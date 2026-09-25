@@ -44,7 +44,7 @@ const bookTitle = document.getElementById('bookTitle');
 const bookEyebrow = document.getElementById('bookEyebrow');
 
 bookTitle.textContent = BOOK.title;
-bookEyebrow.textContent = BOOK.readerEyebrow || `Chroniques d’un autre temps - ${BOOK.libraryLabel || `Livre ${String(BOOK.libraryNumber || 1).padStart(2,'0')}`}`;
+bookEyebrow.textContent = BOOK.readerEyebrow || ('Chroniques d’un autre temps - ' + (BOOK.libraryLabel || ('Livre ' + String(BOOK.libraryNumber || 1).padStart(2,'0'))));
 document.title = `${BOOK.title} — Livre-jeu`;
 
 function defaultSeriesProfile() {
