@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="./styles/reference-02.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-03.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-04.css?v=ref176">
-  <link rel="stylesheet" href="./styles/reference-05.css?v=ref177">
+  <link rel="stylesheet" href="./styles/reference-05.css?v=ref178">
 </head>
 <body class="library-home-open">
 
@@ -47,6 +47,40 @@
       <div class="library-book-list" id="libraryBookList"></div>
     </div>
   </section>
+
+  <div id="libraryPreviewBackdrop" class="library-preview-backdrop hidden" aria-hidden="true">
+    <article class="library-preview-card" role="dialog" aria-modal="true" aria-labelledby="libraryPreviewTitle">
+      <button id="libraryPreviewClose" class="library-preview-close" type="button" aria-label="Fermer">×</button>
+
+      <div class="library-preview-media">
+        <img id="libraryPreviewImage" class="library-preview-image" alt="" />
+      </div>
+
+      <div class="library-preview-copy">
+        <div id="libraryPreviewKicker" class="library-preview-kicker"></div>
+        <h2 id="libraryPreviewTitle"></h2>
+
+        <div class="library-preview-section">
+          <div class="library-preview-label">Situation</div>
+          <p id="libraryPreviewSituation"></p>
+        </div>
+
+        <div class="library-preview-section">
+          <div class="library-preview-label">Type d’aventure</div>
+          <p id="libraryPreviewAdventure"></p>
+        </div>
+
+        <div class="library-preview-section">
+          <div class="library-preview-label">Dangers</div>
+          <p id="libraryPreviewDangers"></p>
+        </div>
+
+        <p id="libraryPreviewAccess" class="library-preview-access hidden"></p>
+        <button id="libraryPreviewAction" class="library-preview-action" type="button">Commencer l’aventure</button>
+      </div>
+    </article>
+  </div>
+
 <div class="app-shell">
 <header class="topbar">
       <div class="topbar-book-meta" aria-hidden="true">
@@ -347,8 +381,9 @@
   </script>
   <script src="./engine/core.js?v=multi-book-6"></script>
   <script src="./app/catalog.js?v=multi-book-6"></script>
-  <script src="./app/library.js?v=multi-book-13"></script>
-  <script src="./app/bootstrap.js?v=multi-book-10"></script>
+  <script src="./app/access.js?v=multi-book-14"></script>
+  <script src="./app/library.js?v=multi-book-14"></script>
+  <script src="./app/bootstrap.js?v=multi-book-14"></script>
 
   <!-- Le reset est géré par le moteur du livre actif. -->
 <script>
