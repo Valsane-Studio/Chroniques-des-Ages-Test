@@ -831,7 +831,7 @@ const STORY = {
           </div>
           <div class="tag">
             <span class="tag-copy">
-              <small><span class="tag-icon icon-jpg icon-terre-noire" aria-hidden="true"></span>Terre noire</small>
+              <small><span class="tag-icon icon-jpg icon-special" aria-hidden="true"></span>Terre noire</small>
               <strong>${contaminationLevel(state)}/13</strong>
             </span>
           </div>
@@ -6921,7 +6921,7 @@ const STORY = {
             <span class="tag-copy"><small><span class="tag-icon icon-jpg icon-protection" aria-hidden="true"></span><span class="tag-label">Protection</span></small><strong>${currentProtection(state)}</strong></span>
           </div>
           <div class="character-stat-card">
-            <span class="tag-copy"><small><span class="tag-icon icon-jpg icon-terre-noire" aria-hidden="true"></span><span class="tag-label">Terre noire</span></small><strong>${contaminationLevel(state)}/13</strong></span>
+            <span class="tag-copy"><small><span class="tag-icon icon-jpg icon-special" aria-hidden="true"></span><span class="tag-label">Terre noire</span></small><strong>${contaminationLevel(state)}/13</strong></span>
           </div>
         </div>
         <div class="character-modal-equipment">
