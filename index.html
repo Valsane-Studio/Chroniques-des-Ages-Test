@@ -16,17 +16,18 @@
   <script id="initial-view-prepaint">
   (function(){
     try{
-      var v=sessionStorage.getItem('livre-interactif.library.view');
-      document.documentElement.setAttribute('data-initial-view',v==='book01'?'book01':'home');
+      var v=localStorage.getItem('livre-interactif.library.view') || sessionStorage.getItem('livre-interactif.library.view');
+      var inBook=(v==='book'||v==='book01');
+      document.documentElement.setAttribute('data-initial-view',inBook?'book':'home');
     }catch(e){
       document.documentElement.setAttribute('data-initial-view','home');
     }
   })();
   </script>
   <style id="initial-view-prepaint-style">
-    html[data-initial-view="book01"] #libraryHome{display:none!important}
-    html[data-initial-view="book01"] body.library-home-open .app-shell,
-    html[data-initial-view="book01"] .app-shell{display:block!important}
+    html[data-initial-view="book"] #libraryHome{display:none!important}
+    html[data-initial-view="book"] body.library-home-open .app-shell,
+    html[data-initial-view="book"] .app-shell{display:block!important}
     html[data-initial-view="home"] .app-shell{display:none!important}
   </style>
     <link rel="stylesheet" href="./styles/reference-01.css?v=ref176">
@@ -344,80 +345,13 @@
     setTimeout(fixAllChoices, 200);
   })();
   </script>
-  <script src="./engine/core.js?v=ref176"></script>
-  <script src="./app/catalog.js?v=ref176"></script>
-  <script src="./app/library.js?v=ref176"></script>
-  <script src="./app/bootstrap.js?v=ref176"></script>
+  <script src="./engine/core.js?v=multi-book-4"></script>
+  <script src="./app/catalog.js?v=multi-book-4"></script>
+  <script src="./app/library.js?v=multi-book-4"></script>
+  <script src="./app/bootstrap.js?v=multi-book-4"></script>
 
-  <script>
-  (function(){
-    const RESTART_FLAG = 'valombre.confirmedRestart';
-
-    if (sessionStorage.getItem(RESTART_FLAG) === '1') {
-      sessionStorage.removeItem(RESTART_FLAG);
-      try {
-        /* Supprime la sauvegarde actuelle ET toutes les anciennes clés
-           que le moteur pourrait sinon restaurer automatiquement. */
-        const legacyKeys = [
-          'ldveh.book.ecuyer-01-valombre.save.v1',
-          'ldveh.book.ecuyer-01-valombre.checkpoint.v1',
-          'valombre_save_v12_3d6_stats18',
-          'valombre_checkpoint_v12_3d6_stats18'
-        ];
-
-        Object.keys(localStorage).forEach(function(key){
-          if (
-            key.indexOf('ldveh.book.ecuyer-01.save.v') === 0 ||
-            key.indexOf('ldveh.book.ecuyer-01.checkpoint.v') === 0 ||
-            legacyKeys.includes(key)
-          ) {
-            localStorage.removeItem(key);
-          }
-        });
-      } catch (e) {}
-    }
-
-    const restartBtn = document.getElementById('restartBtn');
-    const backdrop = document.getElementById('restartConfirmBackdrop');
-    const yesBtn = document.getElementById('restartConfirmYes');
-    const noBtn = document.getElementById('restartConfirmNo');
-
-    function openConfirm(){
-      backdrop.classList.remove('hidden');
-      backdrop.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeConfirm(){
-      backdrop.classList.add('hidden');
-      backdrop.setAttribute('aria-hidden', 'true');
-    }
-
-    if (restartBtn && backdrop && yesBtn && noBtn) {
-      restartBtn.addEventListener('click', function(event){
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        openConfirm();
-      }, true);
-
-      yesBtn.addEventListener('click', function(){
-        sessionStorage.setItem(RESTART_FLAG, '1');
-        location.reload();
-      });
-
-      noBtn.addEventListener('click', closeConfirm);
-
-      backdrop.addEventListener('click', function(event){
-        if (event.target === backdrop) closeConfirm();
-      });
-
-      document.addEventListener('keydown', function(event){
-        if (event.key === 'Escape' && !backdrop.classList.contains('hidden')) closeConfirm();
-      });
-    }
-  })();
-  </script>
-<script>
+  <!-- Le reset est géré par le moteur du livre actif. -->
+script>
 (function(){
   const imageBanner = document.getElementById('pageBannerImage');
   const cardBanner = document.getElementById('pageBannerCard');
