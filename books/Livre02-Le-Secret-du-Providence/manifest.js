@@ -15,7 +15,7 @@ BookManifestRegistry.register({
   extraScripts:['map.js'],
   themeStylesheet:'assets/theme.css',
   contentVersion:10,
-  assetVersion:1,
+  assetVersion:2,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
     statsTexture:'assets/textures/texture-caracteristiques.jpg',
@@ -26,7 +26,7 @@ BookManifestRegistry.register({
       force:'assets/icons/force.png',
       arme:'assets/icons/arme.png',
       protection:'assets/icons/protection.png',
-      terreNoire:'assets/icons/terre-noire.png'
+      special:'assets/icons/special.png'
     }
   }
 });
