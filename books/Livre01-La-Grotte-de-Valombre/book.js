@@ -6943,7 +6943,7 @@ const STORY = {
     title: 'La Grotte de Valombre',
     description: 'Première aventure de la série de l’Écuyer.',
     access: 'free',
-    contentVersion: 122,
+    contentVersion: 123,
     pageMapVersion: 86,
     saveVersion: 23,
     assetBase: './books/Livre01-La-Grotte-de-Valombre/images',
@@ -6982,6 +6982,18 @@ const STORY = {
     createInitialState,
     migrateState: migratePageNumbersV78,
     rules: { currentForce, currentDexterity, combatPower, weaponLabel, currentProtection, maxProtection, applyDamage, raiseContamination },
+    statusStats(state) {
+      const hpRatio = state.maxHp > 0 ? state.hp / state.maxHp : 0;
+      const compactWeapon = state.weapon === 'none' ? '0' : `+${combatPower(state)}`;
+      return [
+        {icon:'♥', label:'Vie', value:`${state.hp}/${state.maxHp}`, cls: hpRatio <= .3 ? 'status-critical' : hpRatio <= .55 ? 'status-warning' : ''},
+        {icon:'◆', label:'Dextérité', value:String(currentDexterity(state))},
+        {icon:'⚔', label:'Force', value:String(currentForce(state))},
+        {icon:'†', label:'Arme', value:compactWeapon},
+        {icon:'🛡', label:'Protection', value:String(currentProtection(state))},
+        {icon:'●', label:'Terre noire', value:`${contaminationLevel(state)}/13`}
+      ];
+    },
     characterSheetHtml,
     inventory,
     checkpoints: [
