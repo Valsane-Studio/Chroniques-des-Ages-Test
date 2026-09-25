@@ -1,0 +1,30 @@
+BookManifestRegistry.register({
+  id:'livre02',
+  runtimeId:'livre02',
+  number:2,
+  label:'Livre 02',
+  kicker:'Chroniques des Âges · Livre 02',
+  title:'Le Secret du Providence',
+  pitch:'Un navire marchand a disparu. Sa trace conduit vers une mer où les récits deviennent moins certains.',
+  status:'planned',
+  statusLabel:'Bientôt disponible',
+  cover:'assets/presentation.webp',
+  coverCandidates:['assets/presentation.webp'],
+  bookScript:'book.js',
+  journalScript:'journal.js',
+  contentVersion:1,
+  assetVersion:1,
+  theme:{
+    buttonTexture:'assets/textures/texture-bouton.jpg',
+    statsTexture:'assets/textures/texture-caracteristiques.jpg',
+    parchmentTexture:'assets/textures/texture-parchemin.jpg',
+    icons:{
+      vie:'assets/icons/vie.png',
+      dexterite:'assets/icons/dexterite.png',
+      force:'assets/icons/force.png',
+      arme:'assets/icons/arme.png',
+      protection:'assets/icons/protection.png',
+      terreNoire:'assets/icons/terre-noire.png'
+    }
+  }
+});
