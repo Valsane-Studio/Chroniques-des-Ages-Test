@@ -1,0 +1,8 @@
+{
+  "name":"Chroniques des Âges",
+  "short_name":"Chroniques",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#10181c",
+  "theme_color":"#10181c"
+}
