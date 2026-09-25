@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10181c">
+  <title>Chroniques des Âges — Valsane Studio</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles/app.css?v=1">
+</head>
+<body class="library-home-open">
+  <section id="libraryHome" class="library-home" aria-labelledby="libraryHomeTitle">
+    <div class="library-home-inner">
+      <div class="studio-mark">Valsane Studio</div>
+      <h1 id="libraryHomeTitle">Chroniques des Âges</h1>
+      <p class="library-home-subtitle">Choisis l’aventure que tu souhaites vivre.</p>
+      <div class="library-book-list" id="libraryBookList">
+        <div class="library-loading">Chargement de la bibliothèque…</div>
+      </div>
+    </div>
+  </section>
+
+  <main class="app-shell" id="gameApp">
+    <header class="book-header">
+      <div class="book-heading">
+        <div id="bookEyebrow" class="book-eyebrow">Chroniques des Âges</div>
+        <h1 id="bookTitle">Livre</h1>
+      </div>
+      <button id="menuBtn" class="icon-button" type="button" aria-label="Ouvrir la navigation">☰</button>
+    </header>
+
+    <section class="reader-card">
+      <div class="chapter-head">
+        <div id="chapterNumber" class="chapter-number"></div>
+        <h2 id="chapterTitle" class="chapter-title"></h2>
+      </div>
+
+      <figure id="imageFrame" class="image-frame">
+        <img id="storyImage" class="story-image hidden" alt="">
+        <div id="imagePlaceholder" class="image-placeholder">
+          <span>Illustration</span>
+          <small id="imageLabel"></small>
+        </div>
+      </figure>
+
+      <article id="storyText" class="story-text"></article>
+      <div id="choices" class="choices"></div>
+      <div id="statusTags" class="status-tags"></div>
+    </section>
+
+    <footer class="footer">
+      <button id="characterBtn" class="footer-btn footer-character-hidden" type="button">Fiche perso</button>
+      <button id="inventoryBtn" class="footer-btn" type="button">Inventaire <span id="inventoryCount">0</span></button>
+      <button id="journalBtn" class="footer-btn" type="button">Journal de bord</button>
+      <button id="restartBtn" class="footer-btn footer-square" type="button" aria-label="Recommencer" title="Recommencer">↻</button>
+      <button id="libraryReturnBtn" class="footer-btn footer-square" type="button" aria-label="Accueil" title="Accueil">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10.8 12 5l7.5 5.8v8.2a.8.8 0 0 1-.8.8h-4.4v-5.2H9.7V19a.8.8 0 0 1-.8.8H5.3a.8.8 0 0 1-.8-.8z"/></svg>
+      </button>
+    </footer>
+  </main>
+
+  <div id="drawerBackdrop" class="backdrop hidden"></div>
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3>Pages · TEST</h3>
+      <button id="closeDrawerBtn" class="icon-button" type="button">×</button>
+    </div>
+    <div id="pageNavList" class="page-nav-list"></div>
+  </aside>
+
+  <div id="modalBackdrop" class="backdrop hidden"></div>
+  <section id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button id="closeModalBtn" class="icon-button" type="button">×</button>
+    </div>
+    <div id="modalContent" class="modal-content"></div>
+  </section>
+
+  <section id="journalPanel" class="journal-panel hidden" aria-hidden="true">
+    <div class="journal-shell">
+      <div class="journal-head">
+        <div>
+          <div class="journal-kicker">Chroniques des Âges</div>
+          <h3>Journal de bord</h3>
+        </div>
+        <button id="journalCloseBtn" class="icon-button" type="button">×</button>
+      </div>
+      <p id="journalCount" class="journal-count"></p>
+      <div id="journalList" class="journal-list"></div>
+    </div>
+  </section>
+
+  <div id="restartConfirmBackdrop" class="confirm-backdrop hidden" aria-hidden="true">
+    <section class="confirm-dialog" role="dialog" aria-modal="true">
+      <p>Souhaitez-vous vraiment recommencer l’aventure au début ?</p>
+      <div class="confirm-actions">
+        <button id="restartConfirmNo" type="button">Non</button>
+        <button id="restartConfirmYes" type="button">Oui</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="./engine/core.js?v=1"></script>
+  <script src="./app/catalog.js?v=1"></script>
+  <script src="./app/library.js?v=1"></script>
+  <script src="./app/bootstrap.js?v=1"></script>
+  <script>
+  (function(){
+    const restartBtn=document.getElementById('restartBtn');
+    const backdrop=document.getElementById('restartConfirmBackdrop');
+    const yes=document.getElementById('restartConfirmYes');
+    const no=document.getElementById('restartConfirmNo');
+    const close=()=>{backdrop.classList.add('hidden');backdrop.setAttribute('aria-hidden','true');};
+    restartBtn.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      backdrop.classList.remove('hidden');
+      backdrop.setAttribute('aria-hidden','false');
+    },true);
+    no.addEventListener('click',close);
+    backdrop.addEventListener('click',e=>{if(e.target===backdrop)close();});
+    yes.addEventListener('click',()=>{
+      try{sessionStorage.setItem('livre-interactif.restart-request','1')}catch(e){}
+      location.reload();
+    });
+  })();
+  </script>
+</body>
+</html>
