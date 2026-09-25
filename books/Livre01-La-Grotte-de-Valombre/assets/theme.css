@@ -1,0 +1,87 @@
+/* Thème visuel du Livre 01 — chargé en dernier.
+   Les chemins sont relatifs à books/Livre01-La-Grotte-de-Valombre/assets/theme.css */
+:root{
+  --ui-button-texture:url("./textures/texture-bouton.jpg?v=176") !important;
+  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=176") !important;
+  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=176") !important;
+
+  --ui-icon-vie:url("./icons/vie.png?v=176") !important;
+  --ui-icon-dexterite:url("./icons/dexterite.png?v=176") !important;
+  --ui-icon-force:url("./icons/force.png?v=176") !important;
+  --ui-icon-arme:url("./icons/arme.png?v=176") !important;
+  --ui-icon-protection:url("./icons/protection.png?v=176") !important;
+  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=176") !important;
+}
+
+/* Texture des éléments cliquables — même traitement que la version de référence. */
+.choice-btn,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn,
+.hero-choice-card,
+.hero-choice-portrait{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+  background-blend-mode:normal !important;
+  filter:brightness(1.18) contrast(1.03) saturate(1.02);
+}
+
+.choice-btn:hover,
+.footer-btn:hover,
+.drawer-action:hover,
+.inventory-action-btn:hover:not(:disabled),
+.icon-btn:hover,
+.page-nav-btn:hover,
+.hero-choice-card:hover{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+  filter:brightness(1.24) contrast(1.04) saturate(1.04);
+}
+
+.hero-choice-card.selected{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+}
+
+/* Texture dédiée aux caractéristiques. */
+.status-tags .tag,
+.hero-sheet-grid.hero-sheet-tag-grid .tag,
+.enemy-card-stats > div{
+  background-image:
+    linear-gradient(180deg,rgba(255,255,255,.030) 0%,rgba(255,255,255,.010) 22%,rgba(0,0,0,.14) 100%),
+    var(--ui-stats-texture),
+    linear-gradient(180deg,#22323a 0%,#18252c 100%) !important;
+  background-color:#1b2930 !important;
+  background-repeat:no-repeat,repeat,no-repeat !important;
+  background-size:100% 100%,360px 360px,100% 100% !important;
+  background-position:center center,center center,center center !important;
+  background-blend-mode:soft-light,normal,normal !important;
+}
+
+/* Fiche personnage : parchemin, comme dans la référence. */
+.character-modal-sheet,
+.character-modal-stats > div{
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Icônes transparentes. */
+.icon-vie{background-image:var(--ui-icon-vie) !important;}
+.icon-dexterite{background-image:var(--ui-icon-dexterite) !important;}
+.icon-force{background-image:var(--ui-icon-force) !important;}
+.icon-arme{background-image:var(--ui-icon-arme) !important;}
+.icon-protection{background-image:var(--ui-icon-protection) !important;}
+.icon-terre-noire{background-image:var(--ui-icon-terre-noire) !important;}
+
+.tag-icon.icon-jpg,
+.enemy-icon.icon-jpg,
+.character-modal-stats .tag-icon.icon-jpg{
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-size:contain !important;
+}
