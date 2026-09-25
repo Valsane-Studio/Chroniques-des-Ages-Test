@@ -1,0 +1,2348 @@
+
+
+.status-tags {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: max(7px, env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) !important;
+  z-index: 30 !important;
+
+  /* Largeur calée sur la page/parchemin, sans jamais dépasser l'écran. */
+  width: min(948px, calc(100vw - 18px)) !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: clamp(1px, .45vw, 5px) !important;
+  padding: clamp(2px, .45vw, 5px) !important;
+  margin: 0 !important;
+}
+
+.status-tags .tag {
+  min-width: 0 !important;
+  min-height: clamp(40px, 6vw, 54px) !important;
+  padding: clamp(3px, .65vw, 7px) 2px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+}
+
+.status-tags .tag-copy {
+  min-width: 0 !important;
+  width: 100% !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: clamp(2px, .4vw, 4px) !important;
+  text-align: center !important;
+}
+
+.status-tags .tag-copy small {
+  min-width: 0 !important;
+  width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: clamp(2px, .45vw, 6px) !important;
+  margin: 0 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+
+  font-size: clamp(6.2px, 1.75vw, 9px) !important;
+  line-height: 1 !important;
+  letter-spacing: clamp(.01em, .15vw, .07em) !important;
+}
+
+.status-tags .tag-label {
+  min-width: 0 !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+}
+
+.status-tags .tag-copy strong {
+  width: 100% !important;
+  margin: 0 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+
+  text-align: center !important;
+  font-size: clamp(10px, 2.7vw, 16px) !important;
+  line-height: 1 !important;
+}
+
+.status-tags .tag-icon,
+.status-tags .tag-icon.icon-jpg {
+  width: clamp(10px, 2.6vw, 16px) !important;
+  height: clamp(10px, 2.6vw, 16px) !important;
+  flex: 0 0 clamp(10px, 2.6vw, 16px) !important;
+
+  display: inline-block !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
+/* Annule les anciens basculements 3 puis 2 colonnes. */
+@media (max-width: 960px), (max-width: 700px), (max-width: 430px) {
+  .app-shell {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .status-tags {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    width: calc(100vw - 18px) !important;
+  }
+}
+
+/* =========================================================
+   V68.143 — BARRE STATS : 2 LIGNES MAXIMUM PAR CASE
+   Ligne 1 = icône + libellé
+   Ligne 2 = valeur
+   Toujours 6 cases sur une seule rangée.
+   ========================================================= */
+
+.status-tags {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+
+.status-tags .tag {
+  min-width: 0 !important;
+  min-height: clamp(42px, 7vw, 56px) !important;
+  padding: clamp(3px, .6vw, 6px) 2px !important;
+  overflow: hidden !important;
+}
+
+.status-tags .tag-copy {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: center !important;
+  justify-items: center !important;
+
+  gap: clamp(2px, .45vw, 4px) !important;
+  text-align: center !important;
+}
+
+/* Ligne 1 : icône + nom */
+.status-tags .tag-copy small {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: clamp(2px, .35vw, 5px) !important;
+  margin: 0 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+
+  font-size: clamp(5.4px, 1.55vw, 8.5px) !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+.status-tags .tag-label {
+  min-width: 0 !important;
+  max-width: calc(100% - 13px) !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: clip !important;
+}
+
+/* Ligne 2 : valeur */
+.status-tags .tag-copy strong {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+
+  display: block !important;
+  margin: 0 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+
+  text-align: center !important;
+  font-size: clamp(10px, 2.8vw, 16px) !important;
+  line-height: 1 !important;
+}
+
+/* Icône compacte, mais toujours lisible */
+.status-tags .tag-icon,
+.status-tags .tag-icon.icon-jpg {
+  width: clamp(9px, 2.3vw, 15px) !important;
+  height: clamp(9px, 2.3vw, 15px) !important;
+  flex: 0 0 clamp(9px, 2.3vw, 15px) !important;
+
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
+/* Aucun passage en 3 ou 2 colonnes : toujours 6 cases. */
+@media (max-width: 960px), (max-width: 700px), (max-width: 430px) {
+  .status-tags {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    width: calc(100vw - 14px) !important;
+  }
+
+  .status-tags .tag {
+    min-height: 46px !important;
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+  }
+
+  .status-tags .tag-copy small {
+    font-size: clamp(5.2px, 1.65vw, 7.5px) !important;
+  }
+
+  .status-tags .tag-copy strong {
+    font-size: clamp(10px, 2.8vw, 14px) !important;
+  }
+}
+
+/* =========================================================
+   V68.144 — BARRE RESPONSIVE
+   Grand écran : 6 cases sur 1 rangée
+   Écran étroit : 3 cases x 2 rangées
+   ========================================================= */
+
+.status-tags {
+  width: min(948px, calc(100vw - 18px)) !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+}
+
+.status-tags .tag {
+  min-width: 0 !important;
+  min-height: 54px !important;
+  padding: 6px 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.status-tags .tag-copy {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 3px !important;
+  text-align: center !important;
+}
+
+.status-tags .tag-copy small {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  font-size: clamp(7px, .85vw, 9px) !important;
+  line-height: 1 !important;
+}
+
+.status-tags .tag-label {
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.status-tags .tag-copy strong {
+  width: 100% !important;
+  margin: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  font-size: clamp(12px, 1.35vw, 16px) !important;
+  line-height: 1 !important;
+}
+
+.status-tags .tag-icon,
+.status-tags .tag-icon.icon-jpg {
+  width: clamp(13px, 1.6vw, 17px) !important;
+  height: clamp(13px, 1.6vw, 17px) !important;
+  flex: 0 0 clamp(13px, 1.6vw, 17px) !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Dès qu'une rangée de 6 devient trop serrée : 3 colonnes / 2 rangées. */
+@media (max-width: 760px) {
+  .app-shell {
+    padding-bottom: calc(132px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .status-tags {
+    width: calc(100vw - 12px) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    bottom: max(6px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .status-tags .tag {
+    min-height: 52px !important;
+    padding: 6px 4px !important;
+  }
+
+  .status-tags .tag-copy small {
+    gap: 6px !important;
+    font-size: clamp(7px, 2.35vw, 9px) !important;
+  }
+
+  .status-tags .tag-copy strong {
+    font-size: clamp(12px, 4vw, 15px) !important;
+  }
+
+  .status-tags .tag-icon,
+  .status-tags .tag-icon.icon-jpg {
+    width: clamp(14px, 4vw, 17px) !important;
+    height: clamp(14px, 4vw, 17px) !important;
+    flex-basis: clamp(14px, 4vw, 17px) !important;
+  }
+}
+
+/* Très petit téléphone : toujours 3 x 2, jamais 2 x 3. */
+@media (max-width: 390px) {
+  .status-tags {
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .status-tags .tag {
+    min-height: 50px !important;
+    padding: 5px 3px !important;
+  }
+
+  .status-tags .tag-copy small {
+    font-size: 7px !important;
+    gap: 4px !important;
+  }
+
+  .status-tags .tag-copy strong {
+    font-size: 12px !important;
+  }
+
+  .status-tags .tag-icon,
+  .status-tags .tag-icon.icon-jpg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-basis: 13px !important;
+  }
+}
+
+/* =========================================================
+   V68.145 — FICHE PERSO : mêmes cartes que la barre de stats
+   ========================================================= */
+
+.character-modal-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin-top: 12px !important;
+}
+
+.character-modal-stats .character-stat-card {
+  min-width: 0 !important;
+  min-height: 58px !important;
+  padding: 7px 5px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border: 1px solid rgba(184,142,79,.48) !important;
+  background: var(--ui-slate-surface) !important;
+  background-color: #142229 !important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.94),
+    inset 0 0 0 2px rgba(190,148,83,.08),
+    inset 0 -12px 20px rgba(0,0,0,.14) !important;
+}
+
+.character-modal-stats .tag-copy {
+  min-width: 0 !important;
+  width: 100% !important;
+
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: center !important;
+  justify-items: center !important;
+
+  gap: 4px !important;
+  text-align: center !important;
+}
+
+.character-modal-stats .tag-copy small {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 6px !important;
+  margin: 0 !important;
+
+  color: #bba984 !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.character-modal-stats .tag-label {
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.character-modal-stats .tag-copy strong {
+  width: 100% !important;
+  margin: 0 !important;
+
+  color: #f2e6cf !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.character-modal-stats .tag-icon,
+.character-modal-stats .tag-icon.icon-jpg {
+  width: 17px !important;
+  height: 17px !important;
+  flex: 0 0 17px !important;
+
+  display: inline-block !important;
+  color: transparent !important;
+  font-size: 0 !important;
+
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
+/* Sur téléphone : 2 colonnes pour laisser une vraie largeur à chaque carte. */
+@media (max-width: 560px) {
+  .character-modal-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .character-modal-stats .character-stat-card {
+    min-height: 54px !important;
+    padding: 6px 4px !important;
+  }
+
+  .character-modal-stats .tag-copy small {
+    font-size: 8px !important;
+  }
+
+  .character-modal-stats .tag-copy strong {
+    font-size: 14px !important;
+  }
+
+  .character-modal-stats .tag-icon,
+  .character-modal-stats .tag-icon.icon-jpg {
+    width: 15px !important;
+    height: 15px !important;
+    flex-basis: 15px !important;
+  }
+}
+
+/* =========================================================
+   V68.146 — LIBELLÉS DES CARACTÉRISTIQUES BEIGE TRÈS CLAIR
+   Barre du bas + fiche personnage
+   ========================================================= */
+
+.status-tags .tag-copy small,
+.status-tags .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.character-modal-stats .tag-copy small,
+.character-modal-stats .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.status-tags .tag-copy strong,
+.character-modal-stats .tag-copy strong {
+  color: #eadcc1 !important;
+}
+
+/* =========================================================
+   V68.148 — FOOTER SÛR : ne casse pas la barre de caractéristiques
+   ========================================================= */
+
+.footer-character-hidden {
+  display: none !important;
+}
+
+.footer {
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) 50px !important;
+  align-items: stretch !important;
+}
+
+.restart-icon-btn {
+  width: 50px !important;
+  min-width: 50px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 29px !important;
+  line-height: 1 !important;
+  color: #f5ecd8 !important;
+}
+
+.restart-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4,8,10,.72);
+  backdrop-filter: blur(3px);
+}
+
+.restart-confirm-backdrop.hidden {
+  display: none !important;
+}
+
+.restart-confirm-card {
+  width: min(420px, calc(100vw - 30px));
+  padding: 18px 18px 16px;
+  border: 1px solid #a47d48;
+  background: var(--ui-slate-surface);
+  background-color: #142229;
+  color: #f5ecd8;
+  text-align: center;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.94),
+    inset 0 0 0 3px rgba(190,148,83,.10),
+    0 18px 50px rgba(0,0,0,.5);
+}
+
+.restart-confirm-card h3 {
+  margin: 0 0 12px;
+  color: #f5ecd8;
+  font-size: 21px;
+}
+
+.restart-confirm-card p {
+  margin: 0 auto 18px;
+  max-width: 330px;
+  color: #eadcc1;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.restart-confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+
+.restart-confirm-actions button {
+  min-height: 43px;
+  border: 1px solid rgba(184,142,79,.62);
+  background: linear-gradient(180deg,#26343b,#172229);
+  color: #f5ecd8;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width:560px) {
+  .footer {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) 46px !important;
+  }
+  .restart-icon-btn {
+    width:46px !important;
+    min-width:46px !important;
+    font-size:27px !important;
+  }
+}
+
+/* =========================================================
+   V68.149 — CADRE PNG AUTOUR DES ILLUSTRATIONS
+   Le PNG n'apparaît que lorsqu'une vraie illustration est chargée.
+   ========================================================= */
+
+.image-frame {
+  position: relative !important;
+}
+
+.story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 7 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: block !important;
+  object-fit: fill !important;
+
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.story-frame-overlay.hidden {
+  display: none !important;
+}
+
+/* Le titre posé sur l'image reste au-dessus du cadre. */
+.image-banner {
+  z-index: 8 !important;
+}
+
+/* =========================================================
+   V68.150 — CADRE PNG À LA PLACE EXACTE DE L’ANCIEN CADRE
+   Le PNG devient le cadre du conteneur d’image.
+   ========================================================= */
+
+.image-frame {
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Quand une vraie image est affichée, on remplace le cadre CSS
+   par le cadre PNG, exactement sur le bord du conteneur. */
+.image-frame.has-story-image {
+  border-style: solid !important;
+  border-color: transparent !important;
+  border-width: clamp(10px, 1.35vw, 18px) !important;
+
+  border-image-source: url('./assets/ui/cadres/cadre-image.png?v=68150') !important;
+  border-image-slice: 120 100 120 100 !important;
+  border-image-width: 1 !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: stretch !important;
+
+  background: #0f171c !important;
+  box-shadow: none !important;
+}
+
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+}
+
+/* L’illustration remplit bien l’intérieur du cadre. */
+.image-frame.has-story-image .story-image,
+.image-frame.has-story-image .image-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Le cartouche au-dessus reste visible. */
+.image-banner {
+  z-index: 8 !important;
+}
+
+/* =========================================================
+   V68.151 — CADRE PNG AU-DESSUS DE L'IMAGE
+   Le cadre est un overlay transparent au-dessus de l’illustration.
+   ========================================================= */
+
+.image-frame {
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* On garde le conteneur sans cadre PNG propre lorsqu'une image est affichée.
+   Le cadre visible sera l'overlay au-dessus. */
+.image-frame.has-story-image {
+  border-color: transparent !important;
+  border-image: none !important;
+  box-shadow: none !important;
+  background: #0f171c !important;
+}
+
+/* L'ancien décor CSS disparaît lorsqu'une illustration est présente */
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+}
+
+/* L'image doit rester sous le cadre */
+.story-image {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.image-placeholder {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Cadre PNG posé AU-DESSUS de l’image, mais avec centre transparent */
+.story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 7 !important;
+  box-sizing: border-box !important;
+
+  border-style: solid !important;
+  border-width: clamp(10px, 1.35vw, 18px) !important;
+  border-color: transparent !important;
+
+  border-image-source: url('./assets/ui/cadres/cadre-image.png?v=68151') !important;
+  border-image-slice: 120 100 120 100 !important;
+  border-image-width: 1 !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: stretch !important;
+
+  background: transparent !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.story-frame-overlay.hidden {
+  display: none !important;
+}
+
+.image-banner {
+  z-index: 8 !important;
+}
+
+@media (max-width: 700px) {
+  .story-frame-overlay {
+    border-width: clamp(8px, 2.4vw, 13px) !important;
+  }
+}
+
+/* =========================================================
+   V68.153 — ÉCRAN DE CHOIX DU PERSONNAGE HARMONISÉ
+   - cadre portrait = même matière ardoise/pierre que les boutons
+   - cases de caractéristiques = mêmes cartes que la barre du bas
+   ========================================================= */
+
+/* Le grand encart de départ reste plus sobre, mais un peu mieux intégré. */
+.hero-sheet {
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+}
+
+/* Le bloc portrait prend la même matière que les boutons / cartes d'UI. */
+.hero-choice-portrait {
+  position: relative;
+  width: min(100%, 190px);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  justify-self: center;
+  margin: 2px 0 10px;
+  padding: 8px;
+  border: 1px solid rgba(184,142,79,.56);
+  background: var(--ui-slate-surface) !important;
+  background-color: #18272e !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(190,148,83,.15),
+    inset 0 11px 22px rgba(255,255,255,.020),
+    inset 0 -16px 24px rgba(0,0,0,.16),
+    0 4px 11px rgba(0,0,0,.17);
+}
+
+.hero-choice-portrait::before,
+.hero-choice-portrait::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  border-color: rgba(194,154,93,.88);
+}
+
+.hero-choice-portrait::before {
+  left: 6px;
+  top: 6px;
+  border-left: 1px solid;
+  border-top: 1px solid;
+}
+
+.hero-choice-portrait::after {
+  right: 6px;
+  bottom: 6px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+
+.hero-choice-portrait img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 32%;
+  border: 1px solid rgba(184,142,79,.40);
+  box-shadow: inset 0 0 0 1px rgba(5,9,11,.72);
+}
+
+/* Les caractéristiques reprennent la logique de la barre du bas. */
+.hero-sheet-grid.hero-sheet-tag-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  min-height: 56px;
+  padding: 7px 7px;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy {
+  width: 100%;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small {
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-icon,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-icon.icon-jpg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  font-size: 0;
+  color: transparent;
+}
+
+@media (max-width: 720px) {
+  .hero-sheet-grid.hero-sheet-tag-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-sheet-grid.hero-sheet-tag-grid .tag {
+    min-height: 52px;
+    padding: 6px 5px;
+  }
+
+  .hero-sheet-grid.hero-sheet-tag-grid .tag-copy small {
+    font-size: 9px;
+  }
+
+  .hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+    font-size: 15px;
+  }
+}
+
+/* =========================================================
+   V68.154 — CADRE AUTOUR DE LA PHOTO, MAIS DEVANT
+   Le cadre encadre l'image et se trouve au-dessus d'elle en z-index.
+   ========================================================= */
+
+.image-frame {
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Quand une illustration existe, l'ancien cadre CSS s'efface. */
+.image-frame.has-story-image {
+  border-color: transparent !important;
+  border-image: none !important;
+  box-shadow: none !important;
+  background: #0f171c !important;
+}
+
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+}
+
+/* La photo reste en dessous du cadre. */
+.image-frame .story-image {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.image-frame .image-placeholder {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Le cadre transparent est posé AU-DESSUS, exactement sur le pourtour. */
+.image-frame .story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 7 !important;
+  box-sizing: border-box !important;
+  display: block !important;
+
+  border-style: solid !important;
+  border-width: clamp(10px, 1.35vw, 18px) !important;
+  border-color: transparent !important;
+
+  border-image-source: url('./assets/ui/cadres/cadre-image.png?v=68154') !important;
+  border-image-slice: 120 100 120 100 !important;
+  border-image-width: 1 !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: stretch !important;
+
+  background: transparent !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.image-frame .story-frame-overlay.hidden {
+  display: none !important;
+}
+
+/* Le petit cartouche sur image reste encore au-dessus du cadre. */
+.image-banner {
+  z-index: 8 !important;
+}
+
+@media (max-width: 700px) {
+  .image-frame .story-frame-overlay {
+    border-width: clamp(8px, 2.4vw, 13px) !important;
+  }
+}
+
+/* =========================================================
+   V68.155 — PAGE DE SÉLECTION DU PERSONNAGE
+   Les cases Vie / Force / etc. prennent la texture pierre/ardoise.
+   ========================================================= */
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  border: 1px solid rgba(184,142,79,.52) !important;
+  background: var(--ui-slate-surface) !important;
+  background-color: #152229 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 2px rgba(190,148,83,.08),
+    inset 0 10px 18px rgba(255,255,255,.02),
+    inset 0 -12px 18px rgba(0,0,0,.14) !important;
+  color: #f0e4cf !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  color: #eadcc1 !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-icon,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-icon.icon-jpg {
+  filter: none !important;
+}
+
+/* =========================================================
+   V68.156 — CADRE PILE-POIL AUTOUR DE LA PHOTO
+   Le cadre et la photo partagent exactement la même zone.
+   ========================================================= */
+
+/* Le conteneur d'image devient une zone de référence unique. */
+.image-frame {
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Dès qu'une vraie image est présente, on neutralise totalement
+   l'ancien cadre CSS pour ne garder qu'une seule géométrie propre. */
+.image-frame.has-story-image {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+}
+
+/* La photo occupe exactement toute la zone utile. */
+.image-frame.has-story-image .story-image {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* Le placeholder reste derrière et disparaît déjà via le moteur. */
+.image-frame.has-story-image .image-placeholder {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+}
+
+/* Le cadre utilise exactement la même emprise que la photo. */
+.image-frame.has-story-image .story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 7 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+
+  border-style: solid !important;
+  border-width: clamp(10px, 1.35vw, 18px) !important;
+  border-color: transparent !important;
+
+  border-image-source: url('./assets/ui/cadres/cadre-image.png?v=68156') !important;
+  border-image-slice: 120 100 120 100 !important;
+  border-image-width: 1 !important;
+  border-image-outset: 0 !important;
+  border-image-repeat: stretch !important;
+
+  background: transparent !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.image-frame .story-frame-overlay.hidden {
+  display: none !important;
+}
+
+/* Le bandeau éventuel reste devant tout. */
+.image-banner {
+  z-index: 8 !important;
+}
+
+@media (max-width: 700px) {
+  .image-frame.has-story-image .story-frame-overlay {
+    border-width: clamp(8px, 2.4vw, 13px) !important;
+  }
+}
+
+/* =========================================================
+   V68.157 — SÉLECTION PERSONNAGE : TEXTURE PIERRE EXACTE
+   Même matière que les boutons principaux.
+   ========================================================= */
+
+/* Carte du personnage : même matière pierre/ardoise que les boutons. */
+.hero-choice-card {
+  background: var(--ui-slate-surface) !important;
+  background-color: #18272e !important;
+  border: 1px solid var(--ui-bronze) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(190,148,83,.16),
+    inset 0 11px 22px rgba(255,255,255,.020),
+    inset 0 -16px 24px rgba(0,0,0,.16),
+    0 4px 11px rgba(0,0,0,.17) !important;
+}
+
+/* Cadre immédiatement autour de la photo. */
+.hero-choice-portrait {
+  padding: 8px !important;
+  border: 1px solid var(--ui-bronze) !important;
+  background: var(--ui-slate-surface) !important;
+  background-color: #18272e !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(190,148,83,.16),
+    inset 0 11px 22px rgba(255,255,255,.020),
+    inset 0 -16px 24px rgba(0,0,0,.16),
+    0 4px 11px rgba(0,0,0,.17) !important;
+}
+
+.hero-choice-portrait img {
+  border: 1px solid rgba(184,142,79,.48) !important;
+  box-shadow: 0 0 0 1px rgba(5,9,11,.72) !important;
+}
+
+/* Nom et rang lisibles sur la pierre. */
+.hero-choice-name {
+  color: #f5ecd8 !important;
+}
+
+.hero-choice-rank {
+  color: #d9c9aa !important;
+}
+
+/* Les caractéristiques de départ utilisent exactement la même matière. */
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  background: var(--ui-slate-surface) !important;
+  background-color: #18272e !important;
+  border: 1px solid var(--ui-bronze) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(190,148,83,.16),
+    inset 0 11px 22px rgba(255,255,255,.020),
+    inset 0 -16px 24px rgba(0,0,0,.16),
+    0 4px 11px rgba(0,0,0,.17) !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  color: #eadcc1 !important;
+}
+
+/* Sélection active : seulement un liseré plus lumineux, sans changer la texture. */
+.hero-choice-card.selected {
+  background: var(--ui-slate-surface) !important;
+  border-color: #d0a362 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(218,174,101,.22),
+    0 0 0 1px rgba(208,163,98,.34),
+    0 5px 14px rgba(0,0,0,.22) !important;
+}
+
+/* =========================================================
+   V68.158 — CADRE PNG COMPLET SUPERPOSÉ
+   Le fichier cadre-image.png est affiché entier, sans border-image.
+   Photo et cadre occupent exactement la même zone 4:3.
+   ========================================================= */
+
+.image-frame {
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Avec une vraie illustration : aucune bordure CSS parasite. */
+.image-frame.has-story-image {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+}
+
+/* Photo : exactement toute la zone. */
+.image-frame.has-story-image .story-image {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 2 !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Cadre : PNG ENTIER, même emprise exacte que la photo, mais au-dessus. */
+.image-frame.has-story-image .story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 7 !important;
+
+  display: block !important;
+  object-fit: fill !important;
+  object-position: center !important;
+
+  border: 0 !important;
+  border-image: none !important;
+  outline: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Quand il n'y a pas d'image, le cadre reste invisible. */
+.image-frame .story-frame-overlay.hidden {
+  display: none !important;
+}
+
+/* Placeholder sous le cadre, uniquement quand nécessaire. */
+.image-frame .image-placeholder {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+
+/* Le cartouche éventuel reste au-dessus de tout. */
+.image-banner {
+  z-index: 8 !important;
+}
+
+/* =========================================================
+   V68.159 — SÉLECTION DU PERSONNAGE
+   VRAIE TEXTURE DES BOUTONS, PAS LE FOND ARDOISE SYNTHÉTIQUE
+   ========================================================= */
+
+/* La pile exacte utilisée par les boutons. */
+.hero-choice-card,
+.hero-choice-portrait,
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  background-image:
+    linear-gradient(180deg,
+      rgba(255,255,255,.035) 0%,
+      rgba(255,255,255,.012) 24%,
+      rgba(0,0,0,.18) 100%),
+    radial-gradient(120% 120% at 14% 18%,
+      rgba(150,186,196,.14) 0%,
+      rgba(150,186,196,.05) 28%,
+      transparent 58%),
+    radial-gradient(120% 150% at 82% 82%,
+      rgba(0,0,0,.24) 0%,
+      rgba(0,0,0,.12) 35%,
+      transparent 62%),
+    var(--ui-button-texture),
+    linear-gradient(180deg, #20323a 0%, #18262d 100%) !important;
+
+  background-color: #1a2830 !important;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat,
+    no-repeat !important;
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    380px 380px,
+    100% 100% !important;
+  background-position:
+    center center,
+    center center,
+    center center,
+    center center,
+    center center !important;
+  background-blend-mode:
+    screen,
+    soft-light,
+    multiply,
+    overlay,
+    normal !important;
+
+  border-color: var(--ui-bronze) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    inset 0 10px 18px rgba(255,255,255,.03),
+    inset 0 -16px 18px rgba(0,0,0,.18),
+    0 5px 13px rgba(0,0,0,.18) !important;
+}
+
+/* La photo garde une vraie marge de matière autour d'elle. */
+.hero-choice-portrait {
+  padding: 8px !important;
+}
+
+/* L'image elle-même reste nette, sans texture par-dessus. */
+.hero-choice-portrait img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border: 1px solid rgba(197,156,93,.55) !important;
+  background: none !important;
+  box-shadow:
+    0 0 0 1px rgba(5,9,11,.78),
+    0 2px 6px rgba(0,0,0,.20) !important;
+}
+
+/* Carte sélectionnée : même pierre, simplement davantage soulignée. */
+.hero-choice-card.selected {
+  background-image:
+    linear-gradient(180deg,
+      rgba(255,255,255,.045) 0%,
+      rgba(255,255,255,.016) 24%,
+      rgba(0,0,0,.16) 100%),
+    radial-gradient(120% 120% at 14% 18%,
+      rgba(160,194,203,.16) 0%,
+      rgba(160,194,203,.055) 28%,
+      transparent 58%),
+    radial-gradient(120% 150% at 82% 82%,
+      rgba(0,0,0,.22) 0%,
+      rgba(0,0,0,.10) 35%,
+      transparent 62%),
+    var(--ui-button-texture),
+    linear-gradient(180deg, #24363e 0%, #1b2a31 100%) !important;
+
+  border-color: #d0a362 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.96),
+    inset 0 0 0 2px rgba(218,174,101,.42),
+    inset 0 10px 18px rgba(255,255,255,.035),
+    inset 0 -16px 18px rgba(0,0,0,.18),
+    0 0 0 1px rgba(208,163,98,.28),
+    0 5px 13px rgba(0,0,0,.20) !important;
+}
+
+/* Lisibilité des textes et valeurs sur la pierre. */
+.hero-choice-name,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.hero-choice-rank {
+  color: #d9c9aa !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  color: #eadcc1 !important;
+}
+
+/* =========================================================
+   V68.160 — SÉLECTION PERSONNAGE
+   Même texture ET même luminosité que les boutons actuels.
+   ========================================================= */
+
+/* Carte personnage + cadre portrait :
+   exactement la texture finale des boutons, sans voiles supplémentaires. */
+.hero-choice-card,
+.hero-choice-portrait {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  background-blend-mode: normal !important;
+  filter: brightness(1.18) contrast(1.03) saturate(1.02) !important;
+
+  border-color: var(--ui-bronze) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 4px 10px rgba(0,0,0,.16) !important;
+}
+
+/* Le portrait ne doit pas être éclairci par le filtre du cadre.
+   On compense approximativement le filtre parent sur l'image elle-même. */
+.hero-choice-portrait img {
+  filter:
+    brightness(.847)
+    contrast(.971)
+    saturate(.980) !important;
+}
+
+/* Carte sélectionnée : même matière, seule la bordure indique la sélection. */
+.hero-choice-card.selected {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  background-blend-mode: normal !important;
+  filter: brightness(1.18) contrast(1.03) saturate(1.02) !important;
+  border-color: #d0a362 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(218,174,101,.44),
+    0 0 0 1px rgba(208,163,98,.28),
+    0 4px 10px rgba(0,0,0,.18) !important;
+}
+
+/* Les 6 caractéristiques utilisent strictement le rendu des boutons. */
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  background-blend-mode: normal !important;
+  filter: brightness(1.18) contrast(1.03) saturate(1.02) !important;
+
+  border-color: var(--ui-bronze) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 4px 10px rgba(0,0,0,.16) !important;
+}
+
+/* Textes conservés clairs comme dans la barre de caractéristiques. */
+.hero-choice-name,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-label {
+  color: #f5ecd8 !important;
+}
+
+.hero-choice-rank {
+  color: #d9c9aa !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  color: #eadcc1 !important;
+}
+
+/* =========================================================
+   V68.161 — PHOTO CLIPPÉE EXACTEMENT DANS L'OUVERTURE DU CADRE
+   ========================================================= */
+
+/* Le cadre PNG complet reste au-dessus. */
+.image-frame.has-story-image .story-frame-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 7 !important;
+  object-fit: fill !important;
+  pointer-events: none !important;
+}
+
+/* La photo garde toute sa taille mais n'est visible QUE dans
+   l'ouverture intérieure exacte du cadre. */
+.image-frame.has-story-image .story-image {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 2 !important;
+  object-fit: cover !important;
+
+  -webkit-mask-image: url('./assets/ui/cadres/cadre-image-mask.png?v=68161') !important;
+  -webkit-mask-size: 100% 100% !important;
+  -webkit-mask-position: center !important;
+  -webkit-mask-repeat: no-repeat !important;
+
+  mask-image: url('./assets/ui/cadres/cadre-image-mask.png?v=68161') !important;
+  mask-size: 100% 100% !important;
+  mask-position: center !important;
+  mask-repeat: no-repeat !important;
+}
+
+/* Rien de la photo ne peut dépasser de l'ensemble. */
+.image-frame.has-story-image {
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   V68.162 — ILLUSTRATION SEULE
+   Aucun cadre PNG, aucun masque, aucun cache décoratif.
+   ========================================================= */
+
+.image-frame,
+.image-frame.has-story-image {
+  position: relative !important;
+  box-sizing: border-box !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+
+/* Supprime les anciens ornements CSS du conteneur. */
+.image-frame::before,
+.image-frame::after,
+.image-frame.has-story-image::before,
+.image-frame.has-story-image::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* L'illustration remplit simplement toute la zone 4:3. */
+.image-frame .story-image,
+.image-frame.has-story-image .story-image {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  z-index: 2 !important;
+
+  object-fit: cover !important;
+  object-position: center !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  clip-path: none !important;
+}
+
+/* Aucun ancien cadre superposé ne peut réapparaître. */
+.story-frame-overlay,
+#storyFrameOverlay {
+  display: none !important;
+}
+
+/* Placeholder normal lorsque l'illustration n'existe pas. */
+.image-frame .image-placeholder {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   V68.163 — TEXTURE DÉDIÉE AUX CARACTÉRISTIQUES
+   But : ne plus confondre les caractéristiques avec les boutons cliquables.
+   ========================================================= */
+
+:root {
+  --ui-stats-texture: url("./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-caracteristiques.jpg?v=ref173");
+}
+
+/* =========================
+   1) TES CARACTÉRISTIQUES — BARRE DU BAS
+   ========================= */
+.status-tags .tag {
+  cursor: default !important;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.030) 0%, rgba(255,255,255,.010) 22%, rgba(0,0,0,.14) 100%),
+    var(--ui-stats-texture),
+    linear-gradient(180deg, #22323a 0%, #18252c 100%) !important;
+  background-color: #1b2930 !important;
+  background-repeat: no-repeat, repeat, no-repeat !important;
+  background-size: 100% 100%, 360px 360px, 100% 100% !important;
+  background-position: center center, center center, center center !important;
+  background-blend-mode: soft-light, normal, normal !important;
+
+  border: 1px solid rgba(177,139,84,.54) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.92),
+    inset 0 0 0 2px rgba(195,154,94,.18),
+    inset 0 8px 12px rgba(255,255,255,.020),
+    inset 0 -12px 14px rgba(0,0,0,.15) !important;
+
+  color: #efe4d0 !important;
+}
+
+.status-tags .tag-icon { color: transparent !important; }
+.status-tags .tag-copy small { color: #efe4d0 !important; }
+.status-tags .tag-copy strong { color: #fff6e6 !important; }
+.status-tags .tag.status-warning {
+  border-color: rgba(191,148,88,.65) !important;
+}
+.status-tags .tag.status-critical {
+  border-color: rgba(176,104,88,.72) !important;
+}
+.status-tags .tag.status-critical .tag-copy strong {
+  color: #ffe2d9 !important;
+}
+
+/* =========================
+   2) SÉLECTION DU PERSONNAGE — TES CARACTÉRISTIQUES
+   ========================= */
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  cursor: default !important;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.030) 0%, rgba(255,255,255,.010) 22%, rgba(0,0,0,.14) 100%),
+    var(--ui-stats-texture),
+    linear-gradient(180deg, #22323a 0%, #18252c 100%) !important;
+  background-color: #1b2930 !important;
+  background-repeat: no-repeat, repeat, no-repeat !important;
+  background-size: 100% 100%, 360px 360px, 100% 100% !important;
+  background-position: center center, center center, center center !important;
+  background-blend-mode: soft-light, normal, normal !important;
+
+  border: 1px solid rgba(177,139,84,.54) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.92),
+    inset 0 0 0 2px rgba(195,154,94,.18),
+    inset 0 8px 12px rgba(255,255,255,.020),
+    inset 0 -12px 14px rgba(0,0,0,.15) !important;
+}
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy small,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-label {
+  color: #efe4d0 !important;
+}
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy strong {
+  color: #fff6e6 !important;
+}
+
+/* =========================
+   3) CARACTÉRISTIQUES DE L’ENNEMI
+   ========================= */
+.enemy-card-stats > div {
+  cursor: default !important;
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.030) 0%, rgba(255,255,255,.010) 22%, rgba(0,0,0,.14) 100%),
+    var(--ui-stats-texture),
+    linear-gradient(180deg, #22323a 0%, #18252c 100%) !important;
+  background-color: #1b2930 !important;
+  background-repeat: no-repeat, repeat, no-repeat !important;
+  background-size: 100% 100%, 360px 360px, 100% 100% !important;
+  background-position: center center, center center, center center !important;
+  background-blend-mode: soft-light, normal, normal !important;
+
+  border: 1px solid rgba(177,139,84,.54) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.92),
+    inset 0 0 0 2px rgba(195,154,94,.18),
+    inset 0 8px 12px rgba(255,255,255,.020),
+    inset 0 -12px 14px rgba(0,0,0,.15) !important;
+}
+.enemy-card-stats span:not(.enemy-icon) {
+  color: #efe4d0 !important;
+}
+.enemy-card-stats strong {
+  color: #fff6e6 !important;
+}
+.enemy-icon {
+  color: #d8b27a !important;
+}
+
+/* =========================================================
+   V68.164 — PAGE D'ACCUEIL / CHOIX DES LIVRES
+   ========================================================= */
+
+.library-home {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background:
+    linear-gradient(rgba(235,223,197,.94), rgba(226,211,181,.96));
+  color: #2d2117;
+}
+
+.library-home.hidden {
+  display: none !important;
+}
+
+.library-home-inner {
+  width: min(860px, 100%);
+  margin: auto;
+  padding: 28px 24px 32px;
+  border: 1px solid rgba(116,88,53,.46);
+  background: rgba(244,234,213,.76);
+  box-shadow:
+    inset 0 0 0 3px rgba(126,94,56,.07),
+    0 16px 42px rgba(31,22,14,.18);
+}
+
+.library-home-kicker {
+  margin: 0 0 5px;
+  text-align: center;
+  font-family: var(--body-font);
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #806343;
+}
+
+.library-home h1 {
+  margin: 0 0 8px;
+  text-align: center;
+  font-family: var(--display-font);
+  font-size: clamp(34px, 6vw, 56px);
+  font-weight: 600;
+  line-height: 1;
+  color: #312116;
+}
+
+.library-home-subtitle {
+  margin: 0 auto 26px;
+  max-width: 600px;
+  text-align: center;
+  font-family: var(--body-font);
+  font-size: 18px;
+  line-height: 1.35;
+  color: #655039;
+}
+
+.library-book-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 16px;
+}
+
+.library-book {
+  position: relative;
+  min-height: 156px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 20px 18px;
+  border: 1px solid #b38b50;
+  background: var(--ui-button-texture) center center / cover repeat;
+  background-color: #23343c;
+  color: #f4ead7;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 5px 13px rgba(0,0,0,.18);
+  text-align: center;
+  cursor: pointer;
+  font-family: var(--body-font);
+  filter: brightness(1.18) contrast(1.03) saturate(1.02);
+}
+
+.library-book:hover:not(:disabled) {
+  filter: brightness(1.24) contrast(1.04) saturate(1.04);
+}
+
+.library-book:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.library-book-number {
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: #d5c098;
+}
+
+.library-book-title {
+  font-family: var(--display-font);
+  font-size: clamp(24px, 3.8vw, 34px);
+  line-height: 1.05;
+  color: #fff5df;
+}
+
+.library-book-status {
+  margin-top: 3px;
+  font-size: 13px;
+  color: #cdbb98;
+}
+
+.library-book:disabled {
+  opacity: .56;
+  cursor: default;
+  filter: grayscale(.3) brightness(.92);
+}
+
+.library-return-btn {
+  position: fixed;
+  left: 10px;
+  top: max(10px, env(safe-area-inset-top));
+  z-index: 28;
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #b38b50;
+  background: var(--ui-button-texture) center center / cover repeat;
+  background-color: #23343c;
+  color: #f3e7cf;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 4px 10px rgba(0,0,0,.20);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+body.library-book-open .library-return-btn {
+  display: grid;
+  place-items: center;
+}
+
+body.library-home-open .app-shell {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 650px) {
+  .library-home {
+    padding: 14px;
+  }
+
+  .library-home-inner {
+    padding: 22px 14px 24px;
+  }
+
+  .library-book-list {
+    grid-template-columns: 1fr;
+  }
+
+  .library-book {
+    min-height: 128px;
+  }
+}
+
+/* =========================================================
+   V68.165 — CARACTÉRISTIQUES PLUS LISIBLES
+   Ligne 1 : libellé, même taille que "Inventaire"
+   Ligne 2 : icône + valeur
+   ========================================================= */
+
+/* -------- Joueur : barre basse + sélection du personnage -------- */
+
+.status-tags .tag-copy,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  text-align: center !important;
+}
+
+.status-tags .stat-label-line,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-label-line {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  color: #efe4d0 !important;
+  font-family: var(--body-font) !important;
+  font-size: 15px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .015em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.status-tags .stat-value-line,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-value-line {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  width: 100% !important;
+  min-height: 22px !important;
+}
+
+.status-tags .stat-value-line .tag-icon,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-value-line .tag-icon {
+  position: static !important;
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+  margin: 0 !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+.status-tags .stat-value-line strong,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-value-line strong {
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #fff6e6 !important;
+  font-family: var(--body-font) !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+/* Donne un peu plus d'air aux cartes pour les deux vraies lignes. */
+.status-tags .tag {
+  min-height: 60px !important;
+  padding: 7px 5px !important;
+}
+
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  min-height: 66px !important;
+  padding: 8px 7px !important;
+}
+
+/* -------- Ennemi : même logique label / icône + valeur -------- */
+
+.enemy-card-stats > div {
+  grid-template-columns: auto auto !important;
+  grid-template-rows: auto auto !important;
+  justify-content: center !important;
+  align-items: center !important;
+  column-gap: 7px !important;
+  row-gap: 5px !important;
+  text-align: center !important;
+  min-height: 66px !important;
+}
+
+.enemy-card-stats > div > span:not(.enemy-icon) {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  justify-self: center !important;
+  color: #efe4d0 !important;
+  font-family: var(--body-font) !important;
+  font-size: 15px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+
+.enemy-card-stats .enemy-icon {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  justify-self: end !important;
+  align-self: center !important;
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+.enemy-card-stats strong {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  justify-self: start !important;
+  align-self: center !important;
+  margin: 0 !important;
+  color: #fff6e6 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+/* Sur mobile on garde la même lecture, sans réduire le libellé à 8-9 px. */
+@media (max-width: 760px) {
+  .status-tags .stat-label-line,
+  .hero-sheet-grid.hero-sheet-tag-grid .stat-label-line,
+  .enemy-card-stats > div > span:not(.enemy-icon) {
+    font-size: 14px !important;
+  }
+
+  .status-tags .stat-value-line strong,
+  .hero-sheet-grid.hero-sheet-tag-grid .stat-value-line strong,
+  .enemy-card-stats strong {
+    font-size: 17px !important;
+  }
+}
+
+/* =========================================================
+   V68.166 — CARACTÉRISTIQUES UN PEU PLUS COMPACTES
+   ========================================================= */
+
+/* Un peu moins d'espace entre libellé et valeur. */
+.status-tags .tag-copy,
+.hero-sheet-grid.hero-sheet-tag-grid .tag-copy {
+  gap: 4px !important;
+}
+
+/* Valeurs légèrement plus petites. */
+.status-tags .stat-value-line strong,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-value-line strong {
+  font-size: 16px !important;
+}
+
+.enemy-card-stats strong {
+  font-size: 16px !important;
+}
+
+/* Icônes très légèrement réduites pour accompagner la valeur. */
+.status-tags .stat-value-line .tag-icon,
+.hero-sheet-grid.hero-sheet-tag-grid .stat-value-line .tag-icon {
+  width: 17px !important;
+  height: 17px !important;
+  flex-basis: 17px !important;
+}
+
+/* Barre du bas : cases un peu moins hautes. */
+.status-tags .tag {
+  min-height: 54px !important;
+  padding: 5px 4px !important;
+}
+
+/* Sélection du personnage : même réduction légère. */
+.hero-sheet-grid.hero-sheet-tag-grid .tag {
+  min-height: 59px !important;
+  padding: 6px 6px !important;
+}
+
+/* Ennemi : un peu plus compact aussi. */
+.enemy-card-stats > div {
+  min-height: 59px !important;
+  row-gap: 3px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+@media (max-width: 760px) {
+  .status-tags .stat-value-line strong,
+  .hero-sheet-grid.hero-sheet-tag-grid .stat-value-line strong,
+  .enemy-card-stats strong {
+    font-size: 15px !important;
+  }
+
+  .status-tags .tag {
+    min-height: 52px !important;
+  }
+
+  .hero-sheet-grid.hero-sheet-tag-grid .tag,
+  .enemy-card-stats > div {
+    min-height: 56px !important;
+  }
+}
+
+/* =========================================================
+   V68.167 — NAVIGATION ALIGNÉE SUR LE LIVRE
+   ========================================================= */
+
+.app-shell {
+  position: relative !important;
+}
+
+/* Accueil : bord gauche du livre, pas bord gauche de la fenêtre. */
+.library-return-btn {
+  position: absolute !important;
+  left: 18px !important;
+  right: auto !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
+  z-index: 61 !important;
+}
+
+/* Menu : bord droit du livre, pas bord droit de la fenêtre. */
+.topbar {
+  position: absolute !important;
+  left: auto !important;
+  right: 18px !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
+  z-index: 60 !important;
+}
+
+@media (max-width: 650px) {
+  .library-return-btn {
+    left: 12px !important;
+    top: max(10px, env(safe-area-inset-top)) !important;
+  }
+
+  .topbar {
+    right: 12px !important;
+    top: max(10px, env(safe-area-inset-top)) !important;
+  }
+}
+
+/* =========================================================
+   V68.168 — HOME DANS LE FOOTER + RESTART PLUS EXPLICITE
+   ========================================================= */
+
+/* Le bouton Home n'existe plus en haut.
+   Le footer accueille désormais : Inventaire / Journal / Home / Restart */
+.footer {
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) 58px 58px !important;
+  align-items: stretch !important;
+}
+
+.footer-home-btn,
+.restart-icon-btn {
+  width: 58px !important;
+  min-width: 58px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.footer-home-btn {
+  font-size: 0 !important;
+}
+
+.footer-home-btn .footer-icon-svg {
+  width: 24px !important;
+  height: 24px !important;
+  display: block !important;
+}
+
+.footer-home-btn .footer-icon-svg path {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.restart-icon-btn {
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 31px !important;
+  line-height: 1 !important;
+  color: #f5ecd8 !important;
+}
+
+@media (max-width:560px) {
+  .footer {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) 50px 50px !important;
+  }
+
+  .footer-home-btn,
+  .restart-icon-btn {
+    width: 50px !important;
+    min-width: 50px !important;
+  }
+
+  .footer-home-btn .footer-icon-svg {
+    width: 21px !important;
+    height: 21px !important;
+  }
+
+  .restart-icon-btn {
+    font-size: 28px !important;
+  }
+}
+
+/* Neutralise l'ancien placement absolu du bouton home haut de page,
+   au cas où d'anciens styles subsisteraient. */
+.library-return-btn {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+}
+
+/* =========================================================
+   V68.169 — RENVOI DE PAGE DISCRET, EN BAS À DROITE
+   ========================================================= */
+
+/* On conserve assez d'espace pour le renvoi de page. */
+.choice-btn {
+  padding-bottom: 48px !important;
+}
+
+/* Plus aucun trait / cartouche intérieur.
+   Le renvoi est simplement posé tout en bas à droite. */
+.choice-dest {
+  position: absolute !important;
+  left: auto !important;
+  right: 12px !important;
+  top: auto !important;
+  bottom: 8px !important;
+
+  width: auto !important;
+  max-width: calc(100% - 24px) !important;
+  min-height: 0 !important;
+
+  display: block !important;
+  place-items: initial !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: #d2bd91 !important;
+  text-align: right !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+
+.choice-dest::before,
+.choice-dest::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 620px) {
+  .choice-btn {
+    padding-bottom: 44px !important;
+  }
+
+  .choice-dest {
+    right: 10px !important;
+    bottom: 7px !important;
+    max-width: calc(100% - 20px) !important;
+    font-size: 14px !important;
+  }
+}
+
+/* =========================================================
+   V68.170 — DÉCISION PARFAITEMENT CENTRÉE DANS LE BOUTON
+   ========================================================= */
+
+.choice-btn {
+  position: relative !important;
+}
+
+/* La décision principale est centrée sur toute la surface du bouton,
+   indépendamment du renvoi de page situé en bas à droite. */
+.choice-copy {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  width: calc(100% - 36px) !important;
+  max-width: none !important;
+
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  text-align: center !important;
+  line-height: 1.18 !important;
+}
+
+/* Le renvoi reste indépendant, en bas à droite. */
+.choice-dest {
+  z-index: 3 !important;
+}
+
+@media (max-width: 620px) {
+  .choice-copy {
+    width: calc(100% - 28px) !important;
+  }
+}
+
+/* =========================================================
+   V68.172 — RENVOI DE PAGE AU RAS DU BAS, À DROITE
+   ========================================================= */
+
+.choice-dest {
+  position: absolute !important;
+  left: auto !important;
+  right: 8px !important;
+  top: auto !important;
+  bottom: 4px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  width: auto !important;
+  max-width: calc(100% - 16px) !important;
+
+  display: block !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  z-index: 4 !important;
+}
+
+@media (max-width: 620px) {
+  .choice-dest {
+    right: 7px !important;
+    bottom: 3px !important;
+    max-width: calc(100% - 14px) !important;
+  }
+}
+
+/* =========================================================
+   V68.173 — CHOIX SANS NUMÉRO + RENVOI VRAIMENT EN BAS À DROITE
+   ========================================================= */
+
+/* Les numéros 1 / 2 / 3 ne sont plus affichés. */
+.choice-index {
+  display: none !important;
+}
+
+/* Le bouton reste la référence de positionnement. */
+.choice-btn {
+  position: relative !important;
+  padding: 16px 18px 38px !important;
+}
+
+/* La décision principale reste exactement au centre du bouton. */
+.choice-copy {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  width: calc(100% - 36px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: block !important;
+  text-align: center !important;
+  line-height: 1.18 !important;
+  z-index: 2 !important;
+}
+
+/* Le renvoi est désormais un ENFANT DIRECT du bouton
+   et se place donc réellement dans son angle inférieur droit. */
+.choice-btn > .choice-dest {
+  position: absolute !important;
+  left: auto !important;
+  right: 10px !important;
+  top: auto !important;
+  bottom: 6px !important;
+
+  width: auto !important;
+  max-width: calc(100% - 20px) !important;
+  min-height: 0 !important;
+
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: #d2bd91 !important;
+  text-align: right !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  z-index: 4 !important;
+}
+
+.choice-btn > .choice-dest::before,
+.choice-btn > .choice-dest::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 620px) {
+  .choice-btn {
+    padding: 14px 14px 34px !important;
+  }
+
+  .choice-copy {
+    width: calc(100% - 28px) !important;
+  }
+
+  .choice-btn > .choice-dest {
+    right: 8px !important;
+    bottom: 5px !important;
+    max-width: calc(100% - 16px) !important;
+    font-size: 13px !important;
+  }
+}
+

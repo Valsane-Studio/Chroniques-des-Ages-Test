@@ -12,7 +12,7 @@ const PAGE_BY_NODE = BOOK.pageByNode;
 const padPage = BOOK.padPage;
 const STORAGE_KEY = `ldveh.book.${BOOK.id}.save.v${BOOK.saveVersion || 1}`;
 const CHECKPOINT_KEY = `ldveh.book.${BOOK.id}.checkpoint.v${BOOK.saveVersion || 1}`;
-const SERIES_KEY = `ldveh.series.${BOOK.seriesId || BOOK.id}.profile.v2`;
+const SERIES_KEY = `ldveh.series.${BOOK.seriesId}.profile.v2`;
 
 const chapterNumber = document.getElementById('chapterNumber');
 const chapterTitle = document.getElementById('chapterTitle');
@@ -43,43 +43,19 @@ const journalCloseBtn = document.getElementById('journalCloseBtn');
 const bookTitle = document.getElementById('bookTitle');
 const bookEyebrow = document.getElementById('bookEyebrow');
 
-const manifest = window.ACTIVE_BOOK_MANIFEST || {};
 bookTitle.textContent = BOOK.title;
-bookEyebrow.textContent = manifest.kicker || BOOK.libraryLabel || `Livre ${String(manifest.number || BOOK.libraryNumber || BOOK.episode || 1).padStart(2,'0')}`;
-document.title = `${BOOK.title} — Chroniques des Âges`;
-
-document.querySelectorAll('.book-page-banner-kicker').forEach(el => {
-  el.textContent = manifest.kicker || BOOK.libraryLabel || `Livre ${String(manifest.number || BOOK.libraryNumber || BOOK.episode || 1).padStart(2,'0')}`;
-});
-document.querySelectorAll('.book-page-banner-title').forEach(el => {
-  el.textContent = BOOK.title;
-});
-const journalKicker = document.querySelector('#journalPanel .journal-kicker');
-if (journalKicker) journalKicker.textContent = `${BOOK.title.toUpperCase()} · TES DÉCOUVERTES`;
-const drawerTitle = document.querySelector('#drawer .drawer-head h3');
-if (drawerTitle) drawerTitle.textContent = `Pages · TEST — ${BOOK.title}`;
+bookEyebrow.textContent = 'Chroniques d’un autre temps - Livre 01';
+document.title = `${BOOK.title} — Livre-jeu`;
 
 function defaultSeriesProfile() {
-  const base = {
+  return {
     version: 2,
-    seriesId: BOOK.seriesId || BOOK.id,
+    seriesId: BOOK.seriesId,
+    heroGender: 'female',
+    heroName: 'Aélis',
+    baseStats: { maxHp: Number.isFinite(BOOK.initialMaxHp) ? BOOK.initialMaxHp : 18, force: 8, dexterity: 13 },
     memory: {},
     completedBooks: []
-  };
-  if (BOOK.seriesProfileDefaults && typeof BOOK.seriesProfileDefaults === 'object') {
-    return {
-      ...base,
-      ...BOOK.seriesProfileDefaults,
-      baseStats: {
-        ...(BOOK.seriesProfileDefaults.baseStats || {})
-      }
-    };
-  }
-  return {
-    ...base,
-    baseStats: {
-      maxHp: Number.isFinite(BOOK.initialMaxHp) ? BOOK.initialMaxHp : 18
-    }
   };
 }
 
@@ -87,7 +63,11 @@ function loadSeriesProfile() {
   try {
     const saved = localStorage.getItem(SERIES_KEY);
     const profile = saved ? { ...defaultSeriesProfile(), ...JSON.parse(saved) } : defaultSeriesProfile();
-    if (typeof BOOK.normalizeSeriesProfile === 'function') BOOK.normalizeSeriesProfile(profile);
+    // V68.64 : un ancien profil pouvait mémoriser les +3 PV du collier comme base.
+    // On restaure le maximum initial défini par le livre sans effacer les choix du héros.
+    if (Number.isFinite(BOOK.initialMaxHp)) {
+      profile.baseStats = { ...defaultSeriesProfile().baseStats, ...(profile.baseStats || {}), maxHp: BOOK.initialMaxHp };
+    }
     return profile;
   } catch { return defaultSeriesProfile(); }
 }
@@ -95,10 +75,15 @@ let seriesProfile = loadSeriesProfile();
 
 function defaultState() { return BOOK.createInitialState(seriesProfile); }
 
-function normalizeLoadedState(loaded) {
-  if (typeof BOOK.normalizeLoadedState !== 'function') return false;
-  try { return !!BOOK.normalizeLoadedState(loaded); }
-  catch (e) { return false; }
+function correctLegacyVitality(loaded) {
+  if (!Number.isFinite(BOOK.initialMaxHp) || !loaded || typeof loaded !== 'object') return false;
+  const allowedMax = BOOK.initialMaxHp + (loaded.flags?.collarEquipped ? 3 : 0);
+  // Ce livre n'a qu'une seule source de Vie maximale supplémentaire : le collier.
+  if (!Number.isFinite(loaded.maxHp) || loaded.maxHp <= allowedMax) return false;
+  const extra = loaded.maxHp - allowedMax;
+  loaded.maxHp = allowedMax;
+  loaded.hp = Math.max(0, Math.min(allowedMax, (Number.isFinite(loaded.hp) ? loaded.hp : allowedMax) - extra));
+  return true;
 }
 
 function migrateLegacySaveIfNeeded() {
@@ -138,7 +123,7 @@ function loadState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(previous));
     }
     const loaded = { ...defaultState(), ...previous };
-    if (normalizeLoadedState(loaded)) localStorage.setItem(STORAGE_KEY, JSON.stringify(loaded));
+    if (correctLegacyVitality(loaded)) localStorage.setItem(STORAGE_KEY, JSON.stringify(loaded));
     return loaded;
   } catch { return defaultState(); }
 }
@@ -148,22 +133,14 @@ function saveSeriesProfile() {
   try { localStorage.setItem(SERIES_KEY, JSON.stringify(seriesProfile)); } catch (e) {}
 }
 function syncSeriesFromState() {
-  if (typeof BOOK.syncSeriesProfile === 'function') {
-    BOOK.syncSeriesProfile(state, seriesProfile);
-    saveSeriesProfile();
-    return;
-  }
-
-  if ('heroGender' in state) seriesProfile.heroGender = state.heroGender;
-  if ('heroName' in state) seriesProfile.heroName = state.heroName;
-
-  if (!seriesProfile.baseStats || typeof seriesProfile.baseStats !== 'object') {
-    seriesProfile.baseStats = {};
-  }
-  if (Number.isFinite(BOOK.initialMaxHp)) seriesProfile.baseStats.maxHp = BOOK.initialMaxHp;
-  if (Number.isFinite(state.baseForce)) seriesProfile.baseStats.force = state.baseForce;
-  if (Number.isFinite(state.baseDexterity)) seriesProfile.baseStats.dexterity = state.baseDexterity;
-
+  seriesProfile.heroGender = state.heroGender === 'male' ? 'male' : 'female';
+  seriesProfile.heroName = state.heroName || (seriesProfile.heroGender === 'male' ? 'Aubin' : 'Aélis');
+  seriesProfile.baseStats = {
+    // Le collier modifie les PV de la partie, jamais les statistiques initiales.
+    maxHp: Number.isFinite(BOOK.initialMaxHp) ? BOOK.initialMaxHp : (state.maxHp || seriesProfile.baseStats.maxHp),
+    force: state.baseForce || seriesProfile.baseStats.force,
+    dexterity: state.baseDexterity || seriesProfile.baseStats.dexterity
+  };
   if (typeof BOOK.exportSeriesMemory === 'function') {
     seriesProfile.memory = { ...seriesProfile.memory, ...BOOK.exportSeriesMemory(state) };
   }
@@ -198,7 +175,7 @@ function restartFromCheckpoint() {
       localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(previous));
     }
     state = { ...defaultState(), ...previous };
-    if (normalizeLoadedState(state)) localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state));
+    if (correctLegacyVitality(state)) localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state));
     state.journal = journalBackup || state.journal || '';
     saveState(); closeDrawer(); closeModal(); closeJournal(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -221,8 +198,11 @@ function enterNode(id) {
   if (!state.visited[id]) {
     state.visited[id] = true;
     if (typeof node.onEnter === 'function') node.onEnter(state);
-  } else if (typeof BOOK.onReenterNode === 'function') {
-    BOOK.onReenterNode(id, state, node);
+  } else if (id === 'c115' && state.flags?.knightFate === 'locked' &&
+             !state.flags.knightWellAttackDone && typeof node.onEnter === 'function') {
+    // Travail uniquement : une nouvelle décision lors d'un essai relance
+    // la conséquence différée du chevalier, même si ce palier était déjà visité.
+    node.onEnter(state);
   }
   state.history.push(id);
   maybeAutoCheckpoint(id);
@@ -241,12 +221,7 @@ function loadPageImage(pageNumber, title) {
   imagePlaceholder.style.display = 'grid';
   storyImage.alt = title ? `Illustration — ${title}` : `Illustration page ${padPage(pageNumber)}`;
   const extensions = BOOK.imageExtensions || ['webp','png','jpg','jpeg'];
-  const assetBases = Array.isArray(BOOK.assetBases) && BOOK.assetBases.length
-    ? BOOK.assetBases
-    : [BOOK.assetBase];
-  const attempts = assetBases.flatMap(assetBase =>
-    candidates.flatMap(candidate => extensions.map(ext => `${assetBase}/${candidate}.${ext}`))
-  );
+  const attempts = candidates.flatMap(candidate => extensions.map(ext => `${BOOK.assetBase}/${candidate}.${ext}`));
   let index = 0;
   const tryNext = () => {
     if (token !== pageImageLoadToken) return;
@@ -300,48 +275,37 @@ function currentRunJournalEntries() {
 }
 
 function appendAdventureConclusion(renderNodeId) {
-  const cfg = BOOK.conclusion;
-  if (!cfg) return;
-
-  const successNodes = new Set(cfg.successNodes || []);
-  const deathNodes = new Set(cfg.deathNodes || []);
-  const success = successNodes.has(renderNodeId);
-
-  let death = !success && deathNodes.has(renderNodeId);
-  if (!success && !death && cfg.deathOnZeroHp !== false && Number(state.hp) <= 0) death = true;
-  if (!success && !death && typeof cfg.isDeath === 'function') {
-    try { death = !!cfg.isDeath(state, renderNodeId); } catch (e) {}
-  }
-
-  if (!success && !death) return;
+  // Trois fins narratives sont considérées comme découvertes, même lorsque
+  // le héros y laisse la vie (l'effondrement et la fin d'un règne).
+  const discoveredEndingNodes = new Set(['c215', 'c217', 'c218']);
+  const discoveredEnding = discoveredEndingNodes.has(renderNodeId);
+  const deathEnding = !discoveredEnding && (state.hp <= 0 || state.flags?.blackEarthTransformed || renderNodeId === 'c216' || renderNodeId === 'c221');
+  if (!discoveredEnding && !deathEnding) return;
 
   const notice = document.createElement('section');
-  notice.className = `adventure-conclusion ${success ? 'adventure-conclusion-success' : 'adventure-conclusion-death'}`;
+  notice.className = `adventure-conclusion ${discoveredEnding ? 'adventure-conclusion-success' : 'adventure-conclusion-death'}`;
 
   const title = document.createElement('h3');
-  title.textContent = success ? (cfg.successTitle || 'Une fin possible') : (cfg.deathTitle || 'Votre aventure s’achève ici');
-
+  title.textContent = discoveredEnding ? 'Une fin possible' : 'Votre aventure s’achève ici';
   const copy = document.createElement('p');
-  copy.textContent = success
-    ? (cfg.successText || 'Vous avez découvert l’une des fins possibles de cette aventure.')
-    : (cfg.deathText || 'C’est la fin de votre aventure. Vous pouvez recommencer et tenter d’autres choix.');
-
+  copy.textContent = discoveredEnding
+    ? 'Vous avez découvert l’une des fins possibles de La Grotte de Valombre. Pour en apprendre davantage sur cette histoire, vous pouvez recommencer l’aventure, emprunter de nouveaux passages et faire d’autres choix.'
+    : 'C’est la fin de votre aventure. Vous n’avez pas réussi à résoudre l’énigme de Valombre. Vous pouvez recommencer l’aventure, faire de nouveaux choix, emprunter de nouveaux passages et tenter de libérer votre village.';
   notice.append(title, copy);
   storyText.appendChild(notice);
 
-  if (!success || cfg.showJournalRecap === false) return;
+  if (!discoveredEnding) return;
 
   const recap = document.createElement('section');
   recap.className = 'ending-journal-recap';
   const recapTitle = document.createElement('h3');
-  recapTitle.textContent = cfg.journalTitle || 'Ce que votre journal révèle';
+  recapTitle.textContent = 'Ce que votre journal révèle';
   const entries = currentRunJournalEntries();
   recap.appendChild(recapTitle);
-
   if (!entries.length) {
     const empty = document.createElement('p');
     empty.className = 'ending-journal-empty';
-    empty.textContent = cfg.journalEmptyText || 'Vous avez atteint cette fin sans consigner de découverte majeure dans votre journal.';
+    empty.textContent = 'Vous avez atteint cette fin sans consigner de découverte majeure dans votre journal.';
     recap.appendChild(empty);
   } else {
     const list = document.createElement('div');
@@ -358,7 +322,6 @@ function appendAdventureConclusion(renderNodeId) {
     });
     recap.appendChild(list);
   }
-
   storyText.appendChild(recap);
 }
 function renderJournal() {
@@ -417,15 +380,13 @@ function resolvePendingDice() {
 }
 
 function render() {
-  const renderNodeId = typeof BOOK.resolveRenderNode === 'function'
-    ? (BOOK.resolveRenderNode(state, state.node) || state.node)
-    : state.node;
-  const alternateView = renderNodeId !== state.node;
+  const transformedView = Boolean(state.flags?.blackEarthTransformed && !(STORY[state.node] && STORY[state.node].sheet));
+  const renderNodeId = transformedView ? 'c219' : state.node;
   const node = STORY[renderNodeId] || STORY.start;
-  const pendingDice = !alternateView && state.pendingDice?.destination === state.node ? state.pendingDice : null;
+  const pendingDice = !transformedView && state.pendingDice?.destination === state.node ? state.pendingDice : null;
   if (node.sheet) {
     ++pageImageLoadToken; // annule une éventuelle image de la page précédente
-    chapterNumber.textContent = BOOK.sheetLabel || 'FICHE DU PERSONNAGE';
+    chapterNumber.textContent = 'FICHE DU HÉROS';
     imageFrame.classList.add('hidden');
   } else {
     const mappedPage = PAGE_BY_NODE[renderNodeId];
@@ -468,13 +429,10 @@ function render() {
 
   appendAdventureConclusion(renderNodeId);
 
-  document.querySelectorAll('[data-book-profile-input], .hero-gender-input').forEach(input => {
+  document.querySelectorAll('.hero-gender-input').forEach(input => {
     input.addEventListener('change', event => {
-      if (typeof BOOK.handleProfileInputChange === 'function') {
-        BOOK.handleProfileInputChange(state, event.target);
-      } else if (event.target.classList.contains('hero-gender-input')) {
-        state.heroGender = event.target.value;
-      }
+      state.heroGender = event.target.value === 'male' ? 'male' : 'female';
+      state.heroName = state.heroGender === 'male' ? 'Aubin' : 'Aélis';
       saveState();
       render();
     });
@@ -483,28 +441,31 @@ function render() {
   inventoryCount.textContent = Object.keys(state.inventory).length;
   statusTags.innerHTML = '';
   if (!node.sheet) {
-    const stats = typeof BOOK.statusStats === 'function' ? (BOOK.statusStats(state) || []) : [];
+    const protection = BOOK.rules && typeof BOOK.rules.currentProtection === 'function' ? BOOK.rules.currentProtection(state) : 0;
+    const hpRatio = state.maxHp > 0 ? state.hp / state.maxHp : 0;
+    const earth = Number(state.contamination || 0);
+    // Dans la barre compacte, on affiche seulement la puissance de l'arme.
+    // Le nom complet reste disponible dans l'inventaire / la fiche personnage.
+    const compactWeapon = state.weapon === 'none'
+      ? '0'
+      : `+${combatPower(state)}`;
+    const stats = [
+      {icon:'♥', label:'Vie', value:`${state.hp}/${state.maxHp}`, cls: hpRatio <= .3 ? 'status-critical' : hpRatio <= .55 ? 'status-warning' : ''},
+      {icon:'◆', label:'Dextérité', value:String(currentDexterity(state))},
+      {icon:'⚔', label:'Force', value:String(currentForce(state))},
+      {icon:'†', label:'Arme', value:compactWeapon},
+      {icon:'🛡', label:'Protection', value:String(protection)},
+      {icon:'●', label:'Terre noire', value:`${earth}/13`, cls: earth >= 12 ? 'status-critical' : earth >= 9 ? 'status-warning' : ''}
+    ];
     stats.forEach(stat => {
       const tag = document.createElement('span');
       tag.className = `tag ${stat.cls || ''}`.trim();
-      tag.innerHTML = `<span class="tag-copy"><small><span class="tag-icon">${stat.icon || ''}</span><span class="tag-label">${stat.label || ''}</span></small><strong>${stat.value ?? ''}</strong></span>`;
+      tag.innerHTML = `<span class="tag-copy"><small><span class="tag-icon">${stat.icon}</span><span class="tag-label">${stat.label}</span></small><strong>${stat.value}</strong></span>`;
       statusTags.appendChild(tag);
     });
   }
 
-  let availableChoices;
-  if (pendingDice) {
-    availableChoices = [{label:'Jeter les dés', action:'resolveDice'}];
-  } else {
-    const override = typeof BOOK.choiceOverride === 'function'
-      ? BOOK.choiceOverride(state, node, renderNodeId)
-      : null;
-    availableChoices = Array.isArray(override)
-      ? override
-      : (Number(state.hp) <= 0 && !node.sheet
-          ? fatalChoices()
-          : (typeof node.choices === 'function' ? node.choices(state) : (node.choices || [])));
-  }
+  const availableChoices = pendingDice ? [{label:'Jeter les dés', action:'resolveDice'}] : state.flags?.blackEarthTransformed && !node.sheet ? [{label:"Reprendre au dernier point de sauvegarde",action:"checkpoint"},{label:"Recommencer depuis le début",action:"restart"}] : state.hp <= 0 && !node.sheet ? fatalChoices() : typeof node.choices === 'function' ? node.choices(state) : (node.choices || []);
   choices.innerHTML = '';
   availableChoices.forEach((choice, i) => {
     const btn = document.createElement('button');
@@ -512,7 +473,7 @@ function render() {
     if (choice.inlineCombat) btn.classList.add('combat-roll-btn');
     const destinationPage = choice.stay ? null : PAGE_BY_NODE[choice.to];
     const destination = destinationPage === 0 ? '<span class="choice-dest">Lire le prologue</span>' : destinationPage ? `<span class="choice-dest">Rendez-vous à la page ${padPage(destinationPage)}</span>` : '';
-    btn.innerHTML = `<span class="choice-copy"><span>${choice.label}</span></span>${destination}`;
+    btn.innerHTML = `<span class="choice-index">${i + 1}</span><span class="choice-copy"><span>${choice.label}</span>${destination}</span>`;
     btn.addEventListener('click', () => {
       if (choice.action === 'resolveDice') { btn.disabled = true; return resolvePendingDice(); }
       if (choice.action === 'checkpoint') return restartFromCheckpoint();
@@ -520,8 +481,9 @@ function render() {
       if (choice.action === 'damage') {
         const key = choice.damageKey || state.node;
         rollDamage(state, key, choice.damageSides || 6);
-        if (typeof BOOK.afterDamageRoll === 'function') {
-          BOOK.afterDamageRoll(state, key);
+        if (key === 'c12' && !state.flags.gaspardEarthRegistered) {
+          state.flags.gaspardEarthRegistered = true;
+          if (typeof BOOK.rules.raiseContamination === 'function') BOOK.rules.raiseContamination(state, 1);
         }
         saveState(); render(); return;
       }

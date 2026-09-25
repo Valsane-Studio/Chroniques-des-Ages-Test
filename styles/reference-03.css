@@ -1,0 +1,825 @@
+
+.story-text .ending {
+  border-color:#8f7149;
+  color:#5d3e27;
+  background:rgba(136,101,56,.055);
+}
+
+.choices {
+  max-width:820px;
+  gap:11px;
+  margin:24px auto 2px;
+}
+.choice-btn {
+  min-height:96px;
+  padding:17px 20px 43px;
+  border:1px solid #977544;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.025), transparent 18%, transparent 82%, rgba(255,255,255,.018)),
+    linear-gradient(180deg, #26343b 0%, #18242a 100%);
+  color:#f0e6d2;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,11,13,.92),
+    inset 0 0 0 3px rgba(174,137,80,.16),
+    0 5px 14px rgba(32,22,13,.10);
+}
+.choice-btn::before,
+.choice-btn::after { border-color:#aa8652; }
+.choice-btn:hover {
+  background:linear-gradient(180deg, #30414a 0%, #1d2b32 100%);
+}
+.choice-copy {
+  color:#f2e8d4;
+  font-size:20px;
+  line-height:1.18;
+  font-weight:600;
+  text-shadow:0 1px 1px rgba(0,0,0,.28);
+}
+.choice-dest {
+  left:10px;
+  right:10px;
+  bottom:8px;
+  min-height:30px;
+  padding:4px 9px;
+  border:0;
+  border-top:1px solid rgba(178,143,86,.38);
+  background:transparent;
+  color:#bba985;
+  font-size:14px;
+  font-weight:500;
+}
+
+.status-tags {
+  bottom:max(6px, env(safe-area-inset-bottom));
+  width:min(930px, calc(100vw - 12px));
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:5px;
+  padding:6px;
+  border:1px solid #9b7848;
+  background:rgba(15,24,29,.975);
+  box-shadow:
+    0 11px 30px rgba(0,0,0,.42),
+    inset 0 0 0 1px rgba(219,184,124,.11);
+  backdrop-filter:blur(10px);
+}
+.status-tags::before {
+  content:'';
+  position:absolute;
+  left:18px;
+  right:18px;
+  top:3px;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(191,151,92,.50), transparent);
+}
+.tag {
+  min-height:50px;
+  gap:7px;
+  border:1px solid rgba(166,132,79,.28);
+  background:rgba(255,255,255,.025);
+  color:#e9dcc1;
+  padding:6px 7px;
+}
+.tag-icon { color:#b99157; font-size:16px; }
+.tag-copy small { color:#aa9879; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
+.tag-copy strong { color:#f1e5cd; font-size:15px; }
+.tag.status-warning { border-color:#9e7238; background:rgba(142,91,31,.18); }
+.tag.status-critical { border-color:#9d5146; background:rgba(130,50,43,.20); }
+.tag.status-critical .tag-copy strong { color:#efb3a9; }
+
+.footer {
+  width:min(900px,100%);
+  margin:12px auto 0;
+  gap:7px;
+}
+.footer-btn, .drawer-action {
+  min-height:47px;
+  border:1px solid rgba(169,132,76,.64);
+  background:linear-gradient(180deg, #26343b, #172229);
+  color:#e7d8ba;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+.footer-btn:hover { background:linear-gradient(180deg, #30414a, #1c2a31); }
+.footer-btn span { background:#aa8653; color:#152027; }
+.danger { color:#e7bdb5; }
+
+.enemy-card {
+  max-width:620px;
+  margin:20px auto 22px;
+  padding:13px 14px 14px;
+  border:1px solid #8e6c43;
+  background:linear-gradient(180deg, #26343b, #1b272e);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025), 0 5px 14px rgba(0,0,0,.12);
+}
+.enemy-card-title {
+  border-bottom-color:rgba(183,144,84,.42);
+  color:#eadbc0;
+}
+.enemy-card-stats > div {
+  border-color:rgba(172,134,78,.30);
+  background:rgba(255,255,255,.025);
+}
+.enemy-card-stats span:not(.enemy-icon) { color:#bba988; }
+.enemy-card-stats strong { color:#f1e5cc; }
+.enemy-icon { color:#c18a6f; }
+
+.combat-roll-result,
+.combat-result,
+.combat-rules-card {
+  border-color:#9a7b50;
+  background:rgba(25,36,42,.06);
+}
+.combat-roll-title { color:#70583c; }
+
+.drawer {
+  color:#211913;
+  background:linear-gradient(180deg, #eee4cf, #ded0b4);
+  border-left-color:#8f714a;
+}
+.modal-card,
+.journal-sheet {
+  background:linear-gradient(180deg, #f0e7d4, #dfd2b8);
+  border-color:#8d7049;
+}
+.drawer .icon-btn,.modal .icon-btn {
+  color:#34271b;
+  background:rgba(255,255,255,.18);
+  border-color:#92754f;
+}
+
+@media (max-width:700px) {
+  .app-shell { padding-left:6px; padding-right:6px; padding-bottom:calc(122px + env(safe-area-inset-bottom)); }
+  .topbar { padding:8px 4px 12px; }
+  .topbar h1 { font-size:25px; }
+  .eyebrow { font-size:9px; }
+  .game { padding:5px; }
+  .game::before { inset:3px; }
+  .image-frame { margin:3px 3px 0; }
+  .story-card { margin:0 3px 3px; padding:18px 14px 22px; }
+  .story-card h2 { font-size:30px; line-height:1.03; margin-bottom:15px; }
+  .story-card h2:not(:empty)::after { width:130px; margin-top:10px; }
+  .chapter-number { font-size:10px; margin-bottom:5px; }
+  .story-text { font-size:18px; line-height:1.30; }
+  .choices { gap:9px; margin-top:20px; }
+  .choice-btn { min-height:86px; padding:14px 13px 39px; }
+  .choice-copy { font-size:17px; }
+  .choice-dest { min-height:26px; font-size:12px; }
+  .status-tags { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:5px; }
+  .tag { min-height:42px; padding:4px 5px; gap:4px; }
+  .tag-icon { font-size:13px; }
+  .tag-copy small { font-size:8px; }
+  .tag-copy strong { font-size:13px; }
+  .footer { grid-template-columns:repeat(2,1fr); }
+  .footer-btn { font-size:14px; min-height:44px; }
+  .enemy-card { margin:16px auto 18px; padding:11px; }
+  .enemy-card-title { font-size:20px; }
+}
+
+
+/* =========================================================
+   V68.120 — TEST DA V2 · GRIMOIRE / ARDOISE
+   Texture papier, cadres et cartouches renforcés.
+   ========================================================= */
+
+/* Papier plus organique : micro-grain, irrégularités et vignettage très léger. */
+.story-card {
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 24%, rgba(91,65,34,.055) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 73% 14%, rgba(106,78,43,.038) 0 1.1px, transparent 1.8px),
+    radial-gradient(circle at 87% 76%, rgba(83,59,30,.045) 0 .8px, transparent 1.5px),
+    linear-gradient(102deg, rgba(95,67,33,.045), transparent 10%, transparent 88%, rgba(88,60,30,.04)),
+    linear-gradient(180deg, #f0e7d4 0%, #e7dbc4 54%, #e2d4b9 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.36),
+    inset 0 0 28px rgba(92,63,30,.075),
+    inset 0 -14px 28px rgba(82,55,26,.035);
+}
+.story-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.48;
+  background:
+    repeating-linear-gradient(17deg, rgba(89,63,34,.014) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(103deg, rgba(255,255,255,.025) 0 1px, transparent 1px 8px);
+  mix-blend-mode:multiply;
+}
+.story-card > * { position:relative; z-index:1; }
+
+/* Cadre d'image plus proche d'une planche de grimoire : double filet bronze. */
+.image-frame {
+  border:1px solid #a6814d;
+  outline:1px solid rgba(45,31,19,.92);
+  outline-offset:3px;
+  box-shadow:
+    0 0 0 5px rgba(177,139,80,.14),
+    0 0 0 6px rgba(22,29,33,.95),
+    inset 0 0 0 1px rgba(230,199,142,.30),
+    inset 0 0 0 5px rgba(7,13,16,.33),
+    0 10px 26px rgba(0,0,0,.32);
+}
+.image-frame::before {
+  content:'';
+  position:absolute;
+  z-index:3;
+  inset:6px;
+  pointer-events:none;
+  border:1px solid rgba(192,153,91,.42);
+  box-shadow:inset 0 0 18px rgba(0,0,0,.28);
+}
+.image-frame::after {
+  z-index:4;
+  box-shadow:
+    inset 0 0 0 3px rgba(14,21,25,.24),
+    inset 0 0 28px rgba(0,0,0,.28);
+}
+
+/* Cartouches sombres : matière ardoise/fer patiné plutôt qu'aplat uniforme. */
+.choice-btn,
+.enemy-card,
+.status-tags,
+.footer-btn,
+.drawer-action {
+  background:
+    radial-gradient(circle at 20% 8%, rgba(117,145,153,.075), transparent 30%),
+    radial-gradient(circle at 84% 110%, rgba(0,0,0,.22), transparent 36%),
+    repeating-linear-gradient(116deg, rgba(255,255,255,.012) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #273840 0%, #1a282f 52%, #142027 100%);
+}
+.choice-btn {
+  border-color:#aa8249;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,11,13,.94),
+    inset 0 0 0 3px rgba(190,149,84,.13),
+    inset 0 10px 24px rgba(255,255,255,.018),
+    0 6px 15px rgba(0,0,0,.16);
+}
+.choice-btn::before,
+.choice-btn::after {
+  border-color:#b18b51;
+}
+.choice-btn:hover {
+  background:
+    radial-gradient(circle at 20% 8%, rgba(130,159,168,.09), transparent 30%),
+    linear-gradient(180deg, #31454f 0%, #203138 100%);
+}
+
+.status-tags {
+  border-color:#a47d48;
+  box-shadow:
+    0 12px 32px rgba(0,0,0,.46),
+    inset 0 0 0 1px rgba(229,194,132,.12),
+    inset 0 0 24px rgba(0,0,0,.20);
+}
+.tag {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.034), rgba(255,255,255,.012)),
+    rgba(7,14,18,.16);
+  border-color:rgba(181,143,83,.34);
+  box-shadow:inset 0 0 10px rgba(0,0,0,.12);
+}
+
+/* Barre haute plus sobre, avec Livre 01 comme seule ligne éditoriale. */
+.eyebrow {
+  color:#bea77f;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  font-size:10px;
+}
+.topbar {
+  border-bottom:1px solid rgba(174,139,85,.20);
+  margin-bottom:8px;
+}
+
+/* Les panneaux secondaires restent dans le même langage papier/grimoire. */
+.modal-card,
+.journal-sheet,
+.drawer {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(98,69,34,.04) 0 1px, transparent 1.6px),
+    linear-gradient(180deg, #f0e7d4 0%, #e1d2b6 100%);
+  box-shadow:inset 0 0 24px rgba(91,63,31,.055), 0 18px 44px rgba(0,0,0,.33);
+}
+
+@media (max-width:700px) {
+  .image-frame { outline-offset:2px; box-shadow:0 0 0 3px rgba(177,139,80,.13), 0 0 0 4px rgba(22,29,33,.95), inset 0 0 0 1px rgba(230,199,142,.28), inset 0 0 0 4px rgba(7,13,16,.30), 0 7px 18px rgba(0,0,0,.28); }
+  .image-frame::before { inset:4px; }
+  .topbar { margin-bottom:6px; }
+}
+
+
+/* =========================================================
+   V68.121 — TEST DA V3 · TEXTURE BOUTONS / HUD
+   Passe ciblée : texture ardoise plus visible sur les choix.
+   Le HUD reste dynamique et fixé en bas comme dans la logique actuelle.
+   ========================================================= */
+
+/* Texture nettement visible : couches de patine, stries et grain minéral. */
+.choice-btn {
+  overflow:hidden;
+  isolation:isolate;
+  border:1px solid #b08a52;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(147,177,185,.12) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 71% 36%, rgba(5,12,16,.28) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 37% 82%, rgba(169,195,198,.07) 0 1px, transparent 1.8px),
+    repeating-linear-gradient(18deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(111deg, rgba(0,0,0,.055) 0 1px, transparent 1px 8px),
+    linear-gradient(180deg, #31434b 0%, #24343c 42%, #18252c 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.94),
+    inset 0 0 0 3px rgba(191,151,88,.20),
+    inset 0 14px 26px rgba(255,255,255,.025),
+    inset 0 -18px 30px rgba(0,0,0,.17),
+    0 7px 16px rgba(0,0,0,.20);
+}
+.choice-btn::before,
+.choice-btn::after {
+  z-index:3;
+  border-color:#c09a5e;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.45));
+}
+.choice-btn:hover {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(161,194,201,.14) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 71% 36%, rgba(5,12,16,.24) 0 1.2px, transparent 2px),
+    repeating-linear-gradient(18deg, rgba(255,255,255,.03) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(111deg, rgba(0,0,0,.05) 0 1px, transparent 1px 8px),
+    linear-gradient(180deg, #3a505a 0%, #293d45 48%, #1d2d34 100%);
+}
+.choice-btn:active {
+  transform:translateY(1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.95),
+    inset 0 0 0 3px rgba(191,151,88,.22),
+    inset 0 12px 26px rgba(0,0,0,.18),
+    0 3px 9px rgba(0,0,0,.17);
+}
+.choice-copy, .choice-dest { position:relative; z-index:2; }
+.choice-copy {
+  color:#f4ead7;
+  text-shadow:0 1px 1px rgba(0,0,0,.55), 0 0 8px rgba(0,0,0,.18);
+}
+.choice-dest {
+  border-top:1px solid rgba(203,163,97,.42);
+  color:#c7b590;
+}
+
+/* HUD : conserver son comportement dynamique, avec matière cohérente mais lisible. */
+.status-tags {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(123,151,158,.08), transparent 30%),
+    repeating-linear-gradient(118deg, rgba(255,255,255,.012) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, rgba(35,50,58,.985), rgba(17,27,33,.985));
+}
+.tag {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)),
+    rgba(7,14,18,.20);
+}
+
+@media (max-width:700px) {
+  .choice-btn {
+    box-shadow:
+      inset 0 0 0 1px rgba(6,10,13,.94),
+      inset 0 0 0 2px rgba(191,151,88,.19),
+      inset 0 10px 22px rgba(255,255,255,.022),
+      inset 0 -14px 24px rgba(0,0,0,.15),
+      0 5px 12px rgba(0,0,0,.18);
+  }
+}
+
+
+/* =========================================================
+   V68.122 — TEST DA V4 · TEXTURE ARDOISE UNIFIÉE
+   Même matière sombre sur tous les éléments interactifs.
+   CSS uniquement : aucune image ajoutée.
+   ========================================================= */
+:root {
+  --ui-slate-surface:
+    radial-gradient(ellipse at 9% 14%, rgba(116,151,160,.16) 0%, rgba(116,151,160,.045) 20%, transparent 42%),
+    radial-gradient(ellipse at 82% 92%, rgba(2,8,12,.36) 0%, rgba(2,8,12,.11) 32%, transparent 60%),
+    radial-gradient(circle at 29% 72%, rgba(154,181,184,.070) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 68% 23%, rgba(205,220,218,.045) 0 .8px, transparent 1.5px),
+    radial-gradient(circle at 88% 48%, rgba(0,0,0,.18) 0 1.1px, transparent 2px),
+    radial-gradient(circle at 47% 38%, rgba(0,0,0,.14) 0 .9px, transparent 1.8px),
+    repeating-linear-gradient(16deg, rgba(255,255,255,.019) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(107deg, rgba(0,0,0,.040) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, #263a43 0%, #1d2e36 48%, #142229 100%);
+  --ui-slate-surface-hover:
+    radial-gradient(ellipse at 9% 14%, rgba(137,174,183,.18) 0%, rgba(137,174,183,.055) 20%, transparent 42%),
+    radial-gradient(ellipse at 82% 92%, rgba(2,8,12,.30) 0%, rgba(2,8,12,.09) 32%, transparent 60%),
+    radial-gradient(circle at 29% 72%, rgba(177,201,202,.080) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 68% 23%, rgba(218,229,226,.052) 0 .8px, transparent 1.5px),
+    repeating-linear-gradient(16deg, rgba(255,255,255,.023) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(107deg, rgba(0,0,0,.034) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, #304751 0%, #243842 50%, #192931 100%);
+  --ui-bronze:#b38b50;
+  --ui-bronze-soft:rgba(190,148,83,.33);
+  --ui-cream:#f0e4cc;
+  --ui-cream-muted:#c8b894;
+}
+
+/* Matière commune : ardoise bleu-noir, patinée, bord bronze et léger biseau. */
+.choice-btn,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn,
+.hero-choice-card,
+.tag,
+.enemy-card,
+.enemy-card-stats > div {
+  background:var(--ui-slate-surface);
+  background-color:#18272e;
+  color:var(--ui-cream);
+  border-color:var(--ui-bronze);
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(190,148,83,.16),
+    inset 0 11px 22px rgba(255,255,255,.020),
+    inset 0 -16px 24px rgba(0,0,0,.16),
+    0 4px 11px rgba(0,0,0,.17);
+}
+
+.choice-btn:hover,
+.footer-btn:hover,
+.drawer-action:hover,
+.inventory-action-btn:hover:not(:disabled),
+.icon-btn:hover,
+.page-nav-btn:hover,
+.hero-choice-card:hover {
+  background:var(--ui-slate-surface-hover);
+  border-color:#c39a5e;
+}
+
+.choice-btn:active,
+.footer-btn:active,
+.drawer-action:active,
+.inventory-action-btn:active:not(:disabled),
+.icon-btn:active,
+.page-nav-btn:active {
+  transform:translateY(1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.97),
+    inset 0 0 0 3px rgba(190,148,83,.18),
+    inset 0 10px 22px rgba(0,0,0,.18),
+    0 2px 7px rgba(0,0,0,.14);
+}
+
+/* Boutons narratifs : même matière que la référence, en grand format. */
+.choice-btn {
+  border-width:1px;
+  outline:1px solid rgba(18,12,7,.82);
+  outline-offset:2px;
+}
+.choice-btn::before,
+.choice-btn::after { border-color:#c29a5d; }
+.choice-copy { color:#f4ead7; }
+.choice-dest { color:#c7b690; border-top-color:rgba(199,156,91,.44); }
+
+/* HUD : chaque case reprend exactement la même matière. */
+.status-tags {
+  background:var(--ui-slate-surface);
+  background-color:#142229;
+  border-color:#aa8249;
+  box-shadow:
+    0 12px 32px rgba(0,0,0,.46),
+    inset 0 0 0 1px rgba(5,9,11,.94),
+    inset 0 0 0 3px rgba(190,148,83,.11),
+    inset 0 -18px 26px rgba(0,0,0,.18);
+}
+.tag {
+  min-width:0;
+  border-color:rgba(184,142,79,.48);
+}
+.tag-copy small { color:#bba984; }
+.tag-copy strong { color:#f2e6cf; }
+.tag-icon { color:#c49a5b; }
+.tag.status-warning {
+  background:var(--ui-slate-surface), linear-gradient(rgba(116,76,27,.20),rgba(116,76,27,.20));
+  border-color:#a87535;
+}
+.tag.status-critical {
+  background:var(--ui-slate-surface), linear-gradient(rgba(116,43,38,.23),rgba(116,43,38,.23));
+  border-color:#9c5045;
+}
+
+/* Barre basse, menu, inventaire et actions : une seule famille visuelle. */
+.footer-btn, .drawer-action, .inventory-action-btn, .icon-btn {
+  color:#ede0c6;
+  text-shadow:0 1px 1px rgba(0,0,0,.42);
+}
+.footer-btn span {
+  background:#b68c4e;
+  color:#152027;
+  box-shadow:inset 0 0 0 1px rgba(255,238,195,.22);
+}
+.inventory-action-btn {
+  outline:1px solid rgba(42,27,16,.78);
+  outline-offset:-3px;
+}
+.inventory-action-btn:disabled {
+  opacity:.38;
+  filter:saturate(.65);
+}
+
+/* Navigation TEST : texture conservée, état courant plus clair. */
+.page-nav-btn {
+  margin:4px 0;
+  border:1px solid rgba(178,137,77,.42);
+  padding:10px 9px;
+}
+.page-nav-btn.current {
+  background:var(--ui-slate-surface-hover);
+  border-color:#c0985c;
+  box-shadow:
+    inset 4px 0 0 #c0985c,
+    inset 0 0 0 1px rgba(5,9,11,.95),
+    inset 0 0 0 3px rgba(190,148,83,.16);
+}
+.page-nav-number { color:#c6a66e; }
+.page-nav-title { color:#f0e5cf; }
+
+/* Sélection du héros : carte interactive sombre, texte remis en clair. */
+.hero-choice-card {
+  border-color:rgba(183,141,79,.70);
+}
+.hero-choice-card.selected {
+  background:var(--ui-slate-surface-hover);
+  border-color:#c39a5e;
+  box-shadow:
+    inset 0 0 0 1px rgba(5,9,11,.96),
+    inset 0 0 0 3px rgba(195,154,94,.27),
+    0 0 0 1px rgba(195,154,94,.14);
+}
+.hero-choice-name { color:#f1e4cb; }
+.hero-choice-rank { color:#c1b08e; }
+.hero-choice-portrait { border-color:rgba(192,149,86,.65); }
+
+/* Petits panneaux de combat : même matière que les boutons, sans modifier la logique. */
+.enemy-card-title { color:#f1e4cb; border-bottom-color:rgba(190,148,83,.44); }
+.enemy-card-stats span:not(.enemy-icon) { color:#c0ae89; }
+.enemy-card-stats strong { color:#f3e7d0; }
+.enemy-icon { color:#c39a5d; }
+
+@media (max-width:700px) {
+  .choice-btn, .footer-btn, .drawer-action, .inventory-action-btn, .icon-btn, .page-nav-btn, .hero-choice-card, .tag, .enemy-card, .enemy-card-stats > div {
+    box-shadow:
+      inset 0 0 0 1px rgba(5,9,11,.96),
+      inset 0 0 0 2px rgba(190,148,83,.15),
+      inset 0 8px 18px rgba(255,255,255,.018),
+      inset 0 -12px 20px rgba(0,0,0,.14),
+      0 3px 8px rgba(0,0,0,.15);
+  }
+}
+
+
+/* =========================================================
+   V68.124 — TEST DA V6 · TEXTURE EXTERNE SUR LES BOUTONS
+   Les boutons utilisent désormais un fichier image dédié
+   (assets/ui/texture-bouton.jpg) pour retrouver une vraie
+   matière de pierre bleutée, sans quadrillage synthétique.
+   ========================================================= */
+:root {
+  --ui-button-texture:url("./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-bouton.jpg?v=ref173");
+}
+
+.choice-btn,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.035) 0%, rgba(255,255,255,.012) 24%, rgba(0,0,0,.18) 100%),
+    radial-gradient(120% 120% at 14% 18%, rgba(150,186,196,.14) 0%, rgba(150,186,196,.05) 28%, transparent 58%),
+    radial-gradient(120% 150% at 82% 82%, rgba(0,0,0,.24) 0%, rgba(0,0,0,.12) 35%, transparent 62%),
+    var(--ui-button-texture),
+    linear-gradient(180deg, #20323a 0%, #18262d 100%);
+  background-color:#1a2830;
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat,no-repeat;
+  background-size:100% 100%,100% 100%,100% 100%,380px 380px,100% 100%;
+  background-position:center center,center center,center center,center center,center center;
+  background-blend-mode:screen,soft-light,multiply,overlay,normal;
+  box-shadow:
+    inset 0 0 0 1px rgba(6,10,13,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    inset 0 10px 18px rgba(255,255,255,.03),
+    inset 0 -16px 18px rgba(0,0,0,.18),
+    0 5px 13px rgba(0,0,0,.18);
+}
+
+.choice-btn:hover,
+.footer-btn:hover,
+.drawer-action:hover,
+.inventory-action-btn:hover:not(:disabled),
+.icon-btn:hover,
+.page-nav-btn:hover {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.042) 0%, rgba(255,255,255,.018) 24%, rgba(0,0,0,.16) 100%),
+    radial-gradient(120% 120% at 14% 18%, rgba(168,201,211,.17) 0%, rgba(168,201,211,.06) 30%, transparent 58%),
+    radial-gradient(120% 150% at 82% 82%, rgba(0,0,0,.20) 0%, rgba(0,0,0,.10) 35%, transparent 62%),
+    var(--ui-button-texture),
+    linear-gradient(180deg, #263b45 0%, #1d2f37 100%);
+}
+
+.choice-btn::before,
+.choice-btn::after,
+.footer-btn::before,
+.footer-btn::after {
+  border-color:#c39b5e;
+}
+
+.choice-copy,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn {
+  text-shadow:0 1px 1px rgba(0,0,0,.48);
+}
+
+
+
+/* =========================================================
+   V68.126 — BOUTONS : TEXTURE PHOTO LA PLUS FIDÈLE POSSIBLE
+   Objectif : afficher la texture JPG presque telle quelle,
+   sans voile sombre, sans quadrillage synthétique, avec
+   seulement un encadrement et un relief très léger.
+   ========================================================= */
+.choice-btn,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  background-blend-mode: normal !important;
+  filter: brightness(1.18) contrast(1.03) saturate(1.02);
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 4px 10px rgba(0,0,0,.16) !important;
+}
+
+.choice-btn:hover,
+.footer-btn:hover,
+.drawer-action:hover,
+.inventory-action-btn:hover:not(:disabled),
+.icon-btn:hover,
+.page-nav-btn:hover {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  filter: brightness(1.24) contrast(1.04) saturate(1.04);
+}
+
+.choice-btn:active,
+.footer-btn:active,
+.drawer-action:active,
+.inventory-action-btn:active,
+.icon-btn:active,
+.page-nav-btn:active {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color: #23343c !important;
+  filter: brightness(1.08) contrast(1.02);
+}
+
+.choice-btn::before,
+.choice-btn::after,
+.footer-btn::before,
+.footer-btn::after {
+  border-color:#c39b5e !important;
+}
+
+.choice-copy,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn {
+  text-shadow:0 1px 1px rgba(0,0,0,.42) !important;
+}
+
+
+
+/* =========================================================
+   V68.127 — TEXTURE PHOTO UNIFIÉE + DESTINATION EN BAS
+   La même texture JPG des boutons est appliquée au HUD et
+   aux encarts ennemis. La destination est à nouveau ancrée
+   en bas du bouton de choix.
+   ========================================================= */
+.status-tags,
+.enemy-card {
+  background: var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+  background-blend-mode:normal !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.96),
+    inset 0 0 0 2px rgba(197,156,93,.34),
+    0 6px 16px rgba(0,0,0,.24) !important;
+}
+
+/* On laisse la photo visible à travers chaque cellule du HUD / ennemi. */
+.tag,
+.enemy-card-stats > div {
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Les états de danger restent lisibles sans masquer la pierre. */
+.tag.status-warning {
+  background:rgba(157,102,34,.13) !important;
+}
+.tag.status-critical {
+  background:rgba(132,49,43,.15) !important;
+}
+
+/* La ligne jaune + "Rendez-vous..." est collée en bas du cartouche. */
+.choice-copy { position:relative; z-index:2; }
+.choice-dest {
+  position:absolute !important;
+  z-index:2;
+  left:10px !important;
+  right:10px !important;
+  bottom:8px !important;
+  top:auto !important;
+  min-height:30px;
+  display:grid;
+  place-items:center;
+  padding:4px 9px;
+  margin:0 !important;
+  border:0 !important;
+  border-top:1px solid rgba(199,156,91,.62) !important;
+  background:transparent !important;
+  color:#d2bd91 !important;
+}
+
+
+
+/* =========================================================
+   V68.128 — POSITION DU RENVOI EN BAS DES BOUTONS
+   Le titre reste centré dans le cartouche ; la ligne bronze et
+   « Rendez-vous... » sont ancrés tout en bas du bouton.
+   ========================================================= */
+.choice-btn {
+  position: relative !important;
+  padding-bottom: 50px !important;
+}
+
+/* Important : le renvoi est enfant de .choice-copy. On remet
+   .choice-copy en position statique pour que le positionnement
+   absolu de .choice-dest se fasse par rapport au bouton entier. */
+.choice-copy {
+  position: static !important;
+  z-index: 2;
+}
+
+.choice-dest {
+  position: absolute !important;
+  left: 14px !important;
+  right: 14px !important;
+  bottom: 9px !important;
+  top: auto !important;
+  min-height: 31px !important;
+  margin: 0 !important;
+  padding: 5px 8px 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(199,156,91,.70) !important;
+  background: transparent !important;
+  color: #d2bd91 !important;
+  line-height: 1.15 !important;
+  z-index: 4 !important;
+}
+
+@media (max-width:700px) {
+  .choice-btn { padding-bottom: 46px !important; }
+  .choice-dest {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 7px !important;
+    min-height: 29px !important;
+    padding-top: 4px !important;
+  }
+}
+
+
+
+/* =========================================================
+   V68.129 — HUD MOBILE + ICÔNES ALIGNÉES + NOUVEL EN-TÊTE
+   - les icônes passent devant les libellés (Vie, Force, etc.)
+   - la barre de caractéristiques redevient fixe en bas d'écran
+   - le surtitre devient « Chroniques des Âges · Livre 01 »
+   ========================================================= */
+.eyebrow {
+  text-transform:none !important;
+  letter-spacing:.04em !important;
+  font-size:13px !important;
+}

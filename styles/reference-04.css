@@ -1,0 +1,661 @@
+
+
+.status-tags {
+  position:fixed !important;
+  left:50% !important;
+  bottom:max(8px, env(safe-area-inset-bottom)) !important;
+  transform:translateX(-50%) !important;
+  z-index:30 !important;
+  width:min(940px, calc(100vw - 20px)) !important;
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:6px !important;
+  margin:0 !important;
+  padding:7px !important;
+}
+
+.tag {
+  min-width:0;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  min-height:64px;
+  padding:8px 10px !important;
+}
+
+.tag-copy {
+  min-width:0;
+  width:100%;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  gap:3px;
+}
+
+.tag-copy small {
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  white-space:nowrap;
+}
+
+.tag-copy strong {
+  margin-top:0 !important;
+  white-space:nowrap;
+}
+
+.tag-icon {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:14px;
+  flex:0 0 14px;
+  font-size:14px !important;
+  line-height:1 !important;
+}
+
+@media (max-width:700px) {
+  .app-shell { padding-bottom:calc(156px + env(safe-area-inset-bottom)) !important; }
+  .status-tags {
+    width:calc(100vw - 12px) !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:5px !important;
+    padding:6px !important;
+    bottom:max(6px, env(safe-area-inset-bottom)) !important;
+  }
+  .tag {
+    min-height:48px;
+    padding:6px 7px !important;
+  }
+  .tag-copy { gap:2px; }
+  .tag-copy small {
+    font-size:8px !important;
+    gap:5px !important;
+  }
+  .tag-copy strong {
+    font-size:13px !important;
+    line-height:1.08;
+  }
+  .tag-icon {
+    width:12px;
+    flex-basis:12px;
+    font-size:12px !important;
+  }
+}
+
+
+
+/* =========================================================
+   V68.132 — TEST DA V14 · PARCHEMIN IMAGE RÉEL
+   Le panneau central utilise désormais la texture dédiée
+   assets/ui/parchemin-fond-texte.jpg. L'image garde sa largeur,
+   son bord supérieur et ses bords latéraux ; le bas est simplement
+   rogné selon la hauteur réelle du contenu de chaque page.
+   ========================================================= */
+.story-card {
+  position:relative !important;
+  overflow:hidden !important;
+  margin:0 4px 4px !important;
+  padding:34px clamp(30px,4vw,52px) 42px !important;
+  border:0 !important;
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  box-shadow:none !important;
+}
+.story-card::before,
+.story-card::after {
+  content:none !important;
+  display:none !important;
+}
+.story-card > * {
+  position:relative;
+  z-index:1;
+}
+.story-text,
+.story-card h2,
+.chapter-number {
+  text-shadow:none !important;
+}
+
+@media (max-width:700px) {
+  .story-card {
+    margin:0 2px 3px !important;
+    padding:26px 20px 34px !important;
+    background-size:100% auto !important;
+    background-position:top center !important;
+  }
+}
+
+
+
+/* =========================================================
+   V68.133 — CROIX SANS TEXTURE + INVENTAIRE/FICHE EN PARCHEMIN
+   - les boutons de fermeture ne reprennent plus la texture pierre
+   - l’inventaire et la fiche perso utilisent la texture parchemin
+   ========================================================= */
+:root {
+  --ui-parchment-texture:url('./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-parchemin.jpg?v=ref173');
+}
+
+/* Boutons croix : plus de texture ardoise. */
+#closeDrawerBtn.icon-btn,
+#closeModalBtn.icon-btn,
+.journal-close {
+  background:#efe2c5 !important;
+  background-image:none !important;
+  color:#4a3523 !important;
+  text-shadow:none !important;
+  border:1px solid rgba(146,113,76,.92) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,248,231,.55),
+    0 3px 10px rgba(0,0,0,.14) !important;
+  filter:none !important;
+}
+#closeDrawerBtn.icon-btn:hover,
+#closeModalBtn.icon-btn:hover,
+.journal-close:hover {
+  background:#f5ead1 !important;
+  background-image:none !important;
+  color:#2f2116 !important;
+  filter:none !important;
+}
+#closeDrawerBtn.icon-btn:active,
+#closeModalBtn.icon-btn:active,
+.journal-close:active {
+  background:#e7d8b8 !important;
+  background-image:none !important;
+  transform:translateY(1px);
+}
+
+/* Inventaire + fiche perso : fond parchemin. */
+.modal-card {
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  border:1px solid #8a6c47 !important;
+  box-shadow:0 18px 40px rgba(0,0,0,.32) !important;
+}
+
+.inventory-equipment-card,
+.character-modal-sheet,
+.inventory-item,
+.test-inventory-panel,
+.test-item-row,
+.character-modal-stats > div,
+.inventory-empty,
+.inventory-owned-section {
+  background-color:rgba(245,236,216,.72) !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  border-color:rgba(138,108,71,.72) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,247,229,.28) !important;
+}
+
+.inventory-empty {
+  padding:14px 12px;
+  border:1px solid rgba(138,108,71,.72);
+}
+
+.inventory-item strong,
+.inventory-equipment-title,
+.character-modal-name,
+.test-inventory-title,
+.inventory-owned-title,
+.character-modal-stats span,
+.character-modal-rank,
+.inventory-topline,
+.inventory-equipment-row span,
+.inventory-protection-state,
+.test-item-copy strong,
+.test-item-copy small,
+.test-inventory-note,
+.character-modal-equipment p {
+  text-shadow:none !important;
+}
+
+
+
+
+/* =========================================================
+   V68.136 — DÉMARRAGE DIRECT + TITRE SUR IMAGE / PARCHEMIN
+   - suppression du bandeau titre en haut de page
+   - le menu devient flottant
+   - le titre du livre est posé directement sur l'image,
+     ou sur le parchemin lorsqu'il n'y a pas d'image
+   ========================================================= */
+.app-shell {
+  padding-top:max(8px, env(safe-area-inset-top)) !important;
+}
+.topbar {
+  position:absolute !important;
+  top:max(8px, env(safe-area-inset-top)) !important;
+  right:12px !important;
+  left:auto !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:flex !important;
+  justify-content:flex-end !important;
+  width:auto !important;
+  z-index:60 !important;
+  color:transparent !important;
+}
+.topbar > :not(#menuBtn) { display:none !important; }
+#menuBtn.icon-btn {
+  position:relative;
+  pointer-events:auto;
+}
+.book-page-banner {
+  pointer-events:none;
+}
+.book-page-banner-kicker {
+  font-family:var(--body-font);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:7px;
+  line-height:1.1;
+}
+.book-page-banner-title {
+  margin-top:3px;
+  font-family:var(--display-font);
+  font-size:clamp(22px, 4.3vw, 34px);
+  line-height:.96;
+  font-weight:600;
+}
+.image-frame { position:relative; overflow:hidden; }
+.image-banner {
+  position:absolute;
+  top:14px;
+  left:14px;
+  z-index:8;
+  max-width:min(78%, 520px);
+  padding:12px 14px 13px;
+  color:#f3e7cf;
+  text-shadow:0 2px 10px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,.95);
+  background:linear-gradient(180deg, rgba(7,13,16,.42), rgba(7,13,16,.20));
+  border-left:2px solid rgba(226,194,135,.8);
+  box-shadow:inset 0 0 0 1px rgba(255,244,222,.10);
+}
+.card-banner {
+  display:none;
+  margin:0 0 18px;
+  padding:0 0 14px;
+  color:#6b4b2c;
+  border-bottom:1px solid rgba(145,112,67,.36);
+}
+.card-banner .book-page-banner-kicker {
+  color:#8b6741;
+  text-shadow:none;
+}
+.card-banner .book-page-banner-title {
+  color:#563721;
+  text-shadow:none;
+}
+@media (max-width:700px) {
+  .topbar { right:8px !important; top:max(8px, env(safe-area-inset-top)) !important; }
+  .image-banner {
+    top:10px;
+    left:10px;
+    right:56px;
+    max-width:none;
+    padding:10px 11px 11px;
+  }
+  .book-page-banner-kicker { font-size:6px; letter-spacing:.07em; }
+  .book-page-banner-title { font-size:clamp(20px, 6vw, 28px); }
+  .card-banner { margin:0 0 14px; padding:0 0 12px; }
+}
+
+
+
+.topbar-book-meta { display:none !important; }
+
+/* =========================================================
+   V68.137 — INVENTAIRE SANS PARCHEMIN + CACHE BUST TEXTURES
+   - l'inventaire et ses sous-panneaux reviennent sur un fond simple
+   - la fiche perso conserve le parchemin
+   - ?v=137 force le navigateur à redemander les JPG de texture
+   ========================================================= */
+
+/* Base des modales : pas de texture parchemin par défaut. */
+.modal-card {
+  background-image:none !important;
+  background:linear-gradient(180deg, #eee4cf 0%, #dfd1b5 100%) !important;
+  border:1px solid #8a6c47 !important;
+}
+
+/* La fiche perso seule garde la texture parchemin. */
+.character-modal-sheet,
+.character-modal-stats > div {
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Inventaire : aucune texture parchemin sur le panneau ni sur ses cartes. */
+.inventory-equipment-card,
+.inventory-item,
+.test-inventory-panel,
+.test-item-row,
+.inventory-empty,
+.inventory-owned-section {
+  background-image:none !important;
+  background-color:rgba(255,255,255,.12) !important;
+  box-shadow:none !important;
+}
+
+
+
+/* =========================================================
+   V68.139 — CACHE TEXTURES + COLLECTION TRÈS DISCRÈTE
+   Le surtitre de collection reste volontairement plus petit
+   que le numéro de page (13–14 px).
+   ========================================================= */
+.book-page-banner-kicker {
+  font-size:7px !important;
+  line-height:1.1 !important;
+  letter-spacing:.08em !important;
+  font-weight:500 !important;
+}
+@media (max-width:700px) {
+  .book-page-banner-kicker {
+    font-size:6px !important;
+    letter-spacing:.07em !important;
+  }
+}
+
+
+
+/* =========================================================
+   V68.140 — TITRE DIRECT SUR IMAGE + ICÔNES JPG PERSONNALISABLES
+   - titre directement posé sur l'image / le parchemin, sans fond ni trait
+   - "La Grotte de Valombre" à peine plus grand que la ligne collection
+   - icône JPG personnalisable pour chaque caractéristique
+   - fichiers attendus (non inclus dans le zip) :
+     ./assets/ui/icons/vie.jpg
+     ./assets/ui/icons/dexterite.jpg
+     ./assets/ui/icons/force.jpg
+     ./assets/ui/icons/arme.jpg
+     ./assets/ui/icons/protection.jpg
+     ./assets/ui/icons/terre-noire.jpg
+   ========================================================= */
+:root {
+  --ui-icon-vie:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/vie.png?v=ref173');
+  --ui-icon-dexterite:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/dexterite.png?v=ref173');
+  --ui-icon-force:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/force.png?v=ref173');
+  --ui-icon-arme:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/arme.png?v=ref173');
+  --ui-icon-protection:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/protection.png?v=ref173');
+  --ui-icon-terre-noire:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/terre-noire.png?v=ref173');
+}
+
+.image-banner,
+.card-banner {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,.95) !important;
+}
+.image-banner {
+  top: 10px !important;
+  left: 12px !important;
+  padding: 0 !important;
+  max-width: min(72%, 420px) !important;
+  color: #f3e7cf !important;
+}
+.card-banner {
+  display:none;
+  margin: 0 0 10px !important;
+  padding: 0 !important;
+  color: #6b4b2c !important;
+  text-shadow: none !important;
+}
+.card-banner .book-page-banner-kicker,
+.card-banner .book-page-banner-title {
+  color:#5b3a21 !important;
+  text-shadow:none !important;
+}
+.book-page-banner-kicker {
+  font-size: 7px !important;
+  line-height: 1.05 !important;
+  letter-spacing: .05em !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+}
+.book-page-banner-title {
+  margin-top: 1px !important;
+  font-size: 9px !important;
+  line-height: 1.02 !important;
+  font-weight: 600 !important;
+  letter-spacing: .015em !important;
+}
+@media (max-width:700px) {
+  .image-banner {
+    top: 8px !important;
+    left: 10px !important;
+    right: 52px !important;
+    max-width: none !important;
+  }
+  .book-page-banner-kicker {
+    font-size: 6px !important;
+    letter-spacing: .04em !important;
+  }
+  .book-page-banner-title {
+    font-size: 8px !important;
+  }
+}
+
+/* Icônes JPG remplaçables par simple changement de fichier. */
+.tag-icon,
+.enemy-icon {
+  color: transparent !important;
+  font-size: 0 !important;
+}
+.tag-icon.icon-jpg,
+.enemy-icon.icon-jpg {
+  width: 14px !important;
+  height: 14px !important;
+  flex: 0 0 14px !important;
+  display:inline-block !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  background-size:contain !important;
+  border-radius: 2px;
+}
+.enemy-icon.icon-jpg {
+  width: 15px !important;
+  height: 15px !important;
+  flex-basis: 15px !important;
+}
+@media (max-width:700px) {
+  .tag-icon.icon-jpg,
+  .enemy-icon.icon-jpg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-basis: 12px !important;
+  }
+}
+.icon-vie { background-image: var(--ui-icon-vie) !important; }
+.icon-dexterite { background-image: var(--ui-icon-dexterite) !important; }
+.icon-force { background-image: var(--ui-icon-force) !important; }
+.icon-arme { background-image: var(--ui-icon-arme) !important; }
+.icon-protection { background-image: var(--ui-icon-protection) !important; }
+.icon-terre-noire { background-image: var(--ui-icon-terre-noire) !important; }
+
+/* =========================================================
+   V68.140 — BARRE DE CARACTÉRISTIQUES RESPONSIVE PROPRE
+   - contenu centré horizontalement et verticalement
+   - icônes visibles (PNG/JPG)
+   - adaptation propre à la largeur de l'écran
+   ========================================================= */
+.app-shell {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+}
+
+.status-tags {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) !important;
+  z-index: 30 !important;
+  width: min(980px, calc(100vw - 18px)) !important;
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.tag {
+  min-width: 0 !important;
+  min-height: 66px !important;
+  padding: 8px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.tag-copy {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  text-align: center !important;
+}
+
+.tag-copy small {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  font-size: clamp(8px, 0.75vw, 11px) !important;
+  line-height: 1 !important;
+}
+
+.tag-label {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.tag-copy strong {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  line-height: 1.1 !important;
+  font-size: clamp(12px, 1.35vw, 18px) !important;
+  overflow-wrap: anywhere !important;
+  text-wrap: balance !important;
+}
+
+.tag-icon {
+  color: transparent !important;
+  font-size: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+  display: inline-block !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
+.tag-icon.icon-jpg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-basis: 18px !important;
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    padding-bottom: calc(118px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .status-tags {
+    width: calc(100vw - 14px) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .tag {
+    min-height: 54px !important;
+    padding: 6px 6px !important;
+  }
+
+  .tag-copy {
+    gap: 3px !important;
+  }
+
+  .tag-copy small {
+    gap: 6px !important;
+    font-size: 8px !important;
+  }
+
+  .tag-copy strong {
+    font-size: clamp(11px, 3.7vw, 15px) !important;
+  }
+
+  .tag-icon,
+  .tag-icon.icon-jpg {
+    width: 15px !important;
+    height: 15px !important;
+    flex-basis: 15px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-bottom: calc(186px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .status-tags {
+    width: calc(100vw - 12px) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    bottom: max(6px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .tag {
+    min-height: 50px !important;
+    padding: 6px 4px !important;
+  }
+
+  .tag-copy small {
+    gap: 5px !important;
+    font-size: 8px !important;
+  }
+
+  .tag-copy strong {
+    font-size: 13px !important;
+  }
+
+  .tag-icon,
+  .tag-icon.icon-jpg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-basis: 14px !important;
+  }
+}
+
+/* =========================================================
+   V68.142 — BARRE CARACTÉRISTIQUES COMPACTE / TOUJOURS 1 LIGNE
+   ========================================================= */
+
+.app-shell {
+  padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+}
