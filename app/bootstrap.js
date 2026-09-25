@@ -5,10 +5,10 @@ const BOOK_KEY='livre-interactif.library.book';
 const home=document.getElementById('libraryHome');
 const returnBtn=document.getElementById('libraryReturnBtn');
 let loadedBookId=null;
-function rememberView(v){try{sessionStorage.setItem(VIEW_KEY,v);}catch(e){}}
-function rememberedView(){try{return sessionStorage.getItem(VIEW_KEY);}catch(e){return null;}}
-function rememberBook(id){try{sessionStorage.setItem(BOOK_KEY,id);}catch(e){}}
-function rememberedBook(){try{return sessionStorage.getItem(BOOK_KEY);}catch(e){return null;}}
+function rememberView(v){try{localStorage.setItem(VIEW_KEY,v);sessionStorage.setItem(VIEW_KEY,v);}catch(e){}}
+function rememberedView(){try{return localStorage.getItem(VIEW_KEY)||sessionStorage.getItem(VIEW_KEY);}catch(e){return null;}}
+function rememberBook(id){try{localStorage.setItem(BOOK_KEY,id);sessionStorage.setItem(BOOK_KEY,id);}catch(e){}}
+function rememberedBook(){try{return localStorage.getItem(BOOK_KEY)||sessionStorage.getItem(BOOK_KEY);}catch(e){return null;}}
 function showHome(rem=true){
   document.documentElement.setAttribute('data-initial-view','home');
   home?.classList.remove('hidden');
@@ -42,7 +42,7 @@ async function loadBook(id){
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
   if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
   for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
-  await LibraryApp.script('./engine/reader.js?v=multi-book-3');
+  await LibraryApp.script('./engine/reader.js?v=multi-book-4');
   loadedBookId=id;rememberBook(id);showBook(id,true);
 }
 LibraryApp.open=loadBook;
