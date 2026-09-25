@@ -36,13 +36,13 @@ async function loadBook(id){
   if(m.theme?.buttonTexture)root.style.setProperty('--ui-button-texture',`url("${base}${m.theme.buttonTexture}")`);
   if(m.theme?.statsTexture)root.style.setProperty('--ui-stats-texture',`url("${base}${m.theme.statsTexture}")`);
   if(m.theme?.parchmentTexture)root.style.setProperty('--ui-parchment-texture',`url("${base}${m.theme.parchmentTexture}")`);
-  const vars={vie:'--ui-icon-vie',dexterite:'--ui-icon-dexterite',force:'--ui-icon-force',arme:'--ui-icon-arme',protection:'--ui-icon-protection',terreNoire:'--ui-icon-terre-noire'};
+  const vars={vie:'--ui-icon-vie',dexterite:'--ui-icon-dexterite',force:'--ui-icon-force',arme:'--ui-icon-arme',protection:'--ui-icon-protection',special:'--ui-icon-special'};
   for(const [k,v] of Object.entries(vars)){if(m.theme?.icons?.[k])root.style.setProperty(v,`url("${base}${m.theme.icons[k]}")`);}
   if(m.themeStylesheet)await new Promise((ok,ko)=>{const l=document.createElement('link');l.rel='stylesheet';l.href=`${base}${m.themeStylesheet}?v=${m.assetVersion||1}`;l.onload=ok;l.onerror=ko;document.head.appendChild(l);});
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
   if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
   for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
-  await LibraryApp.script('./engine/reader.js?v=multi-book-5');
+  await LibraryApp.script('./engine/reader.js?v=multi-book-6');
   loadedBookId=id;rememberBook(id);showBook(id,true);
 }
 LibraryApp.open=loadBook;
