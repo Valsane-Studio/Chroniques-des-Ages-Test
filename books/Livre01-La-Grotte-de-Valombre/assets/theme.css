@@ -1,16 +1,16 @@
 /* Thème visuel du Livre 01 — chargé en dernier.
    Les chemins sont relatifs à books/Livre01-La-Grotte-de-Valombre/assets/theme.css */
 :root{
-  --ui-button-texture:url("./textures/texture-bouton.jpg?v=176") !important;
-  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=176") !important;
-  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=176") !important;
+  --ui-button-texture:url("./textures/texture-bouton.jpg?v=180") !important;
+  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=180") !important;
+  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=180") !important;
 
-  --ui-icon-vie:url("./icons/vie.png?v=176") !important;
-  --ui-icon-dexterite:url("./icons/dexterite.png?v=176") !important;
-  --ui-icon-force:url("./icons/force.png?v=176") !important;
-  --ui-icon-arme:url("./icons/arme.png?v=176") !important;
-  --ui-icon-protection:url("./icons/protection.png?v=176") !important;
-  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=176") !important;
+  --ui-icon-vie:url("./icons/vie.png?v=180") !important;
+  --ui-icon-dexterite:url("./icons/dexterite.png?v=180") !important;
+  --ui-icon-force:url("./icons/force.png?v=180") !important;
+  --ui-icon-arme:url("./icons/arme.png?v=180") !important;
+  --ui-icon-protection:url("./icons/protection.png?v=180") !important;
+  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=180") !important;
 }
 
 /* Texture des éléments cliquables — même traitement que la version de référence. */
@@ -84,4 +84,43 @@
   background-repeat:no-repeat !important;
   background-position:center !important;
   background-size:contain !important;
+}
+
+
+/* Parchemin derrière le texte de l'aventure — rendu de référence V68.173 */
+.story-card{
+  position:relative !important;
+  overflow:hidden !important;
+  margin:0 4px 4px !important;
+  padding:34px clamp(30px,4vw,52px) 42px !important;
+  border:0 !important;
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  box-shadow:none !important;
+}
+.story-card::before,
+.story-card::after{
+  content:none !important;
+  display:none !important;
+}
+.story-card > *{
+  position:relative;
+  z-index:1;
+}
+.story-text,
+.story-card h2,
+.chapter-number{
+  text-shadow:none !important;
+}
+
+@media (max-width:700px){
+  .story-card{
+    margin:0 2px 3px !important;
+    padding:26px 20px 34px !important;
+    background-size:100% auto !important;
+    background-position:top center !important;
+  }
 }
