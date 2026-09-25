@@ -13,6 +13,22 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="La Grotte de Valombre." />
   <title>La Grotte de Valombre</title>
+  <script id="initial-view-prepaint">
+  (function(){
+    try{
+      var v=sessionStorage.getItem('livre-interactif.library.view');
+      document.documentElement.setAttribute('data-initial-view',v==='book01'?'book01':'home');
+    }catch(e){
+      document.documentElement.setAttribute('data-initial-view','home');
+    }
+  })();
+  </script>
+  <style id="initial-view-prepaint-style">
+    html[data-initial-view="book01"] #libraryHome{display:none!important}
+    html[data-initial-view="book01"] body.library-home-open .app-shell,
+    html[data-initial-view="book01"] .app-shell{display:block!important}
+    html[data-initial-view="home"] .app-shell{display:none!important}
+  </style>
     <link rel="stylesheet" href="./styles/reference-01.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-02.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-03.css?v=ref176">
@@ -20,16 +36,6 @@
   <link rel="stylesheet" href="./styles/reference-05.css?v=ref176">
 </head>
 <body class="library-home-open">
-  <script id="prepaint-view-fix">
-  (function(){
-    try{
-      if(sessionStorage.getItem('livre-interactif.library.view')==='book01'){
-        document.body.classList.remove('library-home-open');
-        document.body.classList.add('library-book-open');
-      }
-    }catch(e){}
-  })();
-  </script>
 
   <section id="libraryHome" class="library-home" aria-labelledby="libraryHomeTitle">
     <div class="library-home-inner">
