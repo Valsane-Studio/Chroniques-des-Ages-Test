@@ -42,6 +42,9 @@ const journalPanel = document.getElementById('journalPanel');
 const journalCloseBtn = document.getElementById('journalCloseBtn');
 const bookTitle = document.getElementById('bookTitle');
 const bookEyebrow = document.getElementById('bookEyebrow');
+const restartConfirmBackdrop = document.getElementById('restartConfirmBackdrop');
+const restartConfirmYes = document.getElementById('restartConfirmYes');
+const restartConfirmNo = document.getElementById('restartConfirmNo');
 
 bookTitle.textContent = BOOK.title;
 bookEyebrow.textContent = BOOK.readerEyebrow || ('Chroniques d’un autre temps - ' + (BOOK.libraryLabel || ('Livre ' + String(BOOK.libraryNumber || 1).padStart(2,'0'))));
@@ -184,7 +187,7 @@ function restartFromCheckpoint() {
     state = { ...defaultState(), ...previous };
     if (normalizeLoadedBookState(state)) localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state));
     state.journal = journalBackup || state.journal || '';
-    saveState(); closeDrawer(); closeModal(); closeJournal(); render();
+    saveState(); closeRestartConfirm(); closeDrawer(); closeModal(); closeJournal(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { restartGame(); }
 }
@@ -526,6 +529,18 @@ function render() {
   });
 }
 
+function openRestartConfirm() {
+  if (!restartConfirmBackdrop) return restartGame();
+  restartConfirmBackdrop.classList.remove('hidden');
+  restartConfirmBackdrop.setAttribute('aria-hidden','false');
+  try { restartConfirmNo?.focus(); } catch (e) {}
+}
+function closeRestartConfirm() {
+  if (!restartConfirmBackdrop) return;
+  restartConfirmBackdrop.classList.add('hidden');
+  restartConfirmBackdrop.setAttribute('aria-hidden','true');
+}
+
 function restartGame() {
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -647,13 +662,28 @@ inventoryBtn.addEventListener('click', openInventory);
 characterBtn.addEventListener('click', openCharacterSheet);
 journalBtn.addEventListener('click', openJournal);
 journalCloseBtn.addEventListener('click', closeJournal);
-restartBtn.addEventListener('click', restartGame);
+restartBtn.addEventListener('click', openRestartConfirm);
 if (menuBtn) menuBtn.addEventListener('click', openDrawer);
 if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', closeDrawer);
 if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
 closeModalBtn.addEventListener('click', closeModal);
 modalBackdrop.addEventListener('click', closeModal);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); closeModal(); closeJournal(); } });
+restartConfirmYes?.addEventListener('click', () => {
+  closeRestartConfirm();
+  restartGame();
+});
+restartConfirmNo?.addEventListener('click', closeRestartConfirm);
+restartConfirmBackdrop?.addEventListener('click', e => {
+  if (e.target === restartConfirmBackdrop) closeRestartConfirm();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeRestartConfirm();
+    closeDrawer();
+    closeModal();
+    closeJournal();
+  }
+});
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(() => {});
 render();
