@@ -12,6 +12,7 @@ BookManifestRegistry.register({
   bookScript:'book.js',
   journalScript:'journal.js',
   extraScripts:['map.js'],
+  themeStylesheet:'assets/theme.css',
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
     statsTexture:'assets/textures/texture-caracteristiques.jpg',
