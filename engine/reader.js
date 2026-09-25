@@ -527,8 +527,13 @@ function render() {
 }
 
 function restartGame() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(CHECKPOINT_KEY);
+    if (BOOK.resetSeriesOnRestart) localStorage.removeItem(SERIES_KEY);
+  } catch (e) {}
+  if (BOOK.resetSeriesOnRestart) seriesProfile = defaultSeriesProfile();
   state = defaultState();
-  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CHECKPOINT_KEY); } catch (e) {}
   saveState(); closeDrawer(); closeModal(); closeJournal(); render();
   try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0,0); }
 }
