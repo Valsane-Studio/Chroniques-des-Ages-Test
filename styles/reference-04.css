@@ -138,7 +138,7 @@
    - l’inventaire et la fiche perso utilisent la texture parchemin
    ========================================================= */
 :root {
-  --ui-parchment-texture:url('./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-parchemin.jpg?v=ref173');
+  --ui-parchment-texture:url('../books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-parchemin.jpg?v=ref174');
 }
 
 /* Boutons croix : plus de texture ardoise. */
@@ -388,12 +388,12 @@
      ./assets/ui/icons/terre-noire.jpg
    ========================================================= */
 :root {
-  --ui-icon-vie:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/vie.png?v=ref173');
-  --ui-icon-dexterite:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/dexterite.png?v=ref173');
-  --ui-icon-force:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/force.png?v=ref173');
-  --ui-icon-arme:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/arme.png?v=ref173');
-  --ui-icon-protection:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/protection.png?v=ref173');
-  --ui-icon-terre-noire:url('./books/Livre01-La-Grotte-de-Valombre/assets/icons/terre-noire.png?v=ref173');
+  --ui-icon-vie:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/vie.png?v=ref174');
+  --ui-icon-dexterite:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/dexterite.png?v=ref174');
+  --ui-icon-force:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/force.png?v=ref174');
+  --ui-icon-arme:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/arme.png?v=ref174');
+  --ui-icon-protection:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/protection.png?v=ref174');
+  --ui-icon-terre-noire:url('../books/Livre01-La-Grotte-de-Valombre/assets/icons/terre-noire.png?v=ref174');
 }
 
 .image-banner,
