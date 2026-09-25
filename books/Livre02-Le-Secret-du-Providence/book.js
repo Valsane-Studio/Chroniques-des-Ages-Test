@@ -126,7 +126,7 @@ const STORY={
    return `<p>Tu t’approches du comptoir.</p><p>Le tavernier te regarde enfin.</p><p>À cette distance, tu remarques qu’il évite soigneusement de regarder l’insigne de la Royal Navy sur ton uniforme.</p><p>Tu peux essayer de le mettre en confiance.</p><p>Ou lui rappeler que tu n’es pas ici en simple voyageur.</p>`;
  },choices:s=>s.flags.tavernkeeperDone?[{label:'Retourner dans la salle',to:'c4'}]:[
    {label:'L’amadouer poliment',stay:true,effect:s=>{s.flags.tavernkeeperDone=true;s.flags.tavernkeeperApproach='polite';}},
-   {label:'Employer un ton grave et faire usage de ton autorité',stay:true,effect:s=>{s.flags.tavernkeeperDone=true;s.flags.tavernkeeperApproach='authority';s.flags.islandRumor=true;}}
+   {label:'Employer un ton grave et faire usage de ton autorité',stay:true,effect:s=>{s.flags.tavernkeeperDone=true;s.flags.tavernkeeperApproach='authority';s.flags.tavernkeeperAuthority=true;s.flags.islandRumor=true;}}
  ]},
 
  c6:{title:'Le vieux marin',text:s=>{
