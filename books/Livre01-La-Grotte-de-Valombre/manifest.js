@@ -7,8 +7,15 @@ BookManifestRegistry.register({
   title:'La Grotte de Valombre',
   pitch:'Sir Aldren a disparu. Les réponses se trouvent sous Valombre.',
   status:'available',
-  actionLabel:'Jouer',
+  actionLabel:'Découvrir',
+  access:{mode:'free'},
   cover:'assets/presentation.jpg',
+  preview:{
+    image:'assets/presentation.jpg',
+    situation:'Sir Aldren de Rochebrune a disparu. Sa piste te conduit à Valombre, un village qui semble cacher bien plus que quelques silences.',
+    adventure:'Enquête médiévale, exploration, choix de route, combats et découverte progressive d’un monde enfoui.',
+    dangers:'Pièges, créatures, blessures et une mystérieuse terre noire dont l’influence grandit à mesure que tu t’enfonces sous la cité.'
+  },
   bookScript:'book.js',
   journalScript:'journal.js',
   extraScripts:['map.js'],
