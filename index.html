@@ -20,6 +20,16 @@
   <link rel="stylesheet" href="./styles/reference-05.css?v=ref176">
 </head>
 <body class="library-home-open">
+  <script id="prepaint-view-fix">
+  (function(){
+    try{
+      if(sessionStorage.getItem('livre-interactif.library.view')==='book01'){
+        document.body.classList.remove('library-home-open');
+        document.body.classList.add('library-book-open');
+      }
+    }catch(e){}
+  })();
+  </script>
 
   <section id="libraryHome" class="library-home" aria-labelledby="libraryHomeTitle">
     <div class="library-home-inner">
