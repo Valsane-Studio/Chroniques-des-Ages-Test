@@ -1,0 +1,303 @@
+/* Thème visuel du Livre 01 — chargé en dernier.
+   Les chemins sont relatifs à books/Livre01-La-Grotte-de-Valombre/assets/theme.css */
+:root{
+  --ui-button-texture:url("./textures/texture-bouton.jpg?v=182") !important;
+  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=182") !important;
+  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=182") !important;
+
+  --ui-icon-vie:url("./icons/vie.png?v=182") !important;
+  --ui-icon-dexterite:url("./icons/dexterite.png?v=182") !important;
+  --ui-icon-force:url("./icons/force.png?v=182") !important;
+  --ui-icon-arme:url("./icons/arme.png?v=182") !important;
+  --ui-icon-protection:url("./icons/protection.png?v=182") !important;
+  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=182") !important;
+}
+
+/* Texture des éléments cliquables — même traitement que la version de référence. */
+.choice-btn,
+.footer-btn,
+.drawer-action,
+.inventory-action-btn,
+.icon-btn,
+.page-nav-btn,
+.hero-choice-card,
+.hero-choice-portrait{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+  background-blend-mode:normal !important;
+  filter:brightness(1.18) contrast(1.03) saturate(1.02);
+}
+
+.choice-btn:hover,
+.footer-btn:hover,
+.drawer-action:hover,
+.inventory-action-btn:hover:not(:disabled),
+.icon-btn:hover,
+.page-nav-btn:hover,
+.hero-choice-card:hover{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+  filter:brightness(1.24) contrast(1.04) saturate(1.04);
+}
+
+.hero-choice-card.selected{
+  background:var(--ui-button-texture) center center / cover repeat !important;
+  background-color:#23343c !important;
+}
+
+/* Texture dédiée aux caractéristiques. */
+.status-tags .tag,
+.hero-sheet-grid.hero-sheet-tag-grid .tag,
+.enemy-card-stats > div{
+  background-image:
+    linear-gradient(180deg,rgba(255,255,255,.030) 0%,rgba(255,255,255,.010) 22%,rgba(0,0,0,.14) 100%),
+    var(--ui-stats-texture),
+    linear-gradient(180deg,#22323a 0%,#18252c 100%) !important;
+  background-color:#1b2930 !important;
+  background-repeat:no-repeat,repeat,no-repeat !important;
+  background-size:100% 100%,360px 360px,100% 100% !important;
+  background-position:center center,center center,center center !important;
+  background-blend-mode:soft-light,normal,normal !important;
+}
+
+/* Fiche personnage : parchemin, comme dans la référence. */
+.character-modal-sheet,
+.character-modal-stats > div{
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Icônes transparentes. */
+.icon-vie{background-image:var(--ui-icon-vie) !important;}
+.icon-dexterite{background-image:var(--ui-icon-dexterite) !important;}
+.icon-force{background-image:var(--ui-icon-force) !important;}
+.icon-arme{background-image:var(--ui-icon-arme) !important;}
+.icon-protection{background-image:var(--ui-icon-protection) !important;}
+.icon-terre-noire{background-image:var(--ui-icon-terre-noire) !important;}
+
+.tag-icon.icon-jpg,
+.enemy-icon.icon-jpg,
+.character-modal-stats .tag-icon.icon-jpg{
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-size:contain !important;
+}
+
+
+/* Parchemin derrière le texte de l'aventure — rendu de référence V68.173 */
+.story-card{
+  position:relative !important;
+  overflow:hidden !important;
+  margin:0 4px 4px !important;
+  padding:34px clamp(30px,4vw,52px) 42px !important;
+  border:0 !important;
+  background-color:#e8dcc4 !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:top center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  box-shadow:none !important;
+}
+.story-card::before,
+.story-card::after{
+  content:none !important;
+  display:none !important;
+}
+.story-card > *{
+  position:relative;
+  z-index:1;
+}
+.story-text,
+.story-card h2,
+.chapter-number{
+  text-shadow:none !important;
+}
+
+@media (max-width:700px){
+  .story-card{
+    margin:0 2px 3px !important;
+    padding:26px 20px 34px !important;
+    background-size:100% auto !important;
+    background-position:top center !important;
+  }
+}
+
+
+/* V181 — En-tête éditorial du parchemin
+   Collection/titre à gauche, numéro de page à droite, même traitement typographique. */
+.image-banner{
+  display:none !important;
+}
+
+.story-card{
+  padding-top:68px !important;
+}
+
+.card-banner{
+  display:block !important;
+  position:absolute !important;
+  top:30px !important;
+  left:clamp(30px,4vw,52px) !important;
+  right:auto !important;
+  width:calc(100% - clamp(30px,4vw,52px) - clamp(30px,4vw,52px) - 110px) !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  color:#806846 !important;
+  text-shadow:none !important;
+  text-align:left !important;
+  pointer-events:none !important;
+}
+
+.card-banner .book-page-banner-kicker,
+.card-banner .book-page-banner-title{
+  margin:0 !important;
+  padding:0 !important;
+  color:#806846 !important;
+  font-family:var(--body-font) !important;
+  font-size:12px !important;
+  line-height:1.18 !important;
+  letter-spacing:.10em !important;
+  font-weight:400 !important;
+  text-transform:uppercase !important;
+  text-shadow:none !important;
+}
+
+.card-banner .book-page-banner-title{
+  margin-top:2px !important;
+}
+
+.chapter-number{
+  position:absolute !important;
+  top:30px !important;
+  right:clamp(30px,4vw,52px) !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#806846 !important;
+  font-family:var(--body-font) !important;
+  font-size:12px !important;
+  line-height:1.18 !important;
+  letter-spacing:.10em !important;
+  font-weight:400 !important;
+  text-transform:uppercase !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:700px){
+  .story-card{
+    padding-top:58px !important;
+  }
+
+  .card-banner{
+    top:24px !important;
+    left:20px !important;
+    width:calc(100% - 40px - 82px) !important;
+  }
+
+  .chapter-number{
+    top:24px !important;
+    right:20px !important;
+  }
+
+  .card-banner .book-page-banner-kicker,
+  .card-banner .book-page-banner-title,
+  .chapter-number{
+    font-size:10px !important;
+    line-height:1.16 !important;
+    letter-spacing:.08em !important;
+  }
+
+  .card-banner .book-page-banner-title{
+    margin-top:2px !important;
+  }
+}
+
+
+/* V182 — Informations éditoriales en bas du parchemin */
+.story-card{
+  padding-top:34px !important;
+}
+
+.page-footer-meta{
+  display:flex !important;
+  align-items:flex-end !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+  width:100% !important;
+  margin-top:30px !important;
+  padding-top:0 !important;
+  color:#806846 !important;
+}
+
+.page-footer-meta .card-banner{
+  display:block !important;
+  position:static !important;
+  inset:auto !important;
+  width:auto !important;
+  max-width:70% !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  text-align:left !important;
+  color:#806846 !important;
+  text-shadow:none !important;
+}
+
+.page-footer-meta .book-page-banner-kicker,
+.page-footer-meta .book-page-banner-title,
+.page-footer-meta .chapter-number{
+  margin:0 !important;
+  padding:0 !important;
+  color:#806846 !important;
+  font-family:var(--body-font) !important;
+  font-size:12px !important;
+  line-height:1.18 !important;
+  letter-spacing:.10em !important;
+  font-weight:400 !important;
+  text-transform:uppercase !important;
+  text-shadow:none !important;
+}
+
+.page-footer-meta .book-page-banner-title{
+  margin-top:2px !important;
+}
+
+.page-footer-meta .chapter-number{
+  position:static !important;
+  margin-left:auto !important;
+  flex:0 0 auto !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:700px){
+  .story-card{
+    padding-top:26px !important;
+  }
+
+  .page-footer-meta{
+    margin-top:24px !important;
+    gap:10px !important;
+  }
+
+  .page-footer-meta .card-banner{
+    max-width:72% !important;
+  }
+
+  .page-footer-meta .book-page-banner-kicker,
+  .page-footer-meta .book-page-banner-title,
+  .page-footer-meta .chapter-number{
+    font-size:10px !important;
+    line-height:1.16 !important;
+    letter-spacing:.08em !important;
+  }
+}
