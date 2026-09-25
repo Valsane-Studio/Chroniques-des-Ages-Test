@@ -10,7 +10,7 @@
   --ui-icon-force:url("./icons/force.png?v=182") !important;
   --ui-icon-arme:url("./icons/arme.png?v=182") !important;
   --ui-icon-protection:url("./icons/protection.png?v=182") !important;
-  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=182") !important;
+  --ui-icon-special:url("./icons/special.png?v=182") !important;
 }
 
 /* Texture des éléments cliquables — même traitement que la version de référence. */
@@ -76,7 +76,7 @@
 .icon-force{background-image:var(--ui-icon-force) !important;}
 .icon-arme{background-image:var(--ui-icon-arme) !important;}
 .icon-protection{background-image:var(--ui-icon-protection) !important;}
-.icon-terre-noire{background-image:var(--ui-icon-terre-noire) !important;}
+.icon-special{background-image:var(--ui-icon-special) !important;}
 
 .tag-icon.icon-jpg,
 .enemy-icon.icon-jpg,
