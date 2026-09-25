@@ -736,8 +736,8 @@ function heroRank(state) {
 
 function heroPortraitFilename(state) {
   return heroGender(state) === 'male'
-    ? 'personnage-homme.png'
-    : 'personnage-femme.png';
+    ? 'personnage-homme.jpg'
+    : 'personnage-femme.jpg';
 }
 
 function setHeroIdentity(state, gender) {
@@ -781,13 +781,13 @@ const STORY = {
         <div class="hero-choice-grid">
           <label class="hero-choice-card ${heroGender(state) === 'female' ? 'selected' : ''}">
             <input class="hero-gender-input" type="radio" name="heroGenderChoice" value="female" ${heroGender(state) === 'female' ? 'checked' : ''}>
-            <span class="hero-choice-portrait"><img src="./books/Livre01-La-Grotte-de-Valombre/assets/portraits/personnage-femme.png" alt="Portrait d’Aélis" onerror="this.parentElement.style.display='none'"></span>
+            <span class="hero-choice-portrait"><img src="./books/Livre01-La-Grotte-de-Valombre/assets/portraits/personnage-femme.jpg" alt="Portrait d’Aélis" onerror="this.parentElement.style.display='none'"></span>
             <span class="hero-choice-name">Aélis</span>
             <span class="hero-choice-rank">Écuyère de Sir Aldren de Rochebrune</span>
           </label>
           <label class="hero-choice-card ${heroGender(state) === 'male' ? 'selected' : ''}">
             <input class="hero-gender-input" type="radio" name="heroGenderChoice" value="male" ${heroGender(state) === 'male' ? 'checked' : ''}>
-            <span class="hero-choice-portrait"><img src="./books/Livre01-La-Grotte-de-Valombre/assets/portraits/personnage-homme.png" alt="Portrait d’Aubin" onerror="this.parentElement.style.display='none'"></span>
+            <span class="hero-choice-portrait"><img src="./books/Livre01-La-Grotte-de-Valombre/assets/portraits/personnage-homme.jpg" alt="Portrait d’Aubin" onerror="this.parentElement.style.display='none'"></span>
             <span class="hero-choice-name">Aubin</span>
             <span class="hero-choice-rank">Écuyer de Sir Aldren de Rochebrune</span>
           </label>
@@ -6761,8 +6761,8 @@ const STORY = {
 
       if (action === 'read-parchment') {
         api.showModal('Notes d’Aldren', `
-          <img class="inventory-parchment-image" src="${api.book.uiAssetBase}/objets/parchemin.png" alt="Notes d’Aldren" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <div class="inventory-image-fallback">Ton image apparaîtra ici dès que tu ajouteras :<br><strong>books/Livre01-La-Grotte-de-Valombre/assets/objets/parchemin.png</strong></div>
+          <img class="inventory-parchment-image" src="${api.book.uiAssetBase}/objets/parchemin.jpg" alt="Notes d’Aldren" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <div class="inventory-image-fallback">Ton image apparaîtra ici dès que tu ajouteras :<br><strong>books/Livre01-La-Grotte-de-Valombre/assets/objets/parchemin.jpg</strong></div>
           <div class="parchment-verse"><strong>IL FAUT OUVRIR L’ŒIL FERMÉ</strong><br><br><em>La lame noire. Trouver la lame noire.</em><br><br><s>La terre noire…</s><br><small>Ces mots sont barrés trois fois. Dans la marge, Aldren a ajouté : « ÉVITER ».</small><br><br><strong>SOUFRE !!! ☠</strong><br><small>Le mot est entouré trois fois de traits nerveux. Une tête de mort est dessinée à côté.</small></div>
           <button class="inventory-action-btn" data-action="back-inventory">Retour à l’inventaire</button>`);
         return true;
@@ -7084,7 +7084,7 @@ const STORY = {
         ? [filename, `pages/${filename}`]
         : [`pages/${filename}`, filename];
     },
-    imageExtensions: ['webp', 'png', 'jpg', 'jpeg'],
+    imageExtensions: ['jpg', 'jpeg', 'png'],
     createInitialState,
     migrateState: migratePageNumbersV78,
     rules: { currentForce, currentDexterity, combatPower, weaponLabel, currentProtection, maxProtection, applyDamage, raiseContamination },
