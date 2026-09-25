@@ -31,6 +31,11 @@ async function loadBook(id){
   const e=LibraryApp.byId(id);if(!e)return;
   const m=await LibraryApp.manifest(e);
   if(!m||(m.status||'available')!=='available')return;
+  if(!LibraryApp.canOpen(m)){
+    showHome(true);
+    LibraryApp.showPreview?.(e,m);
+    return;
+  }
   window.COLLECTION_CATALOG={version:4,defaultBookId:m.runtimeId||m.id};
   const root=document.documentElement,base=`./books/${e.folder}/`;
   const assetUrl=path=>{
