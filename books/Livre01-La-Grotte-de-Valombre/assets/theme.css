@@ -1,16 +1,16 @@
 /* Thème visuel du Livre 01 — chargé en dernier.
    Les chemins sont relatifs à books/Livre01-La-Grotte-de-Valombre/assets/theme.css */
 :root{
-  --ui-button-texture:url("./textures/texture-bouton.jpg?v=180") !important;
-  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=180") !important;
-  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=180") !important;
+  --ui-button-texture:url("./textures/texture-bouton.jpg?v=181") !important;
+  --ui-stats-texture:url("./textures/texture-caracteristiques.jpg?v=181") !important;
+  --ui-parchment-texture:url("./textures/texture-parchemin.jpg?v=181") !important;
 
-  --ui-icon-vie:url("./icons/vie.png?v=180") !important;
-  --ui-icon-dexterite:url("./icons/dexterite.png?v=180") !important;
-  --ui-icon-force:url("./icons/force.png?v=180") !important;
-  --ui-icon-arme:url("./icons/arme.png?v=180") !important;
-  --ui-icon-protection:url("./icons/protection.png?v=180") !important;
-  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=180") !important;
+  --ui-icon-vie:url("./icons/vie.png?v=181") !important;
+  --ui-icon-dexterite:url("./icons/dexterite.png?v=181") !important;
+  --ui-icon-force:url("./icons/force.png?v=181") !important;
+  --ui-icon-arme:url("./icons/arme.png?v=181") !important;
+  --ui-icon-protection:url("./icons/protection.png?v=181") !important;
+  --ui-icon-terre-noire:url("./icons/terre-noire.png?v=181") !important;
 }
 
 /* Texture des éléments cliquables — même traitement que la version de référence. */
@@ -122,5 +122,99 @@
     padding:26px 20px 34px !important;
     background-size:100% auto !important;
     background-position:top center !important;
+  }
+}
+
+
+/* V181 — En-tête éditorial du parchemin
+   Collection/titre à gauche, numéro de page à droite, même traitement typographique. */
+.image-banner{
+  display:none !important;
+}
+
+.story-card{
+  padding-top:68px !important;
+}
+
+.card-banner{
+  display:block !important;
+  position:absolute !important;
+  top:30px !important;
+  left:clamp(30px,4vw,52px) !important;
+  right:auto !important;
+  width:calc(100% - clamp(30px,4vw,52px) - clamp(30px,4vw,52px) - 110px) !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  color:#806846 !important;
+  text-shadow:none !important;
+  text-align:left !important;
+  pointer-events:none !important;
+}
+
+.card-banner .book-page-banner-kicker,
+.card-banner .book-page-banner-title{
+  margin:0 !important;
+  padding:0 !important;
+  color:#806846 !important;
+  font-family:var(--body-font) !important;
+  font-size:12px !important;
+  line-height:1.18 !important;
+  letter-spacing:.10em !important;
+  font-weight:400 !important;
+  text-transform:uppercase !important;
+  text-shadow:none !important;
+}
+
+.card-banner .book-page-banner-title{
+  margin-top:2px !important;
+}
+
+.chapter-number{
+  position:absolute !important;
+  top:30px !important;
+  right:clamp(30px,4vw,52px) !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#806846 !important;
+  font-family:var(--body-font) !important;
+  font-size:12px !important;
+  line-height:1.18 !important;
+  letter-spacing:.10em !important;
+  font-weight:400 !important;
+  text-transform:uppercase !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:700px){
+  .story-card{
+    padding-top:58px !important;
+  }
+
+  .card-banner{
+    top:24px !important;
+    left:20px !important;
+    width:calc(100% - 40px - 82px) !important;
+  }
+
+  .chapter-number{
+    top:24px !important;
+    right:20px !important;
+  }
+
+  .card-banner .book-page-banner-kicker,
+  .card-banner .book-page-banner-title,
+  .chapter-number{
+    font-size:10px !important;
+    line-height:1.16 !important;
+    letter-spacing:.08em !important;
+  }
+
+  .card-banner .book-page-banner-title{
+    margin-top:2px !important;
   }
 }
