@@ -25,8 +25,10 @@ La visibilité et l’ordre des livres dans la bibliothèque sont réglés dans 
 
 ## Images
 
-Les illustrations des pages ne sont pas stockées dans cette initialisation.  
-Elles doivent être ajoutées manuellement dans le dossier `images/` du livre concerné, au format WebP.
+Les illustrations des pages ne sont pas stockées dans cette initialisation.
+
+Convention : JPG/JPEG pour les images opaques ; PNG uniquement quand une transparence est nécessaire.  
+Elles doivent être ajoutées manuellement dans le dossier `images/` du livre concerné, au format JPG/JPEG.
 
 ## Studio
 
