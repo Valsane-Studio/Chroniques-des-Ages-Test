@@ -585,7 +585,7 @@
    matière de pierre bleutée, sans quadrillage synthétique.
    ========================================================= */
 :root {
-  --ui-button-texture:url("./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-bouton.jpg?v=ref173");
+  --ui-button-texture:url("../books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-bouton.jpg?v=ref174");
 }
 
 .choice-btn,
