@@ -7,8 +7,15 @@ BookManifestRegistry.register({
   title:'Le Secret du Providence',
   pitch:'Un navire marchand a disparu. Sa trace conduit vers une île que personne n’aurait dû chercher.',
   status:'available',
-  actionLabel:'Jouer',
+  actionLabel:'Découvrir',
+  access:{mode:'free'},
   cover:'assets/presentation.jpg',
+  preview:{
+    image:'assets/presentation.jpg',
+    situation:'Port Royal, 1719. Le Providence, navire marchand d’Edmund Harcourt, a disparu avec vingt-sept hommes. La Royal Navy t’envoie retrouver sa trace.',
+    adventure:'Aventure maritime mêlant enquête, navigation, commandement, exploration et décisions d’équipage.',
+    dangers:'Récifs, pirates, combats, mer imprévisible et phénomènes que les marins préfèrent évoquer à voix basse.'
+  },
   coverCandidates:['assets/presentation.jpg'],
   bookScript:'book.js',
   journalScript:'journal.js',
