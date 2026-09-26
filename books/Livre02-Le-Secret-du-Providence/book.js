@@ -57,57 +57,67 @@ function normalizeCrewBattle(b,enemyCount=12,soldierPower=5,enemyPower=3,retreat
   return b;
 }
 function crewBattleRound(s,key){
-  const b=normalizeCrewBattle(s.crewBattles?.[key]);
-  if(!b||b.enemy<=0||s.soldiers<=0||b.enemy<=b.retreatAt)return;
-  const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
-  const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
-  const duelCount=Math.min(3,s.soldiers,b.enemy);
-  const duels=[];
-  let soldierLoss=0,enemyLoss=0;
+  const b=s.crewBattles?.[key];
+  if(!b)return;
+  if(!Number.isFinite(b.initialEnemy))b.initialEnemy=Math.max(12,b.enemy||0);
+  if(!Number.isFinite(b.soldierPower))b.soldierPower=5;
+  if(!Number.isFinite(b.enemyPower))b.enemyPower=3;
+  if(!Number.isFinite(b.retreatAt))b.retreatAt=Math.floor(b.initialEnemy/2);
+  if(b.enemy<=0||s.soldiers<=0||b.enemy<=b.retreatAt)return;
 
-  for(let i=0;i<duelCount;i++){
-    const soldierDie=cryptoDie6();
-    const enemyDie=cryptoDie6();
-    const soldierTotal=soldierDie+soldierPower;
-    const enemyTotal=enemyDie+enemyPower;
-    let outcome='tie';
-    if(soldierTotal>enemyTotal){outcome='enemy';enemyLoss++;}
-    else if(enemyTotal>soldierTotal){outcome='soldier';soldierLoss++;}
-    duels.push({soldierDie,enemyDie,soldierTotal,enemyTotal,outcome});
+  const soldierDie=cryptoDie6();
+  const enemyDie=cryptoDie6();
+  const soldierTotal=soldierDie+b.soldierPower;
+  const enemyTotal=enemyDie+b.enemyPower;
+
+  let outcome='tie';
+  let soldierLoss=0;
+  let enemyLoss=0;
+
+  if(soldierTotal>enemyTotal){
+    outcome='enemy';
+    enemyLoss=1;
+    b.enemy=Math.max(0,b.enemy-1);
+  }else if(enemyTotal>soldierTotal){
+    outcome='soldier';
+    soldierLoss=1;
+    s.soldiers=Math.max(0,s.soldiers-1);
   }
 
-  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
-  b.enemy=Math.max(0,b.enemy-enemyLoss);
   b.round++;
-  b.last={duels,soldierLoss,enemyLoss};
+  b.last={soldierDie,enemyDie,soldierTotal,enemyTotal,outcome,soldierLoss,enemyLoss};
 }
 function crewBattleHtml(s,key){
-  const b=normalizeCrewBattle(s.crewBattles?.[key]);if(!b)return '';
+  const b=s.crewBattles?.[key];if(!b)return '';
   const l=b.last;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
   const initialEnemy=b.initialEnemy||12;
   const retreatAt=Number.isFinite(b.retreatAt)?b.retreatAt:Math.floor(initialEnemy/2);
-  const hasNewResult=!!(l&&Array.isArray(l.duels));
-  const duelHtml=hasNewResult?l.duels.map((d,i)=>`
-    <div class="dice-result">
-      <p class="roll-number">Affrontement ${i+1}</p>
-      <p><strong>Soldat — Puissance de combat +${soldierPower}</strong></p>
-      <div class="dice-faces">${renderDie(d.soldierDie)}</div>
-      <p>${d.soldierDie} + ${soldierPower} = <strong>${d.soldierTotal}</strong></p>
-      <p><strong>Pirate — Puissance de combat +${enemyPower}</strong></p>
-      <div class="dice-faces">${renderDie(d.enemyDie)}</div>
-      <p>${d.enemyDie} + ${enemyPower} = <strong>${d.enemyTotal}</strong></p>
-      <p><strong>${d.outcome==='enemy'?'Le pirate est éliminé.':d.outcome==='soldier'?'Un de tes soldats tombe.':'Égalité : personne ne tombe.'}</strong></p>
-    </div>`).join(''):'';
+  const hasNewResult=!!(l&&Number.isFinite(l.soldierDie)&&Number.isFinite(l.enemyDie));
   const retreat=b.enemy<=retreatAt&&b.enemy>0;
+
   return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
     <p>Soldats : <strong>${s.soldiers}</strong> · Pirates : <strong>${b.enemy}</strong></p>
-    ${duelHtml}
-    ${hasNewResult?`<p>Cet assaut : <strong>${l.soldierLoss||0}</strong> soldat${(l.soldierLoss||0)>1?'s':''} perdu${(l.soldierLoss||0)>1?'s':''} · <strong>${l.enemyLoss||0}</strong> pirate${(l.enemyLoss||0)>1?'s':''} éliminé${(l.enemyLoss||0)>1?'s':''}.</p>`:''}
+    ${hasNewResult?`
+      <div class="dice-result crew-battle-compact">
+        <div class="crew-battle-side">
+          <span><strong>Soldats +${soldierPower}</strong></span>
+          <span class="crew-battle-die">${renderDie(l.soldierDie)}</span>
+          <span>${l.soldierDie} + ${soldierPower} = <strong>${l.soldierTotal}</strong></span>
+        </div>
+        <div class="crew-battle-side">
+          <span><strong>Pirates +${enemyPower}</strong></span>
+          <span class="crew-battle-die">${renderDie(l.enemyDie)}</span>
+          <span>${l.enemyDie} + ${enemyPower} = <strong>${l.enemyTotal}</strong></span>
+        </div>
+        <p class="crew-battle-outcome"><strong>${l.outcome==='enemy'?'Les pirates perdent 1 homme.':l.outcome==='soldier'?'Tu perds 1 soldat.':'Égalité : aucune perte.'}</strong></p>
+      </div>
+    `:''}
     ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
   </div>`;
 }
+
 function fightRound(s,key,e){
   if(!s.combats)s.combats={};
   const c=s.combats[key]||(s.combats[key]={hp:e.hp,round:0,last:null});
@@ -217,11 +227,10 @@ const STORY={
  c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>
   <div class="dice-result">
     <p class="roll-number">Règle du combat de groupe</p>
-    <p>À chaque assaut, jusqu’à <strong>3 affrontements</strong> ont lieu simultanément.</p>
-    <p>Pour chaque affrontement, le soldat et le pirate lancent chacun <strong>1 dé à 6 faces</strong> et ajoutent leur <strong>Puissance de combat</strong>.</p>
+    <p>À chaque assaut, chaque camp lance <strong>1 dé à 6 faces</strong> et ajoute sa <strong>Puissance de combat</strong>.</p>
     <p>Cette puissance représente leur entraînement, leur expérience et la qualité de leurs armes.</p>
     <p><strong>Soldats : +5</strong> · <strong>Pirates : +3</strong></p>
-    <p>Le total le plus élevé l’emporte. En cas d’égalité, personne ne tombe. Une perte ne réduit jamais la Puissance de combat des survivants.</p>
+    <p>Le total le plus élevé remporte l’assaut et le camp adverse perd <strong>1 combattant</strong>. En cas d’égalité, personne ne tombe. Une perte ne réduit jamais la Puissance de combat des survivants.</p>
     <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
   </div>
   ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=normalizeCrewBattle(s.crewBattles.pirates1,12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=(Number.isFinite(b.retreatAt)?b.retreatAt:6))return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
@@ -310,7 +319,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:13,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:14,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
