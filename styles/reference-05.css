@@ -2913,3 +2913,54 @@ body.library-home-open .app-shell {
     bottom:6px !important;
   }
 }
+
+
+/* V192 — Reset complet des anciennes coordonnées du texte des choix */
+.choice-text-panel .choice-copy{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+
+  display:flex !important;
+  flex:0 1 auto !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+
+  margin:0 !important;
+  padding:0 6px !important;
+  box-sizing:border-box !important;
+
+  text-align:center !important;
+  overflow:visible !important;
+}
+
+.choice-text-panel .choice-copy > span{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 auto !important;
+  padding:0 !important;
+  text-align:center !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+}
+
+.choice-text-panel .choice-dest{
+  transform:none !important;
+}
