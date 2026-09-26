@@ -33,36 +33,68 @@ function rollDex(s,bonus=0,label='Dextérité'){
   const target=currentDexterity(s)-Math.max(0,bonus);
   return roll3D6(s,bonus?label+' — malus +'+bonus:label,target);
 }
-function crewBattleRound(s,key,enemyCount=12){
+function startCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retreatAt=Math.floor(enemyCount/2)){
   if(!s.crewBattles)s.crewBattles={};
-  const b=s.crewBattles[key]||(s.crewBattles[key]={enemy:enemyCount,round:0,last:null});
-  if(b.enemy<=0||s.soldiers<=0)return;
-  const hd=[cryptoDie6(),cryptoDie6()],ed=[cryptoDie6(),cryptoDie6()];
-  const hs=8+4+s.soldiers+hd[0]+hd[1],es=6+2+b.enemy+ed[0]+ed[1];
-  let loss=0,side='tie';
-  if(hs!==es){
-    const gap=Math.abs(hs-es);loss=gap>=9?3:gap>=5?2:1;
-    if(hs>es){side='pirates';b.enemy=Math.max(0,b.enemy-loss);}
-    else{side='soldiers';s.soldiers=Math.max(0,s.soldiers-loss);}
+  s.crewBattles[key]={
+    enemy:enemyCount,
+    initialEnemy:enemyCount,
+    round:0,
+    last:null,
+    soldierPower,
+    enemyPower,
+    retreatAt
+  };
+}
+function crewBattleRound(s,key){
+  const b=s.crewBattles?.[key];
+  if(!b||b.enemy<=0||s.soldiers<=0||b.enemy<=b.retreatAt)return;
+  const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
+  const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
+  const duelCount=Math.min(3,s.soldiers,b.enemy);
+  const duels=[];
+  let soldierLoss=0,enemyLoss=0;
+
+  for(let i=0;i<duelCount;i++){
+    const soldierDie=cryptoDie6();
+    const enemyDie=cryptoDie6();
+    const soldierTotal=soldierDie+soldierPower;
+    const enemyTotal=enemyDie+enemyPower;
+    let outcome='tie';
+    if(soldierTotal>enemyTotal){outcome='enemy';enemyLoss++;}
+    else if(enemyTotal>soldierTotal){outcome='soldier';soldierLoss++;}
+    duels.push({soldierDie,enemyDie,soldierTotal,enemyTotal,outcome});
   }
-  b.round++;b.last={hs,es,loss,side,heroDice:hd,enemyDice:ed};
+
+  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
+  b.enemy=Math.max(0,b.enemy-enemyLoss);
+  b.round++;
+  b.last={duels,soldierLoss,enemyLoss};
 }
 function crewBattleHtml(s,key){
   const b=s.crewBattles?.[key];if(!b)return '';
   const l=b.last;
-  return `<div class="combat-roll-result"><div class="combat-roll-title">Combat d’équipage</div>
+  const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
+  const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
+  const initialEnemy=b.initialEnemy||12;
+  const retreatAt=Number.isFinite(b.retreatAt)?b.retreatAt:Math.floor(initialEnemy/2);
+  const duelHtml=l?(l.duels||[]).map((d,i)=>`
+    <div class="dice-result">
+      <p class="roll-number">Affrontement ${i+1}</p>
+      <p><strong>Soldat — Puissance de combat +${soldierPower}</strong></p>
+      <div class="dice-faces">${renderDie(d.soldierDie)}</div>
+      <p>${d.soldierDie} + ${soldierPower} = <strong>${d.soldierTotal}</strong></p>
+      <p><strong>Pirate — Puissance de combat +${enemyPower}</strong></p>
+      <div class="dice-faces">${renderDie(d.enemyDie)}</div>
+      <p>${d.enemyDie} + ${enemyPower} = <strong>${d.enemyTotal}</strong></p>
+      <p><strong>${d.outcome==='enemy'?'Le pirate est éliminé.':d.outcome==='soldier'?'Un de tes soldats tombe.':'Égalité : personne ne tombe.'}</strong></p>
+    </div>`).join(''):'';
+  const retreat=b.enemy<=retreatAt&&b.enemy>0;
+  return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
     <p>Soldats : <strong>${s.soldiers}</strong> · Pirates : <strong>${b.enemy}</strong></p>
-    ${l?`
-      <div class="dice-result">
-        <p class="roll-number">Tes hommes</p>
-        <div class="dice-faces">${(l.heroDice||[]).map(renderDie).join('')}</div>
-        <p>Total de combat : <strong>${l.hs}</strong></p>
-        <p class="roll-number">Pirates</p>
-        <div class="dice-faces">${(l.enemyDice||[]).map(renderDie).join('')}</div>
-        <p>Total de combat : <strong>${l.es}</strong></p>
-      </div>
-      <p>${l.side==='tie'?'Égalité. Aucun camp ne cède.':l.side==='pirates'?`Les pirates perdent ${l.loss} homme${l.loss>1?'s':''}.`:`Tu perds ${l.loss} soldat${l.loss>1?'s':''}.`}</p>
-    `:''}</div>`;
+    ${duelHtml}
+    ${l?`<p>Cet assaut : <strong>${l.soldierLoss}</strong> soldat${l.soldierLoss>1?'s':''} perdu${l.soldierLoss>1?'s':''} · <strong>${l.enemyLoss}</strong> pirate${l.enemyLoss>1?'s':''} éliminé${l.enemyLoss>1?'s':''}.</p>`:''}
+    ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
+  </div>`;
 }
 function fightRound(s,key,e){
   if(!s.combats)s.combats={};
@@ -169,8 +201,18 @@ const STORY={
    +`<p>Tu allumes la petite lampe posée près du lit.</p><p>Tu ne reconnais pas ton agresseur.</p><p>Un homme du village, peut-être. Ou quelqu’un arrivé après vous.</p><p>Il essaie de respirer.</p><p>Tu t’accroupis près de lui.</p><blockquote>« Qui vous envoie ? »</blockquote><p>Il secoue lentement la tête.</p><p>Puis ses doigts se referment sur ta manche.</p><blockquote>« Abandonnez les recherches... »</blockquote><p>Sa voix n’est plus qu’un souffle.</p><blockquote>« Le trésor doit disparaître à jamais. »</blockquote><p>Sa main retombe.</p><p>Il ne répond plus.</p>`,choices:[{label:'Fouiller son corps',to:'c10',effect:s=>{if(!s.flags.assassinLoot){s.flags.assassinLoot=true;addGold(s,8);addItem(s,'couteaux_jet','Deux couteaux équilibrés','Deux petits couteaux parfaitement équilibrés, adaptés au lancer.',{quantity:2});}}}]},
 
  c10:{title:'',text:s=>`<p>Tu fouilles rapidement les vêtements de l’homme.</p><p>Il ne porte aucun document.</p><p>Aucun signe permettant de connaître son origine.</p><p>Dans une petite bourse, tu trouves <strong>huit pièces d’or</strong>.</p><p>Sous son manteau sont dissimulés <strong>deux petits couteaux parfaitement équilibrés</strong>. Plus courts que ton arme de combat, mais conçus pour être lancés avec précision.</p><p>Tu les ajoutes à ton équipement.</p><p>Le reste de la nuit est court.</p><p>Lorsque tu redescends dans la salle, le jour commence à peine à entrer par les fenêtres.</p><p>Le tavernier est déjà là, mais il évite ton regard.</p>${s.flags.oldSailorDone?'<p>La table du vieux marin est vide.</p>':''}${s.flags.spanishWomanDone?'<p>La femme espagnole a elle aussi disparu.</p>':''}<p>Personne ne demande ce qui s’est passé dans ta chambre.</p><p>Personne ne semble surpris.</p><p>Quelques minutes plus tard, tu rejoins la jetée.</p><p>À bord du Resolute, les marins terminent de préparer les voiles. Tes huit soldats vérifient leurs armes.</p><p>Tu jettes un dernier regard vers le village.</p><p>Puis tu donnes l’ordre de larguer les amarres.</p><p><strong>Le Providence vous attend quelque part au-delà de la côte.</strong></p>`,choices:[{label:'Rejoindre la zone de disparition',to:'c20'}]},
- c12:{title:'Le pavillon noir',text:`<p>Un bâtiment rapide approche. Un pavillon noir monte.</p><p>Vous refusez de vous rendre. Le noir redescend. Un pavillon rouge prend sa place.</p>`,choices:[{label:'Préparer les soldats',to:'c13',effect:s=>{s.crewBattles.pirates1={enemy:12,round:0,last:null};}}]},
- c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=s.crewBattles.pirates1;if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0)return[{label:'Passer sur le navire pirate',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
+ c12:{title:'Le pavillon noir',text:`<p>Un bâtiment rapide approche. Un pavillon noir monte.</p><p>Vous refusez de vous rendre. Le noir redescend. Un pavillon rouge prend sa place.</p>`,choices:[{label:'Préparer les soldats',to:'c13',effect:s=>startCrewBattle(s,'pirates1',12,5,3,6)}]},
+ c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>
+  <div class="dice-result">
+    <p class="roll-number">Règle du combat de groupe</p>
+    <p>À chaque assaut, jusqu’à <strong>3 affrontements</strong> ont lieu simultanément.</p>
+    <p>Pour chaque affrontement, le soldat et le pirate lancent chacun <strong>1 dé à 6 faces</strong> et ajoutent leur <strong>Puissance de combat</strong>.</p>
+    <p>Cette puissance représente leur entraînement, leur expérience et la qualité de leurs armes.</p>
+    <p><strong>Soldats : +5</strong> · <strong>Pirates : +3</strong></p>
+    <p>Le total le plus élevé l’emporte. En cas d’égalité, personne ne tombe. Une perte ne réduit jamais la Puissance de combat des survivants.</p>
+    <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
+  </div>
+  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=s.crewBattles.pirates1;if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=b.retreatAt)return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
@@ -256,7 +298,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:11,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:12,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
