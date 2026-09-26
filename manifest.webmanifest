@@ -1,9 +1,9 @@
 {
-  "name":"Chroniques des Âges",
-  "short_name":"Chroniques",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#10191f",
-  "theme_color":"#10191f",
-  "lang":"fr"
+  "name": "APHANES — Les Chemins perdus",
+  "short_name": "APHANES",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#10191f",
+  "theme_color": "#10191f",
+  "lang": "fr"
 }
