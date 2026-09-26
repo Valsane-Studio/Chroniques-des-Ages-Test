@@ -3,7 +3,7 @@ BookManifestRegistry.register({
   runtimeId:'ecuyer-01',
   number:1,
   label:'Livre 01',
-  kicker:'Chroniques des Âges · Livre 01',
+  kicker:'APHANES · Livre 01',
   title:'La Grotte de Valombre',
   pitch:'Sir Aldren a disparu. Les réponses se trouvent sous Valombre.',
   status:'available',
