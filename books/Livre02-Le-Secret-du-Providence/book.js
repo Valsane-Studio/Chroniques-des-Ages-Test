@@ -42,7 +42,8 @@ function startCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retreat
     last:null,
     soldierPower,
     enemyPower,
-    retreatAt
+    retreatAt,
+    ruleVersion:'force-gap-d6-v1'
   };
 }
 function normalizeCrewBattle(b,enemyCount=12,soldierPower=5,enemyPower=3,retreatAt=Math.floor(enemyCount/2)){
@@ -59,69 +60,73 @@ function normalizeCrewBattle(b,enemyCount=12,soldierPower=5,enemyPower=3,retreat
 function ensureCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retreatAt=Math.floor(enemyCount/2)){
   if(!s.crewBattles)s.crewBattles={};
   if(!s.crewBattles[key])startCrewBattle(s,key,enemyCount,soldierPower,enemyPower,retreatAt);
-  return normalizeCrewBattle(s.crewBattles[key],enemyCount,soldierPower,enemyPower,retreatAt);
+  const b=normalizeCrewBattle(s.crewBattles[key],enemyCount,soldierPower,enemyPower,retreatAt);
+  if(b.ruleVersion!=='force-gap-d6-v1'){
+    b.ruleVersion='force-gap-d6-v1';
+    b.last=null;
+    b.resolved=false;
+  }
+  return b;
 }
-function crewBattleRound(s,key){
-  const b=ensureCrewBattle(s,key,12,5,3,6);
-  if(b.resolved)return;
+function crewBattleRound(s,key,enemyCount=12){
+  const b=ensureCrewBattle(s,key,enemyCount,5,3,0);
+  if(b.enemy<=0||s.soldiers<=0)return;
 
   const soldierCount=s.soldiers;
-  const enemyCount=b.enemy;
-
+  const enemyCountNow=b.enemy;
   const soldierAttack=soldierCount*b.soldierPower;
-  const enemyAttack=enemyCount*b.enemyPower;
+  const enemyAttack=enemyCountNow*b.enemyPower;
+  const gap=Math.abs(soldierAttack-enemyAttack);
 
-  const soldierDice=[cryptoDie6(),cryptoDie6(),cryptoDie6()];
-  const enemyDice=[cryptoDie6(),cryptoDie6(),cryptoDie6()];
-  const soldierDiceTotal=soldierDice.reduce((a,v)=>a+v,0);
-  const enemyDiceTotal=enemyDice.reduce((a,v)=>a+v,0);
-  const soldierTotal=soldierAttack+soldierDiceTotal;
-  const enemyTotal=enemyAttack+enemyDiceTotal;
+  const soldierLossDie=cryptoDie6();
+  const enemyLossDie=cryptoDie6();
 
   let outcome='tie';
-  let soldierLoss=2;
-  let enemyLoss=2;
+  let soldierLoss=soldierLossDie;
+  let enemyLoss=enemyLossDie;
 
-  if(soldierTotal>enemyTotal){
-    outcome='enemy';
-    soldierLoss=1;
-    enemyLoss=3;
-  }else if(enemyTotal>soldierTotal){
-    outcome='soldier';
-    soldierLoss=3;
-    enemyLoss=1;
+  if(soldierAttack>enemyAttack){
+    outcome='soldiers';
+    soldierLoss=Math.max(0,soldierLossDie-gap);
+  }else if(enemyAttack>soldierAttack){
+    outcome='pirates';
+    enemyLoss=Math.max(0,enemyLossDie-gap);
   }
 
   soldierLoss=Math.min(soldierCount,soldierLoss);
-  enemyLoss=Math.min(enemyCount,enemyLoss);
+  enemyLoss=Math.min(enemyCountNow,enemyLoss);
 
   s.soldiers=Math.max(0,s.soldiers-soldierLoss);
   b.enemy=Math.max(0,b.enemy-enemyLoss);
   b.round++;
-  b.resolved=true;
+  b.resolved=false;
   b.last={
-    mode:'single_melee',
-    soldierDice,enemyDice,
-    soldierDiceTotal,enemyDiceTotal,
-    soldierCount,enemyCount,
-    soldierAttack,enemyAttack,
-    soldierTotal,enemyTotal,
-    outcome,soldierLoss,enemyLoss
+    mode:'force_gap_d6',
+    soldierCount,
+    enemyCount:enemyCountNow,
+    soldierAttack,
+    enemyAttack,
+    gap,
+    soldierLossDie,
+    enemyLossDie,
+    outcome,
+    soldierLoss,
+    enemyLoss
   };
 }
-function crewBattleHtml(s,key){
-  const b=ensureCrewBattle(s,key,12,5,3,6);
+function crewBattleHtml(s,key,enemyCount=12){
+  const b=ensureCrewBattle(s,key,enemyCount,5,3,0);
   const l=b.last;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
-  const hasNewResult=!!(b.resolved&&l&&l.mode==='single_melee');
+  const hasNewResult=!!(l&&l.mode==='force_gap_d6');
 
-  const resultText=l
-    ? (l.outcome==='enemy'
-      ? 'Tes soldats remportent la mêlée.'
-      : l.outcome==='soldier'
-        ? 'Les pirates remportent la mêlée.'
-        : 'Aucun camp ne parvient à prendre l’avantage.')
+  const advantage=l
+    ? (l.outcome==='soldiers'
+      ? `Tes soldats ont la plus grande Force. Leur dé de pertes est réduit de <strong>${l.gap}</strong>.`
+      : l.outcome==='pirates'
+        ? `Les pirates ont la plus grande Force. Leur dé de pertes est réduit de <strong>${l.gap}</strong>.`
+        : 'Les deux groupes ont la même Force : aucun camp ne bénéficie de réduction.')
     : '';
 
   return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
@@ -129,17 +134,17 @@ function crewBattleHtml(s,key){
     ${hasNewResult?`
       <div class="dice-result crew-battle-compact">
         <div class="crew-battle-side">
-          <span><strong>Soldats — ${l.soldierCount} × puissance ${soldierPower} = force ${l.soldierAttack}</strong></span>
-          <span class="crew-battle-die">${l.soldierDice.map(renderDie).join('')}</span>
-          <span>3D6 = ${l.soldierDiceTotal} · Force ${l.soldierAttack} → <strong>${l.soldierTotal}</strong></span>
+          <span><strong>Soldats — ${l.soldierCount} × ${soldierPower} = Force ${l.soldierAttack}</strong></span>
+          <span class="crew-battle-die">${renderDie(l.soldierLossDie)}</span>
+          <span>Dé de pertes : ${l.soldierLossDie}${l.outcome==='soldiers'?` − ${l.gap}`:''} → <strong>−${l.soldierLoss}</strong></span>
         </div>
         <div class="crew-battle-side">
-          <span><strong>Pirates — ${l.enemyCount} × puissance ${enemyPower} = force ${l.enemyAttack}</strong></span>
-          <span class="crew-battle-die">${l.enemyDice.map(renderDie).join('')}</span>
-          <span>3D6 = ${l.enemyDiceTotal} · Force ${l.enemyAttack} → <strong>${l.enemyTotal}</strong></span>
+          <span><strong>Pirates — ${l.enemyCount} × ${enemyPower} = Force ${l.enemyAttack}</strong></span>
+          <span class="crew-battle-die">${renderDie(l.enemyLossDie)}</span>
+          <span>Dé de pertes : ${l.enemyLossDie}${l.outcome==='pirates'?` − ${l.gap}`:''} → <strong>−${l.enemyLoss}</strong></span>
         </div>
-        <p class="crew-battle-outcome"><strong>${resultText}</strong></p>
-        <p><strong>Pertes : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>
+        <p class="crew-battle-outcome"><strong>${advantage}</strong></p>
+        <p><strong>Pertes du tour : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>
       </div>
     `:''}
   </div>`;
@@ -254,13 +259,13 @@ const STORY={
  c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>
   <div class="dice-result">
     <p class="roll-number">Règle du combat de groupe</p>
-    <p>La <strong>Force d’attaque</strong> d’un groupe est simple : <strong>nombre de combattants × puissance</strong>.</p>
-    <p><strong>Soldats : puissance 5</strong> · <strong>Pirates : puissance 3</strong>. Au début du combat : 8 soldats × 5 = <strong>40</strong>, contre 12 pirates × 3 = <strong>36</strong>.</p>
-    <p>Les deux camps lancent <strong>3 dés à 6 faces</strong> et ajoutent le résultat à leur Force d’attaque. Le total le plus élevé remporte la mêlée.</p>
-    <p>Le <strong>vainqueur perd 1 homme</strong> et le <strong>perdant en perd 3</strong>. En cas d’égalité, chaque camp perd <strong>2 hommes</strong>.</p>
-    <p>La mêlée ne dure qu’un seul jet. Dès qu’elle est résolue, tu passes sur le pont adverse pour affronter le capitaine pirate.</p>
+    <p>La <strong>Force d’attaque</strong> d’un groupe est égale au <strong>nombre de combattants × leur puissance</strong>.</p>
+    <p><strong>Soldats : puissance 5</strong> · <strong>Pirates : puissance 3</strong>. Au départ : 8 × 5 = <strong>40</strong> contre 12 × 3 = <strong>36</strong>.</p>
+    <p>À chaque assaut, les deux groupes lancent chacun <strong>1D6 de pertes</strong>.</p>
+    <p>Le groupe qui possède la plus grande Force réduit ses propres pertes de <strong>l’écart entre les deux Forces</strong>, sans jamais descendre sous zéro. L’autre groupe subit son dé complet.</p>
+    <p>Les Forces sont recalculées avec les survivants, puis un nouvel assaut commence jusqu’à l’élimination d’un des deux groupes.</p>
   </div>
-  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,6);if(b.resolved)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:'Lancer les dés — résoudre la mêlée',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
+  ${crewBattleHtml(s,'pirates1',12)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
@@ -289,8 +294,8 @@ const STORY={
 
  c30:{title:'',text:`<p>Tu écartes plusieurs cartes marines et ouvres les tiroirs du bureau.</p><p>Le premier contient des instruments de navigation.</p><p>Le second est vide.</p><p>Dans le troisième, tu trouves un paquet de feuilles pliées.</p><p>Tu les poses sur la table.</p><p>Toutes représentent la même île.</p><p>Toujours la même côte.</p><p>La même baie.</p><p>Le même relief dessiné à l’intérieur des terres.</p><p>Certaines cartes sont propres et soigneusement copiées.</p><p>D’autres ont été couvertes de notes.</p><blockquote>« Là où elle dort. »</blockquote><blockquote>« Les pierres sont réelles. »</blockquote><blockquote>« Nous n’aurions jamais dû ouvrir le coffre. »</blockquote><p>Au fond du bureau, tu découvres enfin le journal du capitaine.</p><p>Les premières pages décrivent une traversée parfaitement normale.</p><p>Puis tout change.</p><p>Le Providence avait atteint une île inconnue.</p><p>L’équipage y avait trouvé quelque chose.</p><p>Le texte reste confus sur la nature exacte de cette découverte, mais une chose est certaine :</p><p><strong>le Providence revenait de cette île lorsqu’une présence a commencé à suivre le navire.</strong></p><p>À partir de là, l’écriture devient de plus en plus irrégulière.</p><p>Une même phrase revient plusieurs fois.</p><blockquote>« Elle nous suit. »</blockquote><p>Tu refermes lentement le journal.</p><p>Tu repenses à la masse sombre aperçue sous le Resolute.</p><p>Sur la table, la carte de l’île est encore ouverte.</p>`,choices:[{label:'Mettre le cap sur l’île',to:'c31'}]},
 
- c31:{title:'Le navire sans pavillon',text:`<p>Un navire apparaît. Aucun pavillon.</p><p>Le contourner ferait perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'c32',effect:s=>{s.crewBattles.pirates2={enemy:9,round:0,last:null};}}]},
- c32:{title:'Une seconde attaque',text:s=>`<p>Le navire révèle ses pirates.</p>${crewBattleHtml(s,'pirates2')}`,choices:s=>{const b=s.crewBattles.pirates2;if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',9)}];}},
+ c31:{title:'Le navire sans pavillon',text:`<p>Un navire apparaît. Aucun pavillon.</p><p>Le contourner ferait perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'c32',effect:s=>startCrewBattle(s,'pirates2',9,5,3,0)}]},
+ c32:{title:'Une seconde attaque',text:s=>`<p>Le navire révèle ses pirates.</p>${crewBattleHtml(s,'pirates2',9)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',9,5,3,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',9)}];}},
  c34:{title:'La crique',text:s=>`<p>L’île est petite, sauvage et couverte d’une jungle dense.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats. Tu peux en emmener jusqu’à trois. Au moins deux doivent rester sur les navires.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-2)).map(n=>({label:n===0?'Partir seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
  c35:{title:'À qui confier le commandement ?',text:`<p><strong>William Briggs</strong> est bourru, courageux et efficace. Il prendra la bonne décision, même si elle consiste à partir sans toi.</p><p><strong>Nathaniel Hale</strong> est intelligent et loyal. Il hésite davantage, mais ne t’abandonnera pas.</p>`,choices:[{label:'Choisir William Briggs',to:'c36',effect:s=>s.flags.commander='briggs'},{label:'Choisir Nathaniel Hale',to:'c36',effect:s=>s.flags.commander='hale'}]},
  c36:{title:'Le premier piège',text:s=>`<p>Un énorme tronc hérissé de pieux bascule entre les arbres.</p>${s.expeditionSoldiers>0?'<p>Un de tes hommes est frappé de plein fouet.</p>':'<p>Le tronc fonce vers toi.</p>'}`,onEnter:s=>{if(!s.flags.firstTrap){s.flags.firstTrap=true;s.flags.firstTrapHitCompanion=s.expeditionSoldiers>0;if(s.flags.firstTrapHitCompanion)loseSoldier(s,1);}},choices:s=>!s.flags.firstTrapHitCompanion?[{label:'Éviter le piège — Dextérité',to:'c37',diceTest:true,effect:x=>{x.flags.trapDex=rollDex(x);if(!x.flags.trapDex)rollDamage(x,'jungleTrap',3);}}]:[{label:'Continuer',to:'c38'}]},
@@ -410,7 +415,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:21,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:22,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
