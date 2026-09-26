@@ -45,8 +45,19 @@ function startCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retreat
     retreatAt
   };
 }
+function normalizeCrewBattle(b,enemyCount=12,soldierPower=5,enemyPower=3,retreatAt=Math.floor(enemyCount/2)){
+  if(!b)return null;
+  if(!Number.isFinite(b.initialEnemy))b.initialEnemy=enemyCount;
+  if(!Number.isFinite(b.soldierPower))b.soldierPower=soldierPower;
+  if(!Number.isFinite(b.enemyPower))b.enemyPower=enemyPower;
+  if(!Number.isFinite(b.retreatAt))b.retreatAt=retreatAt;
+  // Une sauvegarde commencée avec l'ancien système peut contenir un ancien format de résultat.
+  // On conserve les effectifs actuels mais on efface seulement ce résultat incompatible.
+  if(b.last && !Array.isArray(b.last.duels))b.last=null;
+  return b;
+}
 function crewBattleRound(s,key){
-  const b=s.crewBattles?.[key];
+  const b=normalizeCrewBattle(s.crewBattles?.[key]);
   if(!b||b.enemy<=0||s.soldiers<=0||b.enemy<=b.retreatAt)return;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
@@ -71,7 +82,7 @@ function crewBattleRound(s,key){
   b.last={duels,soldierLoss,enemyLoss};
 }
 function crewBattleHtml(s,key){
-  const b=s.crewBattles?.[key];if(!b)return '';
+  const b=normalizeCrewBattle(s.crewBattles?.[key]);if(!b)return '';
   const l=b.last;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
@@ -212,7 +223,7 @@ const STORY={
     <p>Le total le plus élevé l’emporte. En cas d’égalité, personne ne tombe. Une perte ne réduit jamais la Puissance de combat des survivants.</p>
     <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
   </div>
-  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=s.crewBattles.pirates1;if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=b.retreatAt)return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
+  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=normalizeCrewBattle(s.crewBattles.pirates1,12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=b.retreatAt)return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
@@ -298,7 +309,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:12,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:13,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
