@@ -486,12 +486,9 @@ function render() {
         : typeof node.choices === 'function' ? node.choices(state) : (node.choices || []);
   choices.innerHTML = '';
   availableChoices.forEach((choice, i) => {
-    const row = document.createElement('div');
-    row.className = 'choice-row';
-
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'choice-btn choice-action';
+    btn.className = 'choice-btn';
     if (choice.inlineCombat) btn.classList.add('combat-roll-btn');
 
     const destinationPage = choice.stay ? null : PAGE_BY_NODE[choice.to];
@@ -502,13 +499,11 @@ function render() {
         : '';
 
     btn.setAttribute('aria-label', `${choice.label}${destinationLabel ? '. ' + destinationLabel : ''}`);
-    btn.title = choice.label;
-    btn.innerHTML = '<span class="choice-arrow" aria-hidden="true"></span>';
-
-    const textPanel = document.createElement('div');
-    textPanel.className = 'choice-text-panel';
-    textPanel.setAttribute('aria-hidden', 'true');
-    textPanel.innerHTML = `<span class="choice-copy"><span>${choice.label}</span></span>${destinationLabel ? `<span class="choice-dest">${destinationLabel}</span>` : ''}`;
+    btn.innerHTML = `
+      <span class="choice-arrow" aria-hidden="true"></span>
+      <span class="choice-copy"><span>${choice.label}</span></span>
+      ${destinationLabel ? `<span class="choice-dest">${destinationLabel}</span>` : ''}
+    `;
 
     btn.addEventListener('click', () => {
       if (choice.action === 'resolveDice') { btn.disabled = true; return resolvePendingDice(); }
@@ -520,7 +515,6 @@ function render() {
         if (typeof BOOK.afterDamageRoll === 'function') BOOK.afterDamageRoll(state, key);
         saveState(); render(); return;
       }
-      // A Dextérité roll happens on the destination dice page, not when choosing a route.
       const deferredDex = typeof choice.diceTest === 'function' ? choice.diceTest(state) : Boolean(choice.diceTest);
       if (deferredDex && choice.to && !choice.stay) {
         btn.disabled = true;
@@ -529,7 +523,6 @@ function render() {
         enterNode(choice.to);
         return;
       }
-      // Disable the previous action immediately; repeated taps cannot produce two rolls.
       if (choice.inlineCombat) btn.disabled = true;
       if (typeof choice.effect === 'function') choice.effect(state);
       if (choice.stay) {
@@ -544,9 +537,7 @@ function render() {
       enterNode(choice.to);
     });
 
-    row.appendChild(btn);
-    row.appendChild(textPanel);
-    choices.appendChild(row);
+    choices.appendChild(btn);
   });
 }
 
