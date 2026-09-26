@@ -88,7 +88,7 @@ function showPreview(entry,m){
   const data=m.preview||{};
   previewSelection={entry,m};
 
-  if(previewKicker) previewKicker.textContent=m.kicker||m.label||'Chroniques des Âges';
+  if(previewKicker) previewKicker.textContent=m.kicker||m.label||'APHANES';
   if(previewTitle) previewTitle.textContent=m.title||entry.id;
   if(previewSituation) previewSituation.textContent=data.situation||m.pitch||'';
   if(previewAdventure) previewAdventure.textContent=data.adventure||'';
