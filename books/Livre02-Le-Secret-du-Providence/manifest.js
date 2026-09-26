@@ -3,7 +3,7 @@ BookManifestRegistry.register({
   runtimeId:'providence-02',
   number:2,
   label:'Livre 02',
-  kicker:'Chroniques des Âges · Livre 02',
+  kicker:'APHANES · Livre 02',
   title:'Le Secret du Providence',
   pitch:'Un navire marchand a disparu. Sa trace conduit vers une île que personne n’aurait dû chercher.',
   status:'available',
