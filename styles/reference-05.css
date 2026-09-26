@@ -2760,3 +2760,156 @@ body.library-home-open .app-shell {
     bottom:7px !important;
   }
 }
+
+
+/* V191 — Choix : flèche discrète et séparation nette du panneau texte */
+.choice-row{
+  display:grid !important;
+  grid-template-columns:68px minmax(0,1fr) !important;
+  align-items:stretch !important;
+  column-gap:14px !important;
+  width:100% !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+
+.choice-row .choice-btn.choice-action{
+  position:relative !important;
+  z-index:2 !important;
+  box-sizing:border-box !important;
+  width:68px !important;
+  height:68px !important;
+  min-width:68px !important;
+  min-height:68px !important;
+  max-width:68px !important;
+  max-height:68px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  flex:none !important;
+  cursor:pointer !important;
+}
+
+.choice-row .choice-btn.choice-action::before,
+.choice-row .choice-btn.choice-action::after{
+  content:none !important;
+  display:none !important;
+  border:0 !important;
+}
+
+.choice-arrow{
+  display:block !important;
+  width:11px !important;
+  height:11px !important;
+  border-top:2px solid #c9aa72 !important;
+  border-right:2px solid #c9aa72 !important;
+  transform:rotate(45deg) translate(-1px,1px) !important;
+  transform-origin:center !important;
+  opacity:.88 !important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.38)) !important;
+  font-size:0 !important;
+  line-height:0 !important;
+}
+
+.choice-text-panel{
+  position:relative !important;
+  z-index:1 !important;
+  box-sizing:border-box !important;
+  min-width:0 !important;
+  width:100% !important;
+  min-height:68px !important;
+  margin:0 !important;
+  padding:12px 18px 27px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  pointer-events:none !important;
+  cursor:default !important;
+  background-color:#2b3940 !important;
+  background-image:
+    var(--ui-button-text-texture),
+    linear-gradient(180deg,#34454d 0%,#27373e 52%,#202f35 100%) !important;
+  background-position:center center,center center !important;
+  background-size:cover,100% 100% !important;
+  background-repeat:repeat,no-repeat !important;
+  border:1px solid rgba(174,139,83,.72) !important;
+  outline:none !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,244,216,.05),
+    inset 0 -10px 20px rgba(0,0,0,.10),
+    0 3px 8px rgba(0,0,0,.10) !important;
+}
+
+.choice-text-panel .choice-copy{
+  position:static !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 4px !important;
+  text-align:center !important;
+  overflow:visible !important;
+}
+
+.choice-text-panel .choice-copy > span{
+  display:block !important;
+  max-width:100% !important;
+  overflow-wrap:anywhere !important;
+}
+
+.choice-text-panel .choice-dest{
+  position:absolute !important;
+  right:11px !important;
+  bottom:7px !important;
+  left:auto !important;
+  top:auto !important;
+  width:auto !important;
+  max-width:calc(100% - 22px) !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+  pointer-events:none !important;
+}
+
+@media (max-width:700px){
+  .choice-row{
+    grid-template-columns:58px minmax(0,1fr) !important;
+    column-gap:12px !important;
+  }
+
+  .choice-row .choice-btn.choice-action{
+    width:58px !important;
+    height:58px !important;
+    min-width:58px !important;
+    min-height:58px !important;
+    max-width:58px !important;
+    max-height:58px !important;
+  }
+
+  .choice-arrow{
+    width:9px !important;
+    height:9px !important;
+    border-top-width:1.5px !important;
+    border-right-width:1.5px !important;
+  }
+
+  .choice-text-panel{
+    min-height:58px !important;
+    padding:10px 13px 24px !important;
+  }
+
+  .choice-text-panel .choice-dest{
+    right:9px !important;
+    bottom:6px !important;
+  }
+}
