@@ -3848,3 +3848,16 @@ body.library-home-open .app-shell {
 .library-book-action{
   opacity:1 !important;
 }
+
+
+/* V198 — Choix : texte principal beige clair, renvoi légèrement plus sombre */
+.choice-btn > .choice-copy,
+.choice-btn > .choice-copy > span{
+  color:#f3e7cf !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.42) !important;
+}
+
+.choice-btn > .choice-dest{
+  color:#d7c29a !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.34) !important;
+}
