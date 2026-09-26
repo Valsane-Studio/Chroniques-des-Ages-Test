@@ -10,6 +10,7 @@ BookManifestRegistry.register({
   actionLabel:'Découvrir',
   access:{mode:'free'},
   cover:'assets/presentation.jpg',
+  libraryImage:'assets/bibliotheque.jpg',
   preview:{
     image:'assets/presentation.jpg',
     situation:'Port Royal, 1719. Le Providence, navire marchand d’Edmund Harcourt, a disparu avec vingt-sept hommes. La Royal Navy t’envoie retrouver sa trace.',
