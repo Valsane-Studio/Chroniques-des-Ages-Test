@@ -503,7 +503,7 @@ function render() {
 
     btn.setAttribute('aria-label', `${choice.label}${destinationLabel ? '. ' + destinationLabel : ''}`);
     btn.title = choice.label;
-    btn.innerHTML = '<span class="choice-arrow" aria-hidden="true">➜</span>';
+    btn.innerHTML = '<span class="choice-arrow" aria-hidden="true"></span>';
 
     const textPanel = document.createElement('div');
     textPanel.className = 'choice-text-panel';
