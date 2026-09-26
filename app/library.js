@@ -27,7 +27,7 @@ function byId(id){
 
 async function manifest(entry){
   if(BookManifestRegistry.get(entry.id)) return BookManifestRegistry.get(entry.id);
-  await script(`./books/${entry.folder}/manifest.js?v=multi-book-22`);
+  await script(`./books/${entry.folder}/manifest.js?v=multi-book-23`);
   return BookManifestRegistry.get(entry.id);
 }
 
