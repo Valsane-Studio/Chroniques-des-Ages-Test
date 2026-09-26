@@ -34,17 +34,45 @@
   <link rel="stylesheet" href="./styles/reference-02.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-03.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-04.css?v=ref176">
-  <link rel="stylesheet" href="./styles/reference-05.css?v=203">
+  <link rel="stylesheet" href="./styles/reference-05.css?v=204">
 </head>
 <body class="library-home-open">
 
   <section id="libraryHome" class="library-home" aria-labelledby="libraryHomeTitle">
     <div class="library-home-stage">
       <div class="library-brand" aria-label="APHANES — Les Chemins perdus">
-        <div class="library-brand-title">APHANES</div>
-        <div class="library-brand-subtitle">LES CHEMINS PERDUS</div>
-      </div>
+        <svg class="library-brand-art" viewBox="0 0 1200 300" role="img" aria-labelledby="aphanesBrandTitle">
+          <title id="aphanesBrandTitle">APHANES — Les Chemins perdus</title>
+          <defs>
+            <pattern id="aphanesStoneTexture" patternUnits="userSpaceOnUse" width="1200" height="300">
+              <image href="./books/Livre01-La-Grotte-de-Valombre/assets/textures/texture-bouton.jpg"
+                     x="0" y="0" width="1200" height="300"
+                     preserveAspectRatio="xMidYMid slice" />
+            </pattern>
+            <filter id="aphanesTextDepth" x="-20%" y="-30%" width="140%" height="160%">
+              <feDropShadow dx="0" dy="4" stdDeviation="3.4" flood-color="#000000" flood-opacity=".62"/>
+            </filter>
+          </defs>
 
+          <text class="library-brand-svg-title"
+                x="600" y="174"
+                text-anchor="middle"
+                fill="url(#aphanesStoneTexture)"
+                stroke="#081217"
+                stroke-width="2.3"
+                paint-order="stroke fill"
+                filter="url(#aphanesTextDepth)">APHANES</text>
+
+          <text class="library-brand-svg-subtitle"
+                x="600" y="247"
+                text-anchor="middle"
+                fill="url(#aphanesStoneTexture)"
+                stroke="#081217"
+                stroke-width="1.15"
+                paint-order="stroke fill"
+                filter="url(#aphanesTextDepth)">LES CHEMINS PERDUS</text>
+        </svg>
+      </div>
       <div class="library-home-inner">
         <header class="library-home-copy">
           <div class="library-home-kicker">Bibliothèque</div>
