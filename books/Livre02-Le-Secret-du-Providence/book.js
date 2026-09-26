@@ -192,7 +192,7 @@ const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,damage:3};
 
 function createInitialState(){
   return {
-    node:'start',pageMapVersion:1,heroGender:'female',heroName:'Eleanor',
+    node:'start',pageMapVersion:3,heroGender:'female',heroName:'Eleanor',
     inventory:{},flags:{},visited:{},history:[],journal:'',
     hp:18,maxHp:18,baseForce:8,baseDexterity:13,forceBonus:0,dexBonus:0,dexPenalty:0,
     weapon:'naval_sword',protection:0,goldCoins:0,
@@ -424,7 +424,22 @@ const PAGE_NAV_TITLES = {
   "c13": "L'abordage",
   "c15": "Le capitaine pirate",
   "c16": "Les gantelets du capitaine",
-  "c20": "La masse sous le Resolute",
+  "c20": "Début des recherches en mer",
+  "search1": "Deuxième journée de recherche",
+  "search2": "Choisir une nouvelle zone",
+  "north1": "Cap au nord — eaux des pirates",
+  "north2": "Abordage dans les eaux du nord",
+  "north3": "Le capitaine pirate du nord",
+  "north4": "Fouiller le navire pirate",
+  "east1": "Cap à l’est — route marchande vide",
+  "east2": "À bord des faux marchands",
+  "east3": "Le verre et le tonnelet",
+  "eastRefuse": "Refuser de monter à bord",
+  "east4": "L’attaque nocturne",
+  "east5": "Le chef des faux marchands",
+  "east6": "Après l’attaque nocturne",
+  "south1": "Cap au sud — l’ombre sous le Resolute",
+  "south2": "Les marchands effrayés",
   "c21": "Le Providence à l'horizon",
   "c22": "Seul vers le Providence",
   "c23": "La chose sous la chaloupe",
@@ -472,7 +487,7 @@ const PAGE_NAV_TITLES = {
   "c69": "Une autre île",
   "death": "La fin du voyage"
 };
-const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','c31','c32','c34','c35','c36','c37','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','c58','c59','c60','c61','c62','c63','c64','c65','c66','c68','c69','death'];
+const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search1','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','c31','c32','c34','c35','c36','c37','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','c58','c59','c60','c61','c62','c63','c64','c65','c66','c68','c69','death'];
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
@@ -491,7 +506,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:22,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:23,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
