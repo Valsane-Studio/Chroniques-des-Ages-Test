@@ -594,9 +594,8 @@ function pageNavigationEntries() {
       pageNumber,
       // Le libellé de navigation appartient uniquement à l'outil de travail.
       // Il peut donc être différent du titre narratif, sans jamais apparaître sur le parchemin.
-      title: BOOK.navigationTitles?.[nodeId]
-        || STORY[nodeId]?.title?.trim()
-        || `Page ${padPage(pageNumber)}`
+      title: BOOK.navigationTitles?.[nodeId]?.trim()
+        || 'Titre de travail à définir'
     }))
     .sort((a, b) => a.pageNumber - b.pageNumber);
 }
