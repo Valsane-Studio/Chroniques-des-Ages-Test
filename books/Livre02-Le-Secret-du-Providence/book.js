@@ -29,6 +29,24 @@ function addBlueDiamond(s){
   if(!s.inventory.diamant_bleu)addItem(s,'diamant_bleu','Diamant bleu','Une pierre bleue taillée, d’un éclat anormalement profond.',{quantity:1});
   else s.inventory.diamant_bleu.quantity=(s.inventory.diamant_bleu.quantity||1)+1;
 }
+function addRumCrate(s,n=1){
+  if(!s.inventory.caisse_rhum)addItem(s,'caisse_rhum','Tonnelet de rhum','Un petit tonnelet de rhum des Caraïbes. Une marchandise qui peut être offerte ou échangée.',{quantity:n});
+  else s.inventory.caisse_rhum.quantity=(s.inventory.caisse_rhum.quantity||1)+n;
+}
+function addThrowingBlades(s,n=1){
+  if(!s.inventory.couteaux_jet)addItem(s,'couteaux_jet','Lames de lancer','De petites lames équilibrées, conçues pour être lancées avec précision.',{quantity:n});
+  else {
+    s.inventory.couteaux_jet.name='Lames de lancer';
+    s.inventory.couteaux_jet.description='De petites lames équilibrées, conçues pour être lancées avec précision.';
+    s.inventory.couteaux_jet.quantity=(s.inventory.couteaux_jet.quantity||1)+n;
+  }
+}
+function grantSouthProtection(s){
+  if(s.flags.southProtectionGift)return;
+  s.flags.southProtectionGift=true;
+  s.protection=Math.max(currentProtection(s),3);
+  addItem(s,'gantelets_marchands','Gantelets renforcés','Des gantelets de cuir épais renforcés de petites plaques métalliques. Protection +3.');
+}
 function rollDex(s,bonus=0,label='Dextérité'){
   const target=currentDexterity(s)-Math.max(0,bonus);
   return roll3D6(s,bonus?label+' — malus +'+bonus:label,target);
@@ -168,6 +186,8 @@ function fightHtml(s,key,e){
   ${r?`<p>Attaque : ${r.ha} contre ${r.ea}</p><p>${r.outcome==='hero'?`Tu infliges ${r.damage} dégâts.`:r.outcome==='enemy'?`Tu subis ${r.damage} dégâts.`:'Égalité, aucun dégât.'}</p>`:''}</div>`;
 }
 const CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
+const NORTH_CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
+const BANDIT_CHIEF={name:'CHEF DES FAUX MARCHANDS',hp:9,dex:9,damage:2};
 const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,damage:3};
 
 function createInitialState(){
@@ -266,7 +286,7 @@ const STORY={
     <p>Les Forces sont recalculées avec les survivants, puis un nouvel assaut commence jusqu’à l’élimination d’un des deux groupes.</p>
   </div>
   ${crewBattleHtml(s,'pirates1',12)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
- c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
+ c15:{title:'Le capitaine pirate',text:s=>`<p>Tu prends appui sur le bastingage et sautes sur le pont adverse.</p><p>Autour de toi, la mêlée se disperse entre les cordages et les canons. Des hommes reculent, d’autres se jettent les uns sur les autres dans le vacarme des lames et du bois frappé.</p><p>Puis tu le vois.</p><p>Le capitaine pirate ne ressemble pas aux hommes qui se battent autour de lui. Grand, massif, le visage mangé par une barbe noire, il porte un long manteau usé dont les manches sont tachées de sel. Une cicatrice épaisse part de sa pommette et disparaît sous sa barbe.</p><p>Il regarde ses hommes tomber sans bouger.</p><p>Quand ses yeux se posent sur toi, il sourit.</p><p>Il tire lentement son sabre d’abordage. La lame est large, ébréchée près de la pointe.</p><p>Du bout de l’arme, il te fait signe d’approcher.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
 
