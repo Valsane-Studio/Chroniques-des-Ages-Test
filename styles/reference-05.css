@@ -4160,3 +4160,62 @@ body.library-home-open .app-shell {
     letter-spacing:11px !important;
   }
 }
+
+
+/* V205 — Bibliothèque : grandes images d’aventure */
+.library-home-copy{
+  margin-bottom:24px !important;
+}
+
+.library-book{
+  grid-template-columns:clamp(185px,21vw,225px) minmax(0,1fr) clamp(135px,16vw,176px) !important;
+  align-items:stretch !important;
+  min-height:190px !important;
+  padding:8px 12px !important;
+}
+
+.library-book-media{
+  align-self:stretch !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:174px !important;
+  aspect-ratio:auto !important;
+}
+
+.library-book-image{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+
+.library-book-copy,
+.library-book-action-wrap{
+  align-self:center !important;
+}
+
+@media (max-width:720px){
+  .library-home-copy{
+    margin-bottom:16px !important;
+  }
+
+  .library-book{
+    grid-template-columns:104px minmax(0,1fr) 96px !important;
+    min-height:126px !important;
+    padding:7px !important;
+  }
+
+  .library-book-media{
+    min-height:112px !important;
+  }
+}
+
+@media (max-width:430px){
+  .library-book{
+    grid-template-columns:92px minmax(0,1fr) 84px !important;
+    min-height:116px !important;
+  }
+
+  .library-book-media{
+    min-height:102px !important;
+  }
+}
