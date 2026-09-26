@@ -10,6 +10,7 @@ BookManifestRegistry.register({
   actionLabel:'Découvrir',
   access:{mode:'free'},
   cover:'assets/presentation.jpg',
+  libraryImage:'assets/bibliotheque.jpg',
   preview:{
     image:'assets/presentation.jpg',
     situation:'Valombre est ton village. Tu y as grandi, tu connais ses rues, ses habitants et ses habitudes. Lorsque Sir Aldren de Rochebrune disparaît, ce monde familier commence pourtant à révéler des secrets que tu n’avais jamais soupçonnés.',
