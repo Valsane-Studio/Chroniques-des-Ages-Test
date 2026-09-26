@@ -53,7 +53,7 @@ async function loadBook(id){
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
   if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
   for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
-  await LibraryApp.script('./engine/reader.js?v=multi-book-22');
+  await LibraryApp.script('./engine/reader.js?v=multi-book-23');
   loadedBookId=id;rememberBook(id);showBook(id,true);
 }
 LibraryApp.open=loadBook;
