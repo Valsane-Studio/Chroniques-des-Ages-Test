@@ -4079,3 +4079,84 @@ body.library-home-open .app-shell {
     letter-spacing:.22em !important;
   }
 }
+
+
+/* V204 — Logo-titre APHANES texturé, transparent sur le fond Valsane */
+.library-brand{
+  position:relative !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:4px auto 20px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  pointer-events:none !important;
+}
+
+.library-brand::before,
+.library-brand::after{
+  content:none !important;
+  display:none !important;
+}
+
+.library-brand-title,
+.library-brand-subtitle,
+.library-brand-logo{
+  display:none !important;
+}
+
+.library-brand-art{
+  display:block !important;
+  width:min(860px,84vw) !important;
+  height:auto !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+
+.library-brand-svg-title,
+.library-brand-svg-subtitle{
+  font-family:"Cinzel Valsane","Times New Roman",serif !important;
+}
+
+.library-brand-svg-title{
+  font-size:154px !important;
+  font-weight:520 !important;
+  letter-spacing:16px !important;
+}
+
+.library-brand-svg-subtitle{
+  font-size:39px !important;
+  font-weight:480 !important;
+  letter-spacing:17px !important;
+}
+
+@media (max-width:720px){
+  .library-brand{
+    margin-top:2px !important;
+    margin-bottom:14px !important;
+  }
+
+  .library-brand-art{
+    width:min(720px,94vw) !important;
+  }
+}
+
+@media (max-width:430px){
+  .library-brand-art{
+    width:96vw !important;
+  }
+
+  .library-brand-svg-title{
+    letter-spacing:11px !important;
+  }
+
+  .library-brand-svg-subtitle{
+    letter-spacing:11px !important;
+  }
+}
