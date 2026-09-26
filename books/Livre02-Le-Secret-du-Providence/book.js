@@ -88,7 +88,8 @@ function crewBattleHtml(s,key){
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
   const initialEnemy=b.initialEnemy||12;
   const retreatAt=Number.isFinite(b.retreatAt)?b.retreatAt:Math.floor(initialEnemy/2);
-  const duelHtml=l?(l.duels||[]).map((d,i)=>`
+  const hasNewResult=!!(l&&Array.isArray(l.duels));
+  const duelHtml=hasNewResult?l.duels.map((d,i)=>`
     <div class="dice-result">
       <p class="roll-number">Affrontement ${i+1}</p>
       <p><strong>Soldat — Puissance de combat +${soldierPower}</strong></p>
@@ -103,7 +104,7 @@ function crewBattleHtml(s,key){
   return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
     <p>Soldats : <strong>${s.soldiers}</strong> · Pirates : <strong>${b.enemy}</strong></p>
     ${duelHtml}
-    ${l?`<p>Cet assaut : <strong>${l.soldierLoss}</strong> soldat${l.soldierLoss>1?'s':''} perdu${l.soldierLoss>1?'s':''} · <strong>${l.enemyLoss}</strong> pirate${l.enemyLoss>1?'s':''} éliminé${l.enemyLoss>1?'s':''}.</p>`:''}
+    ${hasNewResult?`<p>Cet assaut : <strong>${l.soldierLoss||0}</strong> soldat${(l.soldierLoss||0)>1?'s':''} perdu${(l.soldierLoss||0)>1?'s':''} · <strong>${l.enemyLoss||0}</strong> pirate${(l.enemyLoss||0)>1?'s':''} éliminé${(l.enemyLoss||0)>1?'s':''}.</p>`:''}
     ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
   </div>`;
 }
@@ -223,7 +224,7 @@ const STORY={
     <p>Le total le plus élevé l’emporte. En cas d’égalité, personne ne tombe. Une perte ne réduit jamais la Puissance de combat des survivants.</p>
     <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
   </div>
-  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=normalizeCrewBattle(s.crewBattles.pirates1,12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=b.retreatAt)return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
+  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=normalizeCrewBattle(s.crewBattles.pirates1,12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=(Number.isFinite(b.retreatAt)?b.retreatAt:6))return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
