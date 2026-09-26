@@ -79,24 +79,31 @@ function crewBattleRound(s,key){
   const enemyTotal=enemyAttack+enemyDiceTotal;
 
   let outcome='tie';
-  let damageDie=null;
-  let damageSides=0;
+  let winnerLossDie=null;
+  let loserLossDie=null;
   let soldierLoss=0;
   let enemyLoss=0;
 
   if(soldierTotal>enemyTotal){
     outcome='enemy';
-    damageSides=6;
-    damageDie=cryptoDie6();
-    enemyLoss=Math.min(enemyCount,damageDie);
-    b.enemy=Math.max(0,b.enemy-enemyLoss);
+    // Les soldats gagnent : les pirates, perdants, lancent 1D6 de pertes.
+    // Les soldats, vainqueurs, subissent malgré tout 1D3 de pertes.
+    loserLossDie=cryptoDie6();
+    winnerLossDie=Math.ceil(cryptoDie6()/2);
+    enemyLoss=Math.min(enemyCount,loserLossDie);
+    soldierLoss=Math.min(soldierCount,winnerLossDie);
   }else if(enemyTotal>soldierTotal){
     outcome='soldier';
-    damageSides=3;
-    damageDie=Math.ceil(cryptoDie6()/2);
-    soldierLoss=Math.min(soldierCount,damageDie);
-    s.soldiers=Math.max(0,s.soldiers-soldierLoss);
+    // Les pirates gagnent : les soldats, perdants, lancent 1D6 de pertes.
+    // Les pirates, vainqueurs, subissent malgré tout 1D3 de pertes.
+    loserLossDie=cryptoDie6();
+    winnerLossDie=Math.ceil(cryptoDie6()/2);
+    soldierLoss=Math.min(soldierCount,loserLossDie);
+    enemyLoss=Math.min(enemyCount,winnerLossDie);
   }
+
+  b.enemy=Math.max(0,b.enemy-enemyLoss);
+  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
 
   b.round++;
   b.last={
@@ -105,7 +112,7 @@ function crewBattleRound(s,key){
     soldierCount,enemyCount,
     soldierAttack,enemyAttack,
     soldierTotal,enemyTotal,
-    damageDie,damageSides,
+    winnerLossDie,loserLossDie,
     outcome,soldierLoss,enemyLoss
   };
 }
@@ -121,9 +128,9 @@ function crewBattleHtml(s,key){
 
   const resultText=l
     ? (l.outcome==='enemy'
-      ? `Tes soldats remportent l’assaut. Jet de pertes : 1D6 = <strong>${l.damageDie}</strong> → Pirates −${l.enemyLoss}.`
+      ? `Tes soldats remportent l’assaut. Pirates : 1D6 = <strong>${l.loserLossDie}</strong> pertes. Soldats : 1D3 = <strong>${l.winnerLossDie}</strong> pertes.`
       : l.outcome==='soldier'
-        ? `Les pirates remportent l’assaut. Jet de pertes : 1D3 = <strong>${l.damageDie}</strong> → Soldats −${l.soldierLoss}.`
+        ? `Les pirates remportent l’assaut. Soldats : 1D6 = <strong>${l.loserLossDie}</strong> pertes. Pirates : 1D3 = <strong>${l.winnerLossDie}</strong> pertes.`
         : 'Égalité : aucune perte.')
     : '';
 
@@ -142,6 +149,7 @@ function crewBattleHtml(s,key){
           <span>3D6 = ${l.enemyDiceTotal} · Force ${l.enemyAttack} → <strong>${l.enemyTotal}</strong></span>
         </div>
         <p class="crew-battle-outcome"><strong>${resultText}</strong></p>
+        ${l.outcome!=='tie'? `<p><strong>Pertes : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>` : ''}
       </div>
     `:''}
     ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
@@ -260,8 +268,8 @@ const STORY={
     <p>La <strong>Force d’attaque</strong> d’un groupe est simple : <strong>nombre de combattants × puissance</strong>.</p>
     <p><strong>Soldats : puissance 5</strong> · <strong>Pirates : puissance 3</strong>. Au début du combat : 8 soldats × 5 = <strong>40</strong>, contre 12 pirates × 3 = <strong>36</strong>.</p>
     <p>À chaque assaut, les deux camps lancent <strong>3 dés à 6 faces</strong> et ajoutent leur résultat à leur Force d’attaque. Le total le plus élevé remporte l’assaut.</p>
-    <p>Le vainqueur lance alors les pertes : tes soldats utilisent <strong>1D6</strong>, les pirates <strong>1D3</strong>. Le résultat indique combien d’hommes le camp adverse perd.</p>
-    <p>Après les pertes, la Force d’attaque est recalculée avec les survivants. En cas d’égalité, aucune perte.</p>
+    <p>Après l’assaut, les deux camps subissent des pertes : le <strong>perdant lance 1D6</strong> et le <strong>vainqueur lance 1D3</strong>. Le résultat indique combien d’hommes chaque camp perd.</p>
+    <p>La Force d’attaque est ensuite recalculée avec les survivants. En cas d’égalité, aucune perte et l’assaut est rejoué.</p>
     <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
   </div>
   ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=(Number.isFinite(b.retreatAt)?b.retreatAt:6))return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
@@ -414,7 +422,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:19,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:20,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
