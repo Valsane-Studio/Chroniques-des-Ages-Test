@@ -180,32 +180,67 @@ async function render(){
     const m=await manifest(e);
     if(!m) continue;
 
-    const b=document.createElement('button');
-    b.className='library-book';
-    b.type='button';
-
-    const buttonTexture=m.theme?.buttonTexture;
-    if(buttonTexture){
-      b.style.setProperty('--library-book-texture',`url("${assetUrl(e,m,buttonTexture)}")`);
-    }
-
     const available=(m.status||'available')==='available';
     const saved=hasSavedGame(m);
     const access=accessState(m);
+    let actionLabel=m.actionLabel||'Découvrir';
 
-    if(!available){
-      b.disabled=true;
-      b.setAttribute('aria-disabled','true');
+    if(available && access.unlocked && saved) actionLabel='Reprendre';
+    else if(!available) actionLabel=m.statusLabel||'Bientôt disponible';
+
+    const card=document.createElement('article');
+    card.className='library-book';
+    card.dataset.status=m.status||'available';
+
+    const coverPath=m.cover||m.preview?.image||'';
+    const media=document.createElement('div');
+    media.className='library-book-media';
+
+    if(coverPath){
+      const img=document.createElement('img');
+      img.className='library-book-image';
+      img.src=assetUrl(e,m,coverPath);
+      img.alt=`Présentation — ${m.title||e.id}`;
+      img.addEventListener('error',()=>{
+        img.remove();
+        media.classList.add('is-fallback');
+      });
+      media.appendChild(img);
+    }else{
+      media.classList.add('is-fallback');
     }
 
-    let cardStatus=m.actionLabel||'Découvrir';
-    if(available && access.unlocked && saved) cardStatus='Reprendre';
-    else if(available && !access.unlocked) cardStatus='Découvrir';
+    const copy=document.createElement('div');
+    copy.className='library-book-copy';
+    copy.innerHTML=`
+      <div class="library-book-number">${m.label||`Livre ${String(m.number||e.order||'').padStart(2,'0')}`}</div>
+      <div class="library-book-title">${m.title||e.id}</div>
+      <div class="library-book-pitch">${m.pitch||''}</div>
+    `;
 
-    b.innerHTML=`<span class="library-book-number">${m.label||`Livre ${String(m.number||e.order||'').padStart(2,'0')}`}</span><span class="library-book-title">${m.title||e.id}</span><span class="library-book-status">${available?cardStatus:(m.statusLabel||'Bientôt disponible')}</span>`;
+    const actionWrap=document.createElement('div');
+    actionWrap.className='library-book-cta';
+    const action=document.createElement('button');
+    action.className='library-book-action';
+    action.type='button';
+    action.textContent=actionLabel;
+    action.setAttribute('aria-label',`${actionLabel} — ${m.title||e.id}`);
 
-    if(available) b.addEventListener('click',()=>showPreview(e,m));
-    root.appendChild(b);
+    const buttonTexture=m.theme?.buttonTexture;
+    if(buttonTexture){
+      action.style.setProperty('--library-book-button-texture',`url("${assetUrl(e,m,buttonTexture)}")`);
+    }
+
+    if(!available){
+      action.disabled=true;
+      action.setAttribute('aria-disabled','true');
+    }else{
+      action.addEventListener('click',()=>showPreview(e,m));
+    }
+
+    actionWrap.appendChild(action);
+    card.append(media,copy,actionWrap);
+    root.appendChild(card);
   }
 }
 
