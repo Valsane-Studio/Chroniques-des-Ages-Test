@@ -34,17 +34,25 @@
   <link rel="stylesheet" href="./styles/reference-02.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-03.css?v=ref176">
   <link rel="stylesheet" href="./styles/reference-04.css?v=ref176">
-  <link rel="stylesheet" href="./styles/reference-05.css?v=194">
+  <link rel="stylesheet" href="./styles/reference-05.css?v=195">
 </head>
 <body class="library-home-open">
 
   <section id="libraryHome" class="library-home" aria-labelledby="libraryHomeTitle">
-    <div class="library-home-inner">
-      <div class="library-home-kicker">Bibliothèque</div>
-      <h1 id="libraryHomeTitle">Choisis ton aventure</h1>
-      <p class="library-home-subtitle">Sélectionne le livre que tu souhaites commencer ou reprendre.</p>
+    <div class="library-home-stage">
+      <div class="library-brand" aria-label="Via Amissa — Les Chemins Perdus">
+        <img class="library-brand-logo" src="./assets/library/logo-via-amissa.webp?v=195" alt="Via Amissa — Les Chemins Perdus" />
+      </div>
 
-      <div class="library-book-list" id="libraryBookList"></div>
+      <div class="library-home-inner">
+        <header class="library-home-copy">
+          <div class="library-home-kicker">Bibliothèque</div>
+          <h1 id="libraryHomeTitle">Choisis ton aventure</h1>
+          <p class="library-home-subtitle">Chaque chemin est une histoire. Choisis celle que tu souhaites vivre ou reprends une aventure déjà commencée.</p>
+        </header>
+
+        <div class="library-book-list" id="libraryBookList"></div>
+      </div>
     </div>
   </section>
 
@@ -382,7 +390,7 @@
   <script src="./engine/core.js?v=multi-book-6"></script>
   <script src="./app/catalog.js?v=multi-book-6"></script>
   <script src="./app/access.js?v=multi-book-14"></script>
-  <script src="./app/library.js?v=multi-book-29"></script>
+  <script src="./app/library.js?v=195"></script>
   <script src="./app/bootstrap.js?v=multi-book-33"></script>
 
   <!-- Le reset est géré par le moteur du livre actif. -->
