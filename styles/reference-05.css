@@ -2554,3 +2554,29 @@ body.library-home-open .app-shell {
   border:0 !important;
   filter:none !important;
 }
+
+
+/* V188 — Cinzel embarquée pour les boutons de choix */
+@font-face{
+  font-family:"Cinzel Valsane";
+  src:url("../assets/fonts/Cinzel-Variable.ttf?v=188") format("truetype");
+  font-style:normal;
+  font-weight:400 900;
+  font-display:swap;
+}
+
+.choice-copy{
+  font-family:"Cinzel Valsane", Georgia, "Times New Roman", serif !important;
+  font-weight:500 !important;
+  color:#f0e3c7 !important;
+  letter-spacing:.012em !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.42) !important;
+}
+
+.choice-dest{
+  font-family:"Cinzel Valsane", Georgia, "Times New Roman", serif !important;
+  font-weight:400 !important;
+  color:#d9c08d !important;
+  letter-spacing:.018em !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.38) !important;
+}
