@@ -3896,3 +3896,79 @@ body.library-home-open .app-shell {
     background-position:center top !important;
   }
 }
+
+
+/* V202 — Logo APHANES : grand, propre, sans cadre parasite */
+.library-brand{
+  position:relative !important;
+  width:auto !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:0 auto 20px !important;
+  padding:0 !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  border:0 !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:none !important;
+  overflow:visible !important;
+  pointer-events:none !important;
+}
+
+.library-brand::before,
+.library-brand::after{
+  content:none !important;
+  display:none !important;
+  border:0 !important;
+  outline:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+}
+
+.library-brand-logo{
+  position:relative !important;
+  display:block !important;
+
+  width:min(520px,72vw) !important;
+  max-width:520px !important;
+  height:auto !important;
+  max-height:none !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  object-fit:contain !important;
+  object-position:center !important;
+
+  border:0 !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 8px 16px rgba(0,0,0,.28)) !important;
+}
+
+.library-brand-logo::before,
+.library-brand-logo::after{
+  content:none !important;
+  display:none !important;
+}
+
+@media (max-width:720px){
+  .library-brand{
+    width:auto !important;
+    margin-bottom:12px !important;
+  }
+
+  .library-brand-logo{
+    width:min(430px,86vw) !important;
+    max-width:430px !important;
+    height:auto !important;
+    max-height:none !important;
+  }
+}
