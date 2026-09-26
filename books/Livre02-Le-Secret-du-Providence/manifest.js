@@ -25,7 +25,7 @@ BookManifestRegistry.register({
   assetVersion:7,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
-    buttonTextTexture:'assets/textures/texture-bouton-texte.jpg',
+
     statsTexture:'assets/textures/texture-caracteristiques.jpg',
     parchmentTexture:'assets/textures/texture-parchemin.jpg',
     icons:{
