@@ -2580,3 +2580,50 @@ body.library-home-open .app-shell {
   letter-spacing:.018em !important;
   text-shadow:0 1px 1px rgba(0,0,0,.38) !important;
 }
+
+
+/* V189 — Alegreya SC : plus littéraire / aventure héroïque */
+@font-face{
+  font-family:"Alegreya SC Valsane";
+  src:url("../assets/fonts/AlegreyaSC-Medium.ttf?v=189") format("truetype");
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Alegreya SC Valsane";
+  src:url("../assets/fonts/AlegreyaSC-Regular.ttf?v=189") format("truetype");
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+}
+
+.choice-copy{
+  font-family:"Alegreya SC Valsane", Georgia, "Times New Roman", serif !important;
+  font-weight:500 !important;
+  font-size:18px !important;
+  line-height:1.20 !important;
+  color:#f0e3c7 !important;
+  letter-spacing:.015em !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.40) !important;
+}
+
+.choice-dest{
+  font-family:"Alegreya SC Valsane", Georgia, "Times New Roman", serif !important;
+  font-weight:400 !important;
+  font-size:13px !important;
+  line-height:1.16 !important;
+  color:#d9c08d !important;
+  letter-spacing:.018em !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.34) !important;
+}
+
+@media (max-width:700px){
+  .choice-copy{
+    font-size:16px !important;
+    line-height:1.18 !important;
+  }
+  .choice-dest{
+    font-size:12px !important;
+  }
+}
