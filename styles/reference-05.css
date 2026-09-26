@@ -3439,3 +3439,354 @@ body.library-home-open .app-shell {
   .library-book-pitch{-webkit-line-clamp:2 !important;}
   .library-book-action{font-size:10px !important;}
 }
+
+
+/* V195 — Bibliothèque Via Amissa */
+:root{
+  --library-bg-image:url("../assets/library/fond-bibliotheque.webp?v=195");
+  --library-parchment-image:url("../assets/library/parchemin-bibliotheque.webp?v=195");
+}
+
+.library-home{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:200 !important;
+  display:block !important;
+  overflow-y:auto !important;
+  padding:max(22px,env(safe-area-inset-top)) 18px max(26px,env(safe-area-inset-bottom)) !important;
+  color:#2d2117 !important;
+  background-color:#0b0d0d !important;
+  background-image:
+    linear-gradient(rgba(5,7,8,.30),rgba(5,7,8,.58)),
+    var(--library-bg-image) !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-attachment:fixed !important;
+}
+
+.library-home.hidden{
+  display:none !important;
+}
+
+.library-home-stage{
+  width:min(1120px,100%) !important;
+  margin:0 auto !important;
+}
+
+.library-brand{
+  width:min(760px,86vw) !important;
+  margin:0 auto 18px !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+}
+
+.library-brand-logo{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  max-height:220px !important;
+  object-fit:contain !important;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.45)) !important;
+}
+
+.library-home-inner{
+  position:relative !important;
+  width:100% !important;
+  margin:0 auto !important;
+  padding:clamp(28px,4vw,48px) clamp(20px,4.2vw,54px) clamp(30px,4vw,48px) !important;
+  border:1px solid rgba(144,103,55,.82) !important;
+  outline:1px solid rgba(224,191,126,.24) !important;
+  outline-offset:-6px !important;
+  background-color:#e6d4ad !important;
+  background-image:
+    linear-gradient(rgba(232,216,180,.18),rgba(214,191,147,.10)),
+    var(--library-parchment-image) !important;
+  background-size:cover !important;
+  background-position:center top !important;
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.48),
+    inset 0 0 54px rgba(93,62,31,.14) !important;
+}
+
+.library-home-copy{
+  max-width:760px !important;
+  margin:0 auto 26px !important;
+  text-align:center !important;
+}
+
+.library-home-kicker{
+  margin:0 0 4px !important;
+  color:#806343 !important;
+  font-family:"Alegreya SC Valsane",var(--body-font) !important;
+  font-size:12px !important;
+  font-weight:500 !important;
+  letter-spacing:.18em !important;
+  text-transform:uppercase !important;
+}
+
+.library-home h1{
+  margin:0 0 10px !important;
+  color:#2f2116 !important;
+  font-family:"Alegreya SC Valsane",var(--display-font) !important;
+  font-size:clamp(34px,5vw,54px) !important;
+  line-height:1 !important;
+  font-weight:500 !important;
+  letter-spacing:.02em !important;
+}
+
+.library-home-subtitle{
+  max-width:690px !important;
+  margin:0 auto !important;
+  color:#594735 !important;
+  font-family:var(--body-font) !important;
+  font-size:clamp(16px,2vw,19px) !important;
+  line-height:1.34 !important;
+}
+
+.library-book-list{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:14px !important;
+}
+
+.library-book{
+  position:relative !important;
+  display:grid !important;
+  grid-template-columns:clamp(118px,16vw,172px) minmax(0,1fr) clamp(126px,16vw,176px) !important;
+  align-items:center !important;
+  gap:clamp(14px,2vw,24px) !important;
+  width:100% !important;
+  min-height:142px !important;
+  padding:12px 14px !important;
+  border:1px solid rgba(115,81,43,.60) !important;
+  background:
+    linear-gradient(90deg,rgba(255,250,235,.20),rgba(255,250,235,.06)),
+    rgba(230,213,177,.32) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,249,232,.34),
+    0 3px 10px rgba(82,54,25,.10) !important;
+  color:#2d2117 !important;
+  text-align:left !important;
+  filter:none !important;
+  cursor:default !important;
+}
+
+.library-book:hover,
+.library-book:active{
+  transform:none !important;
+  filter:none !important;
+}
+
+.library-book-media{
+  width:100% !important;
+  aspect-ratio:4/3 !important;
+  overflow:hidden !important;
+  border:1px solid rgba(97,67,36,.72) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(240,218,171,.22),
+    0 3px 10px rgba(55,34,18,.18) !important;
+  background:#1a2327 !important;
+}
+
+.library-book-media.is-fallback{
+  background:
+    linear-gradient(135deg,rgba(196,157,93,.10),rgba(8,13,15,.28)),
+    #162228 !important;
+}
+
+.library-book-image{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+
+.library-book-media.is-fallback .library-book-image{
+  display:none !important;
+}
+
+.library-book-copy{
+  min-width:0 !important;
+  align-self:center !important;
+}
+
+.library-book-number{
+  display:block !important;
+  margin:0 0 4px !important;
+  color:#806343 !important;
+  font-family:"Alegreya SC Valsane",var(--body-font) !important;
+  font-size:11px !important;
+  font-weight:500 !important;
+  letter-spacing:.18em !important;
+  text-transform:uppercase !important;
+}
+
+.library-book-title{
+  display:block !important;
+  margin:0 0 8px !important;
+  color:#2b1d13 !important;
+  font-family:"Alegreya SC Valsane",var(--display-font) !important;
+  font-size:clamp(23px,3.1vw,34px) !important;
+  line-height:1.02 !important;
+  font-weight:500 !important;
+  letter-spacing:.01em !important;
+}
+
+.library-book-pitch{
+  display:block !important;
+  margin:0 !important;
+  color:#5a4735 !important;
+  font-family:var(--body-font) !important;
+  font-size:clamp(14px,1.8vw,17px) !important;
+  line-height:1.30 !important;
+}
+
+.library-book-action-wrap{
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+}
+
+.library-book-action{
+  position:relative !important;
+  width:100% !important;
+  min-height:52px !important;
+  padding:11px 28px 11px 16px !important;
+  border:1px solid #b38b50 !important;
+  background:var(--library-book-texture,var(--ui-button-texture)) center center / cover repeat !important;
+  background-color:#23343c !important;
+  color:#ead8b3 !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(7,10,12,.94),
+    inset 0 0 0 2px rgba(197,156,93,.28),
+    0 4px 12px rgba(0,0,0,.16) !important;
+  font-family:"Alegreya SC Valsane",var(--body-font) !important;
+  font-size:15px !important;
+  font-weight:500 !important;
+  letter-spacing:.06em !important;
+  text-transform:uppercase !important;
+  cursor:pointer !important;
+}
+
+.library-book-action::after{
+  content:'' !important;
+  position:absolute !important;
+  right:14px !important;
+  top:50% !important;
+  width:7px !important;
+  height:7px !important;
+  border-top:1.5px solid #c9aa72 !important;
+  border-right:1.5px solid #c9aa72 !important;
+  transform:translateY(-50%) rotate(45deg) !important;
+  opacity:.9 !important;
+}
+
+.library-book-action:hover:not(:disabled){
+  filter:brightness(1.08) !important;
+}
+
+.library-book-action:disabled{
+  cursor:default !important;
+  opacity:.52 !important;
+  filter:grayscale(.2) !important;
+}
+
+@media (max-width:720px){
+  .library-home{
+    padding:max(14px,env(safe-area-inset-top)) 10px max(18px,env(safe-area-inset-bottom)) !important;
+    background-attachment:scroll !important;
+  }
+
+  .library-brand{
+    width:min(520px,92vw) !important;
+    margin-bottom:10px !important;
+  }
+
+  .library-brand-logo{
+    max-height:150px !important;
+  }
+
+  .library-home-inner{
+    padding:24px 14px 26px !important;
+  }
+
+  .library-home-copy{
+    margin-bottom:18px !important;
+  }
+
+  .library-home-subtitle{
+    font-size:15px !important;
+  }
+
+  .library-book{
+    grid-template-columns:82px minmax(0,1fr) 104px !important;
+    gap:10px !important;
+    min-height:108px !important;
+    padding:9px !important;
+  }
+
+  .library-book-number{
+    font-size:9px !important;
+    letter-spacing:.12em !important;
+  }
+
+  .library-book-title{
+    margin-bottom:5px !important;
+    font-size:clamp(17px,4.6vw,22px) !important;
+  }
+
+  .library-book-pitch{
+    font-size:12px !important;
+    line-height:1.20 !important;
+    display:-webkit-box !important;
+    -webkit-line-clamp:3 !important;
+    -webkit-box-orient:vertical !important;
+    overflow:hidden !important;
+  }
+
+  .library-book-action{
+    min-height:44px !important;
+    padding:9px 22px 9px 10px !important;
+    font-size:11px !important;
+    letter-spacing:.04em !important;
+  }
+
+  .library-book-action::after{
+    right:10px !important;
+    width:6px !important;
+    height:6px !important;
+  }
+}
+
+@media (max-width:430px){
+  .library-home-inner{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .library-book{
+    grid-template-columns:72px minmax(0,1fr) 88px !important;
+    gap:7px !important;
+    padding:7px !important;
+  }
+
+  .library-book-title{
+    font-size:16px !important;
+  }
+
+  .library-book-pitch{
+    -webkit-line-clamp:2 !important;
+    font-size:11px !important;
+  }
+
+  .library-book-action{
+    padding-left:7px !important;
+    padding-right:18px !important;
+    font-size:10px !important;
+  }
+
+  .library-book-action::after{
+    right:7px !important;
+  }
+}
