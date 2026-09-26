@@ -592,11 +592,10 @@ function pageNavigationEntries() {
     .map(([nodeId, pageNumber]) => ({
       nodeId,
       pageNumber,
-      // Le titre visible du récit est la source de vérité. Le libellé TEST
-      // sert uniquement de description quand la page n'a pas de titre.
-      // Le prologue conserve son libellé explicite dans la navigation.
-      title: (pageNumber === 0 ? BOOK.navigationTitles?.[nodeId] : STORY[nodeId]?.title?.trim())
-        || BOOK.navigationTitles?.[nodeId]
+      // Le libellé de navigation appartient uniquement à l'outil de travail.
+      // Il peut donc être différent du titre narratif, sans jamais apparaître sur le parchemin.
+      title: BOOK.navigationTitles?.[nodeId]
+        || STORY[nodeId]?.title?.trim()
         || `Page ${padPage(pageNumber)}`
     }))
     .sort((a, b) => a.pageNumber - b.pageNumber);
