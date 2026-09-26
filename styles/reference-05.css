@@ -3443,7 +3443,7 @@ body.library-home-open .app-shell {
 
 /* V195 — Bibliothèque Via Amissa */
 :root{
-  --library-bg-image:url("../assets/library/fond-bibliotheque.webp?v=195");
+  --library-bg-image:url("https://d2ol7oe51mr4n9.cloudfront.net/user_3BOAs9kMl1hrdeKaA98yBoNODbU/bdf3405f-43ee-40cf-8653-c23bf3e092a3.png");
   --library-parchment-image:url("../assets/library/parchemin-bibliotheque.webp?v=195");
 }
 
@@ -3794,7 +3794,7 @@ body.library-home-open .app-shell {
 
 /* V196 — Bibliothèque : parchemin central + cartes 80 % transparentes */
 :root{
-  --library-bg-image:url("../assets/library/fond-bibliotheque.webp?v=196");
+  --library-bg-image:url("https://d2ol7oe51mr4n9.cloudfront.net/user_3BOAs9kMl1hrdeKaA98yBoNODbU/bdf3405f-43ee-40cf-8653-c23bf3e092a3.png");
   --library-parchment-image:url("../assets/library/parchemin-bibliotheque.webp?v=196");
 }
 
@@ -3875,4 +3875,24 @@ body.library-home-open .app-shell {
   color:#c9ae7a !important;
   -webkit-text-fill-color:#c9ae7a !important;
   text-shadow:0 1px 1px rgba(0,0,0,.34) !important;
+}
+
+
+/* V200 — Fond général Valsane Studio */
+.library-home{
+  background-color:#caa36d !important;
+  background-image:
+    linear-gradient(rgba(35,22,12,.08),rgba(35,22,12,.16)),
+    var(--library-bg-image) !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
+}
+
+@media (max-width:720px){
+  .library-home{
+    background-attachment:scroll !important;
+    background-position:center top !important;
+  }
 }
