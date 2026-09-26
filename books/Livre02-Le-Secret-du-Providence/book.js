@@ -63,7 +63,7 @@ function ensureCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retrea
 }
 function crewBattleRound(s,key){
   const b=ensureCrewBattle(s,key,12,5,3,6);
-  if(b.enemy<=0||s.soldiers<=0||b.enemy<=b.retreatAt)return;
+  if(b.resolved)return;
 
   const soldierCount=s.soldiers;
   const enemyCount=b.enemy;
@@ -79,40 +79,33 @@ function crewBattleRound(s,key){
   const enemyTotal=enemyAttack+enemyDiceTotal;
 
   let outcome='tie';
-  let winnerLossDie=null;
-  let loserLossDie=null;
-  let soldierLoss=0;
-  let enemyLoss=0;
+  let soldierLoss=2;
+  let enemyLoss=2;
 
   if(soldierTotal>enemyTotal){
     outcome='enemy';
-    // Les soldats gagnent : les pirates, perdants, lancent 1D6 de pertes.
-    // Les soldats, vainqueurs, subissent malgré tout 1D3 de pertes.
-    loserLossDie=cryptoDie6();
-    winnerLossDie=Math.ceil(cryptoDie6()/2);
-    enemyLoss=Math.min(enemyCount,loserLossDie);
-    soldierLoss=Math.min(soldierCount,winnerLossDie);
+    soldierLoss=1;
+    enemyLoss=3;
   }else if(enemyTotal>soldierTotal){
     outcome='soldier';
-    // Les pirates gagnent : les soldats, perdants, lancent 1D6 de pertes.
-    // Les pirates, vainqueurs, subissent malgré tout 1D3 de pertes.
-    loserLossDie=cryptoDie6();
-    winnerLossDie=Math.ceil(cryptoDie6()/2);
-    soldierLoss=Math.min(soldierCount,loserLossDie);
-    enemyLoss=Math.min(enemyCount,winnerLossDie);
+    soldierLoss=3;
+    enemyLoss=1;
   }
 
-  b.enemy=Math.max(0,b.enemy-enemyLoss);
-  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
+  soldierLoss=Math.min(soldierCount,soldierLoss);
+  enemyLoss=Math.min(enemyCount,enemyLoss);
 
+  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
+  b.enemy=Math.max(0,b.enemy-enemyLoss);
   b.round++;
+  b.resolved=true;
   b.last={
+    mode:'single_melee',
     soldierDice,enemyDice,
     soldierDiceTotal,enemyDiceTotal,
     soldierCount,enemyCount,
     soldierAttack,enemyAttack,
     soldierTotal,enemyTotal,
-    winnerLossDie,loserLossDie,
     outcome,soldierLoss,enemyLoss
   };
 }
@@ -121,17 +114,14 @@ function crewBattleHtml(s,key){
   const l=b.last;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
-  const initialEnemy=b.initialEnemy||12;
-  const retreatAt=Number.isFinite(b.retreatAt)?b.retreatAt:Math.floor(initialEnemy/2);
-  const hasNewResult=!!(l&&Array.isArray(l.soldierDice)&&l.soldierDice.length===3&&Array.isArray(l.enemyDice)&&l.enemyDice.length===3);
-  const retreat=b.enemy<=retreatAt&&b.enemy>0;
+  const hasNewResult=!!(b.resolved&&l&&l.mode==='single_melee');
 
   const resultText=l
     ? (l.outcome==='enemy'
-      ? `Tes soldats remportent l’assaut. Pirates : 1D6 = <strong>${l.loserLossDie}</strong> pertes. Soldats : 1D3 = <strong>${l.winnerLossDie}</strong> pertes.`
+      ? 'Tes soldats remportent la mêlée.'
       : l.outcome==='soldier'
-        ? `Les pirates remportent l’assaut. Soldats : 1D6 = <strong>${l.loserLossDie}</strong> pertes. Pirates : 1D3 = <strong>${l.winnerLossDie}</strong> pertes.`
-        : 'Égalité : aucune perte.')
+        ? 'Les pirates remportent la mêlée.'
+        : 'Aucun camp ne parvient à prendre l’avantage.')
     : '';
 
   return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
@@ -149,10 +139,9 @@ function crewBattleHtml(s,key){
           <span>3D6 = ${l.enemyDiceTotal} · Force ${l.enemyAttack} → <strong>${l.enemyTotal}</strong></span>
         </div>
         <p class="crew-battle-outcome"><strong>${resultText}</strong></p>
-        ${l.outcome!=='tie'? `<p><strong>Pertes : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>` : ''}
+        <p><strong>Pertes : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>
       </div>
     `:''}
-    ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
   </div>`;
 }
 
@@ -267,12 +256,11 @@ const STORY={
     <p class="roll-number">Règle du combat de groupe</p>
     <p>La <strong>Force d’attaque</strong> d’un groupe est simple : <strong>nombre de combattants × puissance</strong>.</p>
     <p><strong>Soldats : puissance 5</strong> · <strong>Pirates : puissance 3</strong>. Au début du combat : 8 soldats × 5 = <strong>40</strong>, contre 12 pirates × 3 = <strong>36</strong>.</p>
-    <p>À chaque assaut, les deux camps lancent <strong>3 dés à 6 faces</strong> et ajoutent leur résultat à leur Force d’attaque. Le total le plus élevé remporte l’assaut.</p>
-    <p>Après l’assaut, les deux camps subissent des pertes : le <strong>perdant lance 1D6</strong> et le <strong>vainqueur lance 1D3</strong>. Le résultat indique combien d’hommes chaque camp perd.</p>
-    <p>La Force d’attaque est ensuite recalculée avec les survivants. En cas d’égalité, aucune perte et l’assaut est rejoué.</p>
-    <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
+    <p>Les deux camps lancent <strong>3 dés à 6 faces</strong> et ajoutent le résultat à leur Force d’attaque. Le total le plus élevé remporte la mêlée.</p>
+    <p>Le <strong>vainqueur perd 1 homme</strong> et le <strong>perdant en perd 3</strong>. En cas d’égalité, chaque camp perd <strong>2 hommes</strong>.</p>
+    <p>La mêlée ne dure qu’un seul jet. Dès qu’elle est résolue, tu passes sur le pont adverse pour affronter le capitaine pirate.</p>
   </div>
-  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=(Number.isFinite(b.retreatAt)?b.retreatAt:6))return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
+  ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,6);if(b.resolved)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:'Lancer les dés — résoudre la mêlée',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu bondis sur le pont adverse. Le capitaine tire son sabre.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute reprend le large.</p><p>Pendant plusieurs heures, la mer semble enfin vouloir vous aider.</p><p>Le vent souffle régulièrement dans les voiles, suffisamment fort pour maintenir une bonne allure sans obliger les hommes à réduire la toile. Le sloop file proprement sur une houle longue et régulière.</p><p>Sur le pont, l’atmosphère se détend peu à peu.</p><p>Les marins reprennent leurs habitudes. Certains plaisantent en travaillant. D’autres surveillent l’horizon en plissant les yeux sous le soleil.</p><p>Tu consultes plusieurs fois la carte.</p><p>Vous approchez maintenant de la dernière zone où le Providence aurait pu être aperçu.</p><p>Rien ne semble anormal.</p><p>Puis un marin posté à l’avant t’appelle.</p><p>Il montre la mer, sur bâbord.</p><p>Au début, tu ne vois qu’une différence dans la couleur de l’eau.</p><p>Une zone plus sombre.</p><p>Très sombre.</p><p>Elle avance sous la surface.</p><p>Tu changes légèrement de position pour mieux la suivre.</p><p>La masse est immense.</p><p>Bien plus longue qu’une chaloupe.</p><p>Probablement plus longue que le Resolute lui-même.</p><p>Elle passe lentement sous votre trajectoire, disparaît dans les profondeurs... puis réapparaît quelques instants plus tard, toujours à distance.</p><p>Comme si elle suivait le navire.</p><p>Autour de toi, les conversations cessent.</p><p>Un des marins se signe discrètement.</p><p>Personne ne prononce le mot.</p><p>Mais tu sais à quoi ils pensent.</p><p>Aux vieilles histoires racontées dans les ports du Nord. À ces créatures gigantesques capables d’entraîner un navire entier sous l’eau.</p><p>Tu fixes encore quelques secondes la surface.</p><p>La forme disparaît.</p><p>Cette fois, elle ne revient pas.</p><p>Le vent continue de gonfler les voiles.</p><p>Pourtant, sur le pont, plus personne ne plaisante.</p>`,choices:[{label:'Poursuivre les recherches',to:'c21'}]},
@@ -422,7 +410,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:20,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:21,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
