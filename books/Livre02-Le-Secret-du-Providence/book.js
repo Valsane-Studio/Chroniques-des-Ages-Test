@@ -67,8 +67,12 @@ function crewBattleRound(s,key){
 
   const soldierCount=s.soldiers;
   const enemyCount=b.enemy;
-  const soldierEffectif=Math.ceil(soldierCount/2);
-  const enemyEffectif=Math.ceil(enemyCount/2);
+
+  // L'effectif compte réellement, mais par paliers assez larges pour
+  // qu'une seule perte ne fasse pas basculer tout le combat.
+  const soldierEffectif=Math.ceil(soldierCount/3);
+  const enemyEffectif=Math.ceil(enemyCount/3);
+
   const soldierDice=[cryptoDie6(),cryptoDie6()];
   const enemyDice=[cryptoDie6(),cryptoDie6()];
   const soldierDiceTotal=soldierDice[0]+soldierDice[1];
@@ -76,19 +80,24 @@ function crewBattleRound(s,key){
   const soldierTotal=soldierDiceTotal+b.soldierPower+soldierEffectif;
   const enemyTotal=enemyDiceTotal+b.enemyPower+enemyEffectif;
 
-  let outcome='tie';
-  let soldierLoss=0;
-  let enemyLoss=0;
+  // Chaque 5 ou 6 représente une blessure infligée pendant la mêlée.
+  // Le camp dominé subit une perte supplémentaire, avec un maximum
+  // de deux pertes par camp et par assaut.
+  const soldierHits=soldierDice.filter(d=>d>=5).length;
+  const enemyHits=enemyDice.filter(d=>d>=5).length;
 
-  if(soldierTotal>enemyTotal){
-    outcome='enemy';
-    enemyLoss=1;
-    b.enemy=Math.max(0,b.enemy-1);
-  }else if(enemyTotal>soldierTotal){
-    outcome='soldier';
-    soldierLoss=1;
-    s.soldiers=Math.max(0,s.soldiers-1);
-  }
+  let outcome='tie';
+  if(soldierTotal>enemyTotal)outcome='enemy';
+  else if(enemyTotal>soldierTotal)outcome='soldier';
+
+  let enemyLoss=soldierHits+(outcome==='enemy'?1:0);
+  let soldierLoss=enemyHits+(outcome==='soldier'?1:0);
+
+  enemyLoss=Math.min(2,enemyLoss,enemyCount);
+  soldierLoss=Math.min(2,soldierLoss,soldierCount);
+
+  b.enemy=Math.max(0,b.enemy-enemyLoss);
+  s.soldiers=Math.max(0,s.soldiers-soldierLoss);
 
   b.round++;
   b.last={
@@ -97,6 +106,7 @@ function crewBattleRound(s,key){
     soldierCount,enemyCount,
     soldierEffectif,enemyEffectif,
     soldierTotal,enemyTotal,
+    soldierHits,enemyHits,
     outcome,soldierLoss,enemyLoss
   };
 }
@@ -109,6 +119,14 @@ function crewBattleHtml(s,key){
   const retreatAt=Number.isFinite(b.retreatAt)?b.retreatAt:Math.floor(initialEnemy/2);
   const hasNewResult=!!(l&&Array.isArray(l.soldierDice)&&Array.isArray(l.enemyDice));
   const retreat=b.enemy<=retreatAt&&b.enemy>0;
+
+  const advantage=l
+    ? (l.outcome==='enemy'
+      ? 'Tes soldats prennent l’avantage dans la mêlée.'
+      : l.outcome==='soldier'
+        ? 'Les pirates prennent l’avantage dans la mêlée.'
+        : 'La mêlée reste indécise.')
+    : '';
 
   return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
     <p>Soldats : <strong>${s.soldiers}</strong> · Pirates : <strong>${b.enemy}</strong></p>
@@ -124,7 +142,9 @@ function crewBattleHtml(s,key){
           <span class="crew-battle-die">${l.enemyDice.map(renderDie).join('')}</span>
           <span>${l.enemyDice[0]} + ${l.enemyDice[1]} + puissance ${enemyPower} + effectif ${l.enemyEffectif} = <strong>${l.enemyTotal}</strong></span>
         </div>
-        <p class="crew-battle-outcome"><strong>${l.outcome==='enemy'?'Les pirates perdent 1 homme.':l.outcome==='soldier'?'Tu perds 1 soldat.':'Égalité : aucune perte.'}</strong></p>
+        <p class="crew-battle-outcome"><strong>${advantage}</strong></p>
+        <p>5 ou 6 obtenus : Soldats <strong>${l.soldierHits}</strong> · Pirates <strong>${l.enemyHits}</strong></p>
+        <p><strong>Pertes : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>
       </div>
     `:''}
     ${retreat?'<p><strong>Après avoir perdu la moitié de leurs hommes, les pirates rompent le combat.</strong></p>':''}
@@ -242,8 +262,9 @@ const STORY={
     <p class="roll-number">Règle du combat de groupe</p>
     <p>À chaque assaut, chaque camp lance <strong>2 dés à 6 faces</strong>, puis ajoute sa <strong>Puissance de combat</strong> et son <strong>bonus d’effectif</strong>.</p>
     <p>La Puissance de combat représente l’entraînement, l’expérience et la qualité des armes. <strong>Soldats : +5</strong> · <strong>Pirates : +3</strong>.</p>
-    <p>Le bonus d’effectif vaut <strong>+1 par tranche de 2 combattants présents au début de l’assaut</strong>, arrondi au supérieur.</p>
-    <p>Le total le plus élevé remporte l’assaut et le camp adverse perd <strong>1 combattant</strong>. En cas d’égalité, personne ne tombe. Les pertes ne sont prises en compte dans le bonus d’effectif qu’à l’assaut suivant.</p>
+    <p>L’effectif compte par paliers : <strong>1–3 hommes : +1 · 4–6 : +2 · 7–9 : +3 · 10–12 : +4</strong>.</p>
+    <p>Chaque <strong>5 ou 6</strong> obtenu sur un dé inflige une perte au camp adverse. Le camp qui obtient le meilleur total prend l’avantage et inflige <strong>1 perte supplémentaire</strong>.</p>
+    <p>Un camp ne peut pas perdre plus de <strong>2 combattants par assaut</strong>. En cas d’égalité des scores, seules les pertes provoquées par les 5 et 6 sont appliquées.</p>
     <p>Les pirates rompront le combat s’ils perdent la moitié de leurs hommes.</p>
   </div>
   ${crewBattleHtml(s,'pirates1')}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,6);if(s.soldiers<=0)return[{label:'Le Resolute est submergé',to:'death'}];if(b.enemy<=0||b.enemy<=(Number.isFinite(b.retreatAt)?b.retreatAt:6))return[{label:'Les pirates reculent — passer sur leur navire',to:'c15'}];return[{label:'Lancer les dés — assaut suivant',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1')}];}},
@@ -396,7 +417,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:17,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:18,pageMapVersion:2,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
