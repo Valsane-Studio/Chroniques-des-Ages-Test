@@ -44,7 +44,7 @@ async function loadBook(id){
     return u.href;
   };
   if(m.theme?.buttonTexture)root.style.setProperty('--ui-button-texture',`url("${assetUrl(m.theme.buttonTexture)}")`,'important');
-  if(m.theme?.buttonTextTexture)root.style.setProperty('--ui-button-text-texture',`url("${assetUrl(m.theme.buttonTextTexture)}")`,'important');
+
   if(m.theme?.statsTexture)root.style.setProperty('--ui-stats-texture',`url("${assetUrl(m.theme.statsTexture)}")`,'important');
   if(m.theme?.parchmentTexture)root.style.setProperty('--ui-parchment-texture',`url("${assetUrl(m.theme.parchmentTexture)}")`,'important');
   const vars={vie:'--ui-icon-vie',dexterite:'--ui-icon-dexterite',force:'--ui-icon-force',arme:'--ui-icon-arme',protection:'--ui-icon-protection',special:'--ui-icon-special'};
@@ -53,7 +53,7 @@ async function loadBook(id){
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
   if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
   for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
-  await LibraryApp.script('./engine/reader.js?v=multi-book-23');
+  await LibraryApp.script('./engine/reader.js?v=multi-book-24');
   loadedBookId=id;rememberBook(id);showBook(id,true);
 }
 LibraryApp.open=loadBook;
