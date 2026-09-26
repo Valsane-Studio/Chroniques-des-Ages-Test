@@ -13,9 +13,9 @@ BookManifestRegistry.register({
   libraryImage:'assets/bibliotheque.jpg',
   preview:{
     image:'assets/presentation.jpg',
-    situation:'Valombre est ton village. Tu y as grandi, tu connais ses rues, ses habitants et ses habitudes. Lorsque Sir Aldren de Rochebrune disparaît, ce monde familier commence pourtant à révéler des secrets que tu n’avais jamais soupçonnés.',
+    situation:'Valombre est ton village, tu y as grandi, tu connais ses rues, ses habitants et ses habitudes.\n\nLorsque Sir Aldren de Rochebrune disparaît, ce monde familier commence pourtant à révéler des secrets que tu n’avais jamais soupçonnés.',
     adventure:'Enquête médiévale, exploration, choix de route, combats et découverte progressive d’un monde enfoui.',
-    dangers:'Pièges, créatures, blessures et une mystérieuse terre noire dont l’influence grandit à mesure que tu t’enfonces sous la cité.'
+    dangers:'Pièges, créatures et une mystérieuse terre noire dont l’influence grandit à mesure que tu t’enfonces sous la cité.'
   },
   bookScript:'book.js',
   journalScript:'journal.js',
