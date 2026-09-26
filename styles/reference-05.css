@@ -3861,3 +3861,18 @@ body.library-home-open .app-shell {
   color:#d7c29a !important;
   text-shadow:0 1px 1px rgba(0,0,0,.34) !important;
 }
+
+
+/* V199 — Choix : beige réellement visible sur la texture sombre */
+.choice-btn > .choice-copy,
+.choice-btn > .choice-copy > span{
+  color:#e7cf9d !important;
+  -webkit-text-fill-color:#e7cf9d !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.46) !important;
+}
+
+.choice-btn > .choice-dest{
+  color:#c9ae7a !important;
+  -webkit-text-fill-color:#c9ae7a !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.34) !important;
+}
