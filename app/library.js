@@ -183,59 +183,64 @@ async function render(){
     const available=(m.status||'available')==='available';
     const saved=hasSavedGame(m);
     const access=accessState(m);
-    let actionLabel=m.actionLabel||'Découvrir';
-
-    if(available && access.unlocked && saved) actionLabel='Reprendre';
-    else if(!available) actionLabel=m.statusLabel||'Bientôt disponible';
 
     const card=document.createElement('article');
     card.className='library-book';
     card.dataset.status=m.status||'available';
 
-    const coverPath=m.cover||m.preview?.image||'';
     const media=document.createElement('div');
     media.className='library-book-media';
 
-    if(coverPath){
-      const img=document.createElement('img');
-      img.className='library-book-image';
-      img.src=assetUrl(e,m,coverPath);
-      img.alt=`Présentation — ${m.title||e.id}`;
-      img.addEventListener('error',()=>{
-        img.remove();
-        media.classList.add('is-fallback');
-      });
-      media.appendChild(img);
+    const img=document.createElement('img');
+    img.className='library-book-image';
+    img.alt=`Présentation — ${m.title||e.id}`;
+    const imagePath=m.cover||m.preview?.image||'';
+    if(imagePath){
+      img.src=assetUrl(e,m,imagePath);
+      img.addEventListener('error',()=>media.classList.add('is-fallback'),{once:true});
     }else{
       media.classList.add('is-fallback');
     }
+    media.appendChild(img);
 
     const copy=document.createElement('div');
     copy.className='library-book-copy';
-    copy.innerHTML=`
-      <div class="library-book-number">${m.label||`Livre ${String(m.number||e.order||'').padStart(2,'0')}`}</div>
-      <div class="library-book-title">${m.title||e.id}</div>
-      <div class="library-book-pitch">${m.pitch||''}</div>
-    `;
+
+    const number=document.createElement('div');
+    number.className='library-book-number';
+    number.textContent=m.label||`Livre ${String(m.number||e.order||'').padStart(2,'0')}`;
+
+    const title=document.createElement('h2');
+    title.className='library-book-title';
+    title.textContent=m.title||e.id;
+
+    const pitch=document.createElement('p');
+    pitch.className='library-book-pitch';
+    pitch.textContent=m.pitch||m.preview?.situation||'';
+
+    copy.append(number,title,pitch);
 
     const actionWrap=document.createElement('div');
-    actionWrap.className='library-book-cta';
+    actionWrap.className='library-book-action-wrap';
+
     const action=document.createElement('button');
     action.className='library-book-action';
     action.type='button';
-    action.textContent=actionLabel;
-    action.setAttribute('aria-label',`${actionLabel} — ${m.title||e.id}`);
 
     const buttonTexture=m.theme?.buttonTexture;
     if(buttonTexture){
-      action.style.setProperty('--library-book-button-texture',`url("${assetUrl(e,m,buttonTexture)}")`);
+      action.style.setProperty('--library-book-texture',`url("${assetUrl(e,m,buttonTexture)}")`);
     }
 
     if(!available){
       action.disabled=true;
-      action.setAttribute('aria-disabled','true');
-    }else{
+      action.textContent=m.statusLabel||'Bientôt';
+    }else if(!access.unlocked){
+      action.textContent=access.priceLabel?`Découvrir · ${access.priceLabel}`:'Découvrir';
       action.addEventListener('click',()=>showPreview(e,m));
+    }else{
+      action.textContent=saved?'Reprendre':'Ouvrir';
+      action.addEventListener('click',()=>window.LibraryApp.open?.(e.id));
     }
 
     actionWrap.appendChild(action);
