@@ -486,12 +486,30 @@ function render() {
         : typeof node.choices === 'function' ? node.choices(state) : (node.choices || []);
   choices.innerHTML = '';
   availableChoices.forEach((choice, i) => {
+    const row = document.createElement('div');
+    row.className = 'choice-row';
+
     const btn = document.createElement('button');
-    btn.className = 'choice-btn';
+    btn.type = 'button';
+    btn.className = 'choice-btn choice-action';
     if (choice.inlineCombat) btn.classList.add('combat-roll-btn');
+
     const destinationPage = choice.stay ? null : PAGE_BY_NODE[choice.to];
-    const destination = destinationPage === 0 ? '<span class="choice-dest">Lire le prologue</span>' : destinationPage ? `<span class="choice-dest">Rendez-vous à la page ${padPage(destinationPage)}</span>` : '';
-    btn.innerHTML = `<span class="choice-index">${i + 1}</span><span class="choice-copy"><span>${choice.label}</span>${destination}</span>`;
+    const destinationLabel = destinationPage === 0
+      ? 'Lire le prologue'
+      : destinationPage
+        ? `Rendez-vous à la page ${padPage(destinationPage)}`
+        : '';
+
+    btn.setAttribute('aria-label', `${choice.label}${destinationLabel ? '. ' + destinationLabel : ''}`);
+    btn.title = choice.label;
+    btn.innerHTML = '<span class="choice-arrow" aria-hidden="true">➜</span>';
+
+    const textPanel = document.createElement('div');
+    textPanel.className = 'choice-text-panel';
+    textPanel.setAttribute('aria-hidden', 'true');
+    textPanel.innerHTML = `<span class="choice-copy"><span>${choice.label}</span></span>${destinationLabel ? `<span class="choice-dest">${destinationLabel}</span>` : ''}`;
+
     btn.addEventListener('click', () => {
       if (choice.action === 'resolveDice') { btn.disabled = true; return resolvePendingDice(); }
       if (choice.action === 'checkpoint') return restartFromCheckpoint();
@@ -525,7 +543,10 @@ function render() {
       }
       enterNode(choice.to);
     });
-    choices.appendChild(btn);
+
+    row.appendChild(btn);
+    row.appendChild(textPanel);
+    choices.appendChild(row);
   });
 }
 
