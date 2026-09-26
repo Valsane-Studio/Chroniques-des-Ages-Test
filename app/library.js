@@ -194,13 +194,19 @@ async function render(){
     const img=document.createElement('img');
     img.className='library-book-image';
     img.alt=`Présentation — ${m.title||e.id}`;
-    const imagePath=m.cover||m.preview?.image||'';
-    if(imagePath){
-      img.src=assetUrl(e,m,imagePath);
-      img.addEventListener('error',()=>media.classList.add('is-fallback'),{once:true});
-    }else{
-      media.classList.add('is-fallback');
-    }
+    const imageCandidates=[m.libraryImage,m.cover,m.preview?.image].filter(Boolean);
+    let imageIndex=0;
+    const tryMenuImage=()=>{
+      if(imageIndex>=imageCandidates.length){
+        img.remove();
+        media.classList.add('is-fallback');
+        return;
+      }
+      img.src=assetUrl(e,m,imageCandidates[imageIndex++]);
+    };
+    img.addEventListener('error',tryMenuImage);
+    if(imageCandidates.length) tryMenuImage();
+    else media.classList.add('is-fallback');
     media.appendChild(img);
 
     const copy=document.createElement('div');
@@ -239,8 +245,8 @@ async function render(){
       action.textContent=access.priceLabel?`Découvrir · ${access.priceLabel}`:'Découvrir';
       action.addEventListener('click',()=>showPreview(e,m));
     }else{
-      action.textContent=saved?'Reprendre':'Ouvrir';
-      action.addEventListener('click',()=>window.LibraryApp.open?.(e.id));
+      action.textContent=m.actionLabel||'Découvrir';
+      action.addEventListener('click',()=>showPreview(e,m));
     }
 
     actionWrap.appendChild(action);
