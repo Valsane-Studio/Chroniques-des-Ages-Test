@@ -3972,3 +3972,110 @@ body.library-home-open .app-shell {
     max-height:none !important;
   }
 }
+
+
+/* V203 — APHANES en typographie directe sur le fond général */
+.library-brand{
+  position:relative !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:8px auto 24px !important;
+  padding:0 !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:2px !important;
+
+  border:0 !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  filter:none !important;
+  overflow:visible !important;
+  pointer-events:none !important;
+}
+
+.library-brand::before,
+.library-brand::after{
+  content:none !important;
+  display:none !important;
+}
+
+.library-brand-logo{
+  display:none !important;
+}
+
+.library-brand-title{
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+
+  font-family:"Cinzel", "Cinzel Valsane", "Times New Roman", serif !important;
+  font-size:clamp(58px,8.2vw,118px) !important;
+  line-height:.92 !important;
+  font-weight:500 !important;
+  letter-spacing:.085em !important;
+
+  color:#d9ad72 !important;
+  -webkit-text-fill-color:#d9ad72 !important;
+  text-shadow:
+    0 2px 0 rgba(67,33,12,.42),
+    0 4px 12px rgba(0,0,0,.46) !important;
+  opacity:.94 !important;
+  white-space:nowrap !important;
+}
+
+.library-brand-subtitle{
+  margin:8px 0 0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+
+  font-family:"Cinzel", "Cinzel Valsane", "Times New Roman", serif !important;
+  font-size:clamp(13px,2vw,25px) !important;
+  line-height:1 !important;
+  font-weight:400 !important;
+  letter-spacing:.42em !important;
+
+  color:#d9ad72 !important;
+  -webkit-text-fill-color:#d9ad72 !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.52) !important;
+  opacity:.90 !important;
+  white-space:nowrap !important;
+}
+
+@media (max-width:720px){
+  .library-brand{
+    margin-top:6px !important;
+    margin-bottom:16px !important;
+  }
+
+  .library-brand-title{
+    font-size:clamp(42px,13vw,72px) !important;
+    letter-spacing:.05em !important;
+  }
+
+  .library-brand-subtitle{
+    margin-top:6px !important;
+    font-size:clamp(10px,3.2vw,15px) !important;
+    letter-spacing:.28em !important;
+  }
+}
+
+@media (max-width:430px){
+  .library-brand-title{
+    font-size:clamp(36px,12vw,58px) !important;
+  }
+
+  .library-brand-subtitle{
+    font-size:10px !important;
+    letter-spacing:.22em !important;
+  }
+}
