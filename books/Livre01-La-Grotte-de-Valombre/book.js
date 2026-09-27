@@ -6944,7 +6944,7 @@ const STORY = {
     access: 'free',
     contentVersion: 123,
     pageMapVersion: 86,
-    saveVersion: 25,
+    saveVersion: 26,
     assetBase: './books/Livre01-La-Grotte-de-Valombre/images',
     uiAssetBase: './books/Livre01-La-Grotte-de-Valombre/assets',
     showMissingIllustrationPlaceholder: true, // uniquement pour la version Travail
