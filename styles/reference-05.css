@@ -4219,3 +4219,52 @@ body.library-home-open .app-shell {
     min-height:102px !important;
   }
 }
+
+
+/* V206 — APHANES déplacé sur le parchemin, au-dessus de BIBLIOTHÈQUE */
+.library-home-inner > .library-brand{
+  position:relative !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 auto 8px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  pointer-events:none !important;
+}
+
+.library-home-inner > .library-brand .library-brand-art{
+  width:min(690px,78vw) !important;
+  height:auto !important;
+  margin:0 auto !important;
+}
+
+.library-home-copy{
+  margin-top:0 !important;
+}
+
+.library-home-kicker{
+  margin-top:0 !important;
+}
+
+@media (max-width:720px){
+  .library-home-inner > .library-brand{
+    margin-bottom:6px !important;
+  }
+
+  .library-home-inner > .library-brand .library-brand-art{
+    width:min(600px,88vw) !important;
+  }
+}
+
+@media (max-width:430px){
+  .library-home-inner > .library-brand .library-brand-art{
+    width:92vw !important;
+  }
+}
