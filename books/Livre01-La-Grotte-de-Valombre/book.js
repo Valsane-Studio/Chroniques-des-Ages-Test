@@ -6682,9 +6682,8 @@ const STORY = {
       const healing = Number.isInteger(state.lastHealingDie)
         ? `<div class="dice-result"><p class="roll-number">Dernière potion</p><div class="dice-faces">${renderDie(state.lastHealingDie)}</div><p><strong>+${state.lastHealingDie} point${state.lastHealingDie > 1 ? 's' : ''} de Vie</strong></p><p>Vie : <strong>${state.hp} / ${state.maxHp}</strong></p></div>`
         : '';
-      const testPanel = testInventoryHtml(state);
       const earth = contaminationLevel(state)>0 ? `<div class="inventory-equipment-card"><strong>Terre noire : ${contaminationLevel(state)}/13</strong><p>${state.flags.physicianNotesRead ? "0–3 : appel puissant · 4–8 : équilibre précaire · 9–12 : transformation imminente · 13 : transformation." : "Effets inconnus."}</p></div>` : "";
-      return equipment + earth + testPanel + healing;
+      return equipment + earth + healing;
     },
 
     actionHtml(id, item, state) {
@@ -6945,7 +6944,7 @@ const STORY = {
     access: 'free',
     contentVersion: 123,
     pageMapVersion: 86,
-    saveVersion: 23,
+    saveVersion: 24,
     assetBase: './books/Livre01-La-Grotte-de-Valombre/images',
     uiAssetBase: './books/Livre01-La-Grotte-de-Valombre/assets',
     showMissingIllustrationPlaceholder: true, // uniquement pour la version Travail
