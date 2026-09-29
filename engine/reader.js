@@ -177,6 +177,9 @@ function restartFromCheckpoint() {
     if (!saved) return restartGame();
     const journalBackup = state.journal || '';
     const previous = JSON.parse(saved);
+    if (typeof BOOK.normalizeCheckpoint === 'function' && BOOK.normalizeCheckpoint(previous)) {
+      localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(previous));
+    }
     if (typeof BOOK.migrateState === 'function' && previous.pageMapVersion !== (BOOK.pageMapVersion || 58)) {
       try {
         if (!localStorage.getItem(`${CHECKPOINT_KEY}.backup-v68`)) localStorage.setItem(`${CHECKPOINT_KEY}.backup-v68`, saved);
@@ -451,7 +454,8 @@ function render() {
     });
   });
 
-  inventoryCount.textContent = Object.keys(state.inventory).length;
+  inventoryCount.textContent = typeof BOOK.inventory?.displayEntries === 'function'
+    ? BOOK.inventory.displayEntries(state).length : Object.keys(state.inventory).length;
   statusTags.innerHTML = '';
   if (!node.sheet) {
     const stats = typeof BOOK.statusStats === 'function'
@@ -525,6 +529,9 @@ function render() {
       }
       if (choice.inlineCombat) btn.disabled = true;
       if (typeof choice.effect === 'function') choice.effect(state);
+      const redirect = typeof choice.redirectAfterEffect === 'function'
+        ? choice.redirectAfterEffect(state) : choice.redirectAfterEffect;
+      if (redirect && STORY[redirect]) return enterNode(redirect);
       if (choice.stay) {
         saveState(); render();
         if (choice.inlineCombat) {
@@ -583,7 +590,8 @@ function openCharacterSheet() {
 function openInventory() {
   modal.dataset.panel = 'inventory';
   modalTitle.textContent = 'Inventaire';
-  const items = Object.entries(state.inventory);
+  const items = typeof BOOK.inventory?.displayEntries === 'function'
+    ? BOOK.inventory.displayEntries(state) : Object.entries(state.inventory);
   const topText = BOOK.inventory && BOOK.inventory.topLine ? BOOK.inventory.topLine(state) : '';
   const moneyLine = topText ? `<div class="inventory-topline">${topText}</div>` : '';
   const extraLine = BOOK.inventory && BOOK.inventory.extraHtml ? BOOK.inventory.extraHtml(state) : '';
@@ -631,10 +639,21 @@ function renderPageNavigation() {
 function jumpToPageForTest(nodeId) {
   if (!STORY[nodeId] || !Number.isInteger(PAGE_BY_NODE[nodeId])) return;
   // Outil de test : on change uniquement la page courante.
-  // Aucun effet de choix/onEnter/checkpoint antérieur n'est déclenché automatiquement.
+  // Le passage choisi reçoit son point de reprise sans simuler les anciens choix.
   state.pendingDice = null;
   state.node = nodeId;
   state.history.push(nodeId);
+  const testCheckpointNode = BOOK.testCheckpointForNode?.(nodeId);
+  if (testCheckpointNode && state.hp > 0) {
+    const checkpoint = (BOOK.checkpoints || []).find(cp => cp.node === testCheckpointNode);
+    if (checkpoint) setCheckpoint({
+      ...state, node: testCheckpointNode,
+      flags: { ...state.flags, finalMazeTurns:0, finalMazeFound:false, finalMazeLast:null,
+        finalRopeClimbed:false, finalKnights:null,
+        finalPassageDex:null, finalPassageRecovery:null, finalPassageBruise:null,
+        finalKnightsEscape:null }
+    }, checkpoint.label);
+  } else if (state.hp > 0) maybeAutoCheckpoint(nodeId);
   saveState();
   closeDrawer();
   render();
