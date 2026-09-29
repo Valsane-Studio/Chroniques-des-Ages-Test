@@ -402,6 +402,7 @@ function render() {
   const node = STORY[renderNodeId] || STORY.start;
   const pendingDice = !transformedView && state.pendingDice?.destination === state.node ? state.pendingDice : null;
   const testCompletion = TEST_TELEMETRY?.classifyResult(state, renderNodeId) || null;
+  document.body.classList.remove('test-feedback-open');
   footer?.classList.toggle('hidden', !!testCompletion);
 
   if (testCompletion && TEST_TELEMETRY?.isQuestionnaireOpen(state)) {
