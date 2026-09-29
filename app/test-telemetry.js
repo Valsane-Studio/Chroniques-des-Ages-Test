@@ -424,32 +424,21 @@
       }
       .test-feedback-dot.filled { background: currentColor; }
       .test-feedback-dot.filled::after { color: rgba(245, 235, 208, .96); }
-      .test-feedback-submit {
-        display: block;
-        width: min(100%, 360px);
-        margin: 8px auto 0;
-        padding: 12px 16px;
-        border-radius: 8px;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
+      .test-feedback-submit,
+      .test-feedback-restart {
+        width: 100% !important;
       }
-      .test-feedback-submit:disabled { opacity: .45; cursor: default; }
+      .test-feedback-submit:disabled {
+        opacity: .45 !important;
+        cursor: default !important;
+      }
       .test-feedback-status { min-height: 1.4em; margin: 12px 0 0; text-align: center; }
       .test-feedback-thanks { text-align: center; font-weight: 700; margin: 12px 0 0; }
       .test-feedback-actions {
         display: grid;
-        gap: 10px;
-        margin: 20px auto 0;
-        width: min(100%, 420px);
-      }
-      .test-feedback-restart {
+        gap: 12px;
+        margin: 20px 0 0;
         width: 100%;
-        padding: 12px 14px;
-        border-radius: 8px;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
       }
       .test-feedback-page .test-feedback {
         margin-top: 0;
@@ -502,11 +491,22 @@
         <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
         <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
         <div class="test-feedback-questions"></div>
-        <button class="test-feedback-submit" type="button">Envoyer mes réponses</button>
+        <div class="test-feedback-actions">
+          <button class="choice-btn test-feedback-submit" type="button">
+            <span class="choice-arrow" aria-hidden="true"></span>
+            <span class="choice-copy"><span>Envoyer mes réponses</span></span>
+          </button>
+        </div>
         <p class="test-feedback-status" aria-live="polite"></p>
         <div class="test-feedback-actions">
-          <button class="test-feedback-restart" type="button" data-test-restart="checkpoint">Recommencer au point de sauvegarde</button>
-          <button class="test-feedback-restart" type="button" data-test-restart="start">Recommencer au début</button>
+          <button class="choice-btn test-feedback-restart" type="button" data-test-restart="checkpoint">
+            <span class="choice-arrow" aria-hidden="true"></span>
+            <span class="choice-copy"><span>Recommencer au point de sauvegarde</span></span>
+          </button>
+          <button class="choice-btn test-feedback-restart" type="button" data-test-restart="start">
+            <span class="choice-arrow" aria-hidden="true"></span>
+            <span class="choice-copy"><span>Recommencer au début</span></span>
+          </button>
         </div>
       </section>
     `;
@@ -548,7 +548,8 @@
 
     if (run.questionnaireSent) {
       submit.disabled = true;
-      submit.textContent = 'Réponses envoyées';
+      const submitLabel = submit.querySelector('.choice-copy > span');
+      if (submitLabel) submitLabel.textContent = 'Réponses envoyées';
       statusEl.textContent = 'Merci. Tes réponses ont bien été enregistrées.';
     } else {
       submit.disabled = !allAnswered();
@@ -568,7 +569,8 @@
         statusEl.textContent = 'Envoi en cours…';
         try {
           await submitQuestionnaire(values);
-          submit.textContent = 'Réponses envoyées';
+          const submitLabel = submit.querySelector('.choice-copy > span');
+          if (submitLabel) submitLabel.textContent = 'Réponses envoyées';
           statusEl.textContent = 'Merci. Tes réponses ont bien été enregistrées.';
         } catch (error) {
           submit.disabled = false;
