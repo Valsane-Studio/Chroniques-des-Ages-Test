@@ -9,9 +9,11 @@
   const SUCCESS_NODES = new Set(['c218']);
   const NARRATIVE_DEATH_NODES = new Set(['c215','c216','c217','c221','c225','c236']);
   const COMBAT_DEATH_NODES = new Set([
-    'c26','c27','c29','c33','c36','c38','c47',
-    'c61','c62','c79','c80','c97','c149','c153',
-    'c161','c191','c192','c202','c231'
+    'c25','c26','c27','c29','c33','c36','c38','c47',
+    'c61','c62','c78','c79','c80','c97','c132','c133',
+    'c134','c135','c149','c153','c154','c155','c156',
+    'c161','c162','c191','c192','c201','c202','c230',
+    'c231','c232','c237'
   ]);
 
   let getState = null;
@@ -43,7 +45,7 @@
       origin: origin || 'start',
       startedAt: now,
       activeMs: 0,
-      historyStart: Array.isArray(state.history) ? state.history.length : 0,
+      historyStart: origin === 'checkpoint' && Array.isArray(state.history) ? state.history.length : 0,
       sent: false,
       sentAt: null,
       retryCount: 0
@@ -182,6 +184,20 @@
     }
   }
 
+  function loadedContentVersion(book) {
+    try {
+      const entries = performance.getEntriesByType('resource');
+      const hit = [...entries].reverse().find(entry =>
+        entry?.name?.includes('/books/Livre01-La-Grotte-de-Valombre/book.js')
+      );
+      if (hit?.name) {
+        const value = new URL(hit.name).searchParams.get('v');
+        if (value) return value;
+      }
+    } catch (e) {}
+    return book?.contentVersion ?? '?';
+  }
+
   function buildPayload({ state, book, renderNodeId, pageByNode }) {
     const run = ensureRun(state);
     touch(state);
@@ -200,7 +216,7 @@
     return {
       id: run.id,
       livre: book?.title || 'La Grotte de Valombre',
-      version_jeu: `TEST-c${book?.contentVersion ?? '?'}-map${book?.pageMapVersion ?? '?'}-save${book?.saveVersion ?? '?'}`,
+      version_jeu: `TEST-content${loadedContentVersion(book)}-map${book?.pageMapVersion ?? '?'}-save${book?.saveVersion ?? '?'}`,
       resultat: classifyResult(state, renderNodeId),
       page_finale: Number.isInteger(pageByNode?.[renderNodeId]) ? pageByNode[renderNodeId] : null,
       duree_secondes: Math.max(0, Math.round((run.activeMs || 0) / 1000)),
