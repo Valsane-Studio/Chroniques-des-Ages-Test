@@ -49,7 +49,10 @@
       historyStart: origin === 'checkpoint' && Array.isArray(state.history) ? state.history.length : 0,
       sent: false,
       sentAt: null,
-      retryCount: 0
+      retryCount: 0,
+      feedbackOpen: false,
+      feedbackAnswers: {},
+      questionnaireSent: false
     };
     visibleSince = document.visibilityState === 'visible' ? now : null;
     return state.__testAnalytics;
@@ -68,6 +71,18 @@
 
   function resetRun(state, origin) {
     return freshRun(state, origin || 'restart');
+  }
+
+  function openQuestionnaire(state) {
+    const run = ensureRun(state);
+    if (!run) return false;
+    run.feedbackOpen = true;
+    if (!run.feedbackAnswers || typeof run.feedbackAnswers !== 'object') run.feedbackAnswers = {};
+    return true;
+  }
+
+  function isQuestionnaireOpen(state) {
+    return !!state?.__testAnalytics?.feedbackOpen;
   }
 
   function touch(state) {
@@ -422,6 +437,23 @@
       .test-feedback-submit:disabled { opacity: .45; cursor: default; }
       .test-feedback-status { min-height: 1.4em; margin: 12px 0 0; text-align: center; }
       .test-feedback-thanks { text-align: center; font-weight: 700; margin: 12px 0 0; }
+      .test-feedback-actions {
+        display: grid;
+        gap: 10px;
+        margin: 20px auto 0;
+        width: min(100%, 420px);
+      }
+      .test-feedback-restart {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 8px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .test-feedback-page .test-feedback {
+        margin-top: 0;
+      }
       @media (max-width: 520px) {
         .test-feedback { padding: 18px 10px; }
         .test-feedback-label { font-size: .62rem; }
@@ -433,45 +465,53 @@
     document.head.appendChild(style);
   }
 
-  function renderQuestionnaire(context) {
+  function renderQuestionnairePage(context) {
     lastCompletionContext = context || lastCompletionContext;
     const state = context?.state;
     const nodeId = context?.renderNodeId;
     const result = classifyResult(state, nodeId);
-    const old = document.getElementById('testFeedback');
-    if (!result) {
-      old?.remove();
-      return;
-    }
+    if (!result || !isQuestionnaireOpen(state)) return false;
 
     ensureQuestionnaireStyle();
+
+    const chapterNumber = document.getElementById('chapterNumber');
+    const chapterTitle = document.getElementById('chapterTitle');
+    const storyText = document.getElementById('storyText');
     const choices = document.getElementById('choices');
-    if (!choices) return;
+    const imageFrame = document.getElementById('imageFrame');
+    const statusTags = document.getElementById('statusTags');
 
-    if (state?.__testAnalytics?.questionnaireSent) {
-      if (old) old.remove();
-      const done = document.createElement('section');
-      done.id = 'testFeedback';
-      done.className = 'test-feedback';
-      done.innerHTML = '<p class="test-feedback-thanks">Merci. Tes réponses ont bien été enregistrées.</p>';
-      choices.insertAdjacentElement('afterend', done);
-      return;
+    if (!storyText || !choices) return false;
+
+    imageFrame?.classList.add('hidden');
+    if (chapterNumber) chapterNumber.textContent = '';
+    if (chapterTitle) {
+      chapterTitle.textContent = '';
+      chapterTitle.classList.add('hidden');
     }
+    if (statusTags) statusTags.innerHTML = '';
+    choices.innerHTML = '';
 
-    if (old) old.remove();
-    const section = document.createElement('section');
-    section.id = 'testFeedback';
-    section.className = 'test-feedback';
-    section.innerHTML = `
-      <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
-      <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
-      <div class="test-feedback-questions"></div>
-      <button class="test-feedback-submit" type="button" disabled>Envoyer mes réponses</button>
-      <p class="test-feedback-status" aria-live="polite"></p>
+    const run = ensureRun(state);
+    if (!run.feedbackAnswers || typeof run.feedbackAnswers !== 'object') run.feedbackAnswers = {};
+    const values = run.feedbackAnswers;
+
+    storyText.classList.add('test-feedback-page');
+    storyText.innerHTML = `
+      <section id="testFeedback" class="test-feedback">
+        <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
+        <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
+        <div class="test-feedback-questions"></div>
+        <button class="test-feedback-submit" type="button">Envoyer mes réponses</button>
+        <p class="test-feedback-status" aria-live="polite"></p>
+        <div class="test-feedback-actions">
+          <button class="test-feedback-restart" type="button" data-test-restart="checkpoint">Recommencer au point de sauvegarde</button>
+          <button class="test-feedback-restart" type="button" data-test-restart="start">Recommencer au début</button>
+        </div>
+      </section>
     `;
-    choices.insertAdjacentElement('afterend', section);
 
-    const values = {};
+    const section = storyText.querySelector('#testFeedback');
     const questions = section.querySelector('.test-feedback-questions');
     const submit = section.querySelector('.test-feedback-submit');
     const statusEl = section.querySelector('.test-feedback-status');
@@ -493,32 +533,58 @@
       questions.appendChild(block);
     }
 
-    section.querySelectorAll('.test-feedback-dot').forEach(button => {
-      button.addEventListener('click', () => {
-        const key = button.dataset.question;
-        const value = Number(button.dataset.value);
-        values[key] = value;
-        section.querySelectorAll(`.test-feedback-dot[data-question="${key}"]`).forEach(dot => {
-          const filled = Number(dot.dataset.value) <= value;
-          dot.classList.toggle('filled', filled);
-          dot.setAttribute('aria-checked', Number(dot.dataset.value) === value ? 'true' : 'false');
-        });
-        submit.disabled = QUESTIONNAIRE.some(q => !Number.isInteger(values[q.key]));
+    function refreshQuestion(key) {
+      const value = Number(values[key] || 0);
+      section.querySelectorAll(`.test-feedback-dot[data-question="${key}"]`).forEach(dot => {
+        const dotValue = Number(dot.dataset.value);
+        dot.classList.toggle('filled', dotValue <= value);
+        dot.setAttribute('aria-checked', dotValue === value ? 'true' : 'false');
       });
+    }
+
+    QUESTIONNAIRE.forEach(spec => refreshQuestion(spec.key));
+
+    const allAnswered = () => QUESTIONNAIRE.every(q => Number.isInteger(Number(values[q.key])) && Number(values[q.key]) >= 1 && Number(values[q.key]) <= 10);
+
+    if (run.questionnaireSent) {
+      submit.disabled = true;
+      submit.textContent = 'Réponses envoyées';
+      statusEl.textContent = 'Merci. Tes réponses ont bien été enregistrées.';
+    } else {
+      submit.disabled = !allAnswered();
+      section.querySelectorAll('.test-feedback-dot').forEach(button => {
+        button.addEventListener('click', () => {
+          const key = button.dataset.question;
+          values[key] = Number(button.dataset.value);
+          refreshQuestion(key);
+          submit.disabled = !allAnswered();
+          try { context?.persist?.(); } catch (e) {}
+        });
+      });
+
+      submit.addEventListener('click', async () => {
+        if (submit.disabled) return;
+        submit.disabled = true;
+        statusEl.textContent = 'Envoi en cours…';
+        try {
+          await submitQuestionnaire(values);
+          submit.textContent = 'Réponses envoyées';
+          statusEl.textContent = 'Merci. Tes réponses ont bien été enregistrées.';
+        } catch (error) {
+          submit.disabled = false;
+          statusEl.textContent = 'L’envoi a échoué. Tu peux réessayer.';
+        }
+      });
+    }
+
+    section.querySelector('[data-test-restart="checkpoint"]')?.addEventListener('click', () => {
+      context?.restartCheckpoint?.();
+    });
+    section.querySelector('[data-test-restart="start"]')?.addEventListener('click', () => {
+      context?.restartGame?.();
     });
 
-    submit.addEventListener('click', async () => {
-      if (submit.disabled) return;
-      submit.disabled = true;
-      statusEl.textContent = 'Envoi en cours…';
-      try {
-        await submitQuestionnaire(values);
-        section.innerHTML = '<p class="test-feedback-thanks">Merci. Tes réponses ont bien été enregistrées.</p>';
-      } catch (error) {
-        submit.disabled = false;
-        statusEl.textContent = 'L’envoi a échoué. Tu peux réessayer.';
-      }
-    });
+    return true;
   }
 
   function status() {
@@ -541,7 +607,9 @@
     beforeSave,
     recordCompletion,
     submitQuestionnaire,
-    renderQuestionnaire,
+    openQuestionnaire,
+    isQuestionnaireOpen,
+    renderQuestionnairePage,
     classifyResult,
     status
   };
