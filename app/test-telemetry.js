@@ -325,7 +325,9 @@
       duree: answers?.duree ?? null,
       comprehension: answers?.comprehension ?? null,
       envie_rejouer: answers?.envie_rejouer ?? null,
-      commentaire: null
+      commentaire: typeof answers?.commentaire === 'string' && answers.commentaire.trim()
+        ? answers.commentaire.trim().slice(0, 2000)
+        : null
     };
     const ok = await postRow('test_questionnaires', row);
     if (ok) {
@@ -424,6 +426,46 @@
       }
       .test-feedback-dot.filled { background: currentColor; }
       .test-feedback-dot.filled::after { color: rgba(245, 235, 208, .96); }
+      .test-feedback-comment {
+        display: block;
+        margin: 8px 0 24px;
+      }
+      .test-feedback-comment > span {
+        display: block;
+        margin: 0 0 10px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .test-feedback-comment textarea {
+        display: block;
+        width: 100%;
+        min-height: 118px;
+        box-sizing: border-box;
+        resize: vertical;
+        padding: 14px 16px;
+        border: 1px solid rgba(92, 65, 35, .46);
+        border-radius: 14px;
+        background: rgba(255, 248, 224, .34);
+        box-shadow:
+          inset 0 1px 2px rgba(255,255,255,.28),
+          inset 0 -2px 6px rgba(83,56,28,.08);
+        color: inherit;
+        font: inherit;
+        line-height: 1.45;
+        outline: none;
+      }
+      .test-feedback-comment textarea:focus {
+        border-color: rgba(92, 65, 35, .72);
+        box-shadow:
+          0 0 0 2px rgba(126, 91, 49, .10),
+          inset 0 1px 2px rgba(255,255,255,.28);
+      }
+      .test-feedback-comment textarea::placeholder {
+        color: rgba(54, 40, 27, .58);
+      }
+      .test-feedback-comment textarea:disabled {
+        opacity: .68;
+      }
       .test-feedback-submit,
       .test-feedback-restart {
         width: 100% !important;
@@ -491,6 +533,10 @@
         <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
         <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
         <div class="test-feedback-questions"></div>
+        <label class="test-feedback-comment">
+          <span>Commentaire ou bug à relever</span>
+          <textarea class="test-feedback-comment-input" maxlength="2000" placeholder="Tu peux noter ici un bug, une incompréhension, une remarque ou une suggestion."></textarea>
+        </label>
         <div class="test-feedback-actions">
           <button class="choice-btn test-feedback-submit" type="button">
             <span class="choice-arrow" aria-hidden="true"></span>
@@ -515,6 +561,8 @@
     const questions = section.querySelector('.test-feedback-questions');
     const submit = section.querySelector('.test-feedback-submit');
     const statusEl = section.querySelector('.test-feedback-status');
+    const commentInput = section.querySelector('.test-feedback-comment-input');
+    if (commentInput) commentInput.value = typeof values.commentaire === 'string' ? values.commentaire : '';
 
     for (const spec of QUESTIONNAIRE) {
       const block = document.createElement('div');
@@ -550,9 +598,16 @@
       submit.disabled = true;
       const submitLabel = submit.querySelector('.choice-copy > span');
       if (submitLabel) submitLabel.textContent = 'Réponses envoyées';
+      if (commentInput) commentInput.disabled = true;
       statusEl.textContent = 'Merci. Tes réponses ont bien été enregistrées.';
     } else {
       submit.disabled = !allAnswered();
+
+      commentInput?.addEventListener('input', () => {
+        values.commentaire = commentInput.value.slice(0, 2000);
+        try { context?.persist?.(); } catch (e) {}
+      });
+
       section.querySelectorAll('.test-feedback-dot').forEach(button => {
         button.addEventListener('click', () => {
           const key = button.dataset.question;
