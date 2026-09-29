@@ -400,6 +400,25 @@ function render() {
   const transformedView = renderNodeId !== state.node;
   const node = STORY[renderNodeId] || STORY.start;
   const pendingDice = !transformedView && state.pendingDice?.destination === state.node ? state.pendingDice : null;
+  const testCompletion = TEST_TELEMETRY?.classifyResult(state, renderNodeId) || null;
+
+  if (testCompletion && TEST_TELEMETRY?.isQuestionnaireOpen(state)) {
+    TEST_TELEMETRY.recordCompletion({ state, book: BOOK, renderNodeId, pageByNode: PAGE_BY_NODE, persist: saveState });
+    if (TEST_TELEMETRY.renderQuestionnairePage({
+      state,
+      book: BOOK,
+      renderNodeId,
+      pageByNode: PAGE_BY_NODE,
+      persist: saveState,
+      restartCheckpoint: restartFromCheckpoint,
+      restartGame
+    })) {
+      return;
+    }
+  }
+
+  storyText.classList.remove('test-feedback-page');
+
   if (node.sheet) {
     ++pageImageLoadToken; // annule une éventuelle image de la page précédente
     chapterNumber.textContent = BOOK.sheetLabel || 'FICHE DU HÉROS';
@@ -489,8 +508,10 @@ function render() {
   const overriddenChoices = typeof BOOK.choiceOverride === 'function' ? BOOK.choiceOverride(state, node) : null;
   const availableChoices = pendingDice
     ? [{label:'Jeter les dés', action:'resolveDice'}]
-    : overriddenChoices
-      ? overriddenChoices
+    : testCompletion
+      ? [{label:'Continuer', action:'testQuestionnaire'}]
+      : overriddenChoices
+        ? overriddenChoices
       : state.hp <= 0 && !node.sheet
         ? fatalChoices()
         : typeof node.choices === 'function' ? node.choices(state) : (node.choices || []);
@@ -517,6 +538,13 @@ function render() {
 
     btn.addEventListener('click', () => {
       if (choice.action === 'resolveDice') { btn.disabled = true; return resolvePendingDice(); }
+      if (choice.action === 'testQuestionnaire') {
+        TEST_TELEMETRY?.openQuestionnaire(state);
+        saveState();
+        render();
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0,0); }
+        return;
+      }
       if (choice.action === 'checkpoint') return restartFromCheckpoint();
       if (choice.action === 'restart') return restartGame();
       if (choice.action === 'damage') {
@@ -553,13 +581,6 @@ function render() {
     choices.appendChild(btn);
   });
 
-  TEST_TELEMETRY?.renderQuestionnaire({
-    state,
-    book: BOOK,
-    renderNodeId,
-    pageByNode: PAGE_BY_NODE,
-    persist: saveState
-  });
 }
 
 function openRestartConfirm() {
