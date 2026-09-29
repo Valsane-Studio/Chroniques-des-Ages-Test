@@ -265,7 +265,7 @@
       headers: {
         apikey: SUPABASE_KEY,
         'Content-Type': 'application/json',
-        Prefer: 'resolution=ignore-duplicates,return=minimal'
+        Prefer: 'return=minimal'
       },
       body: JSON.stringify(row),
       keepalive: true
