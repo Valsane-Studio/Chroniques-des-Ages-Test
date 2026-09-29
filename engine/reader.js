@@ -13,6 +13,7 @@ const padPage = BOOK.padPage;
 const STORAGE_KEY = `ldveh.book.${BOOK.id}.save.v${BOOK.saveVersion || 1}`;
 const CHECKPOINT_KEY = `ldveh.book.${BOOK.id}.checkpoint.v${BOOK.saveVersion || 1}`;
 const SERIES_KEY = `ldveh.series.${BOOK.seriesId}.profile.v2`;
+const TEST_TELEMETRY = window.AphanesTestTelemetry || null;
 
 const chapterNumber = document.getElementById('chapterNumber');
 const chapterTitle = document.getElementById('chapterTitle');
@@ -134,6 +135,7 @@ function loadState() {
   } catch { return defaultState(); }
 }
 let state = loadState();
+TEST_TELEMETRY?.ensureRun(state);
 
 function saveSeriesProfile() {
   try { localStorage.setItem(SERIES_KEY, JSON.stringify(seriesProfile)); } catch (e) {}
@@ -157,9 +159,11 @@ function syncSeriesFromState() {
   saveSeriesProfile();
 }
 function saveState() {
+  TEST_TELEMETRY?.beforeSave(state);
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
   syncSeriesFromState();
 }
+TEST_TELEMETRY?.attach(() => state, saveState);
 
 function setCheckpoint(targetState, label) {
   targetState.currentCheckpoint = label;
@@ -190,6 +194,7 @@ function restartFromCheckpoint() {
     state = { ...defaultState(), ...previous };
     if (normalizeLoadedBookState(state)) localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(state));
     state.journal = journalBackup || state.journal || '';
+    TEST_TELEMETRY?.resetRun(state, 'checkpoint');
     saveState(); closeRestartConfirm(); closeDrawer(); closeModal(); closeJournal(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { restartGame(); }
@@ -439,6 +444,7 @@ function render() {
   }
 
   appendAdventureConclusion(renderNodeId);
+  TEST_TELEMETRY?.recordCompletion({ state, book: BOOK, renderNodeId, pageByNode: PAGE_BY_NODE, persist: saveState });
 
   document.querySelectorAll('.hero-gender-input').forEach(input => {
     input.addEventListener('change', event => {
@@ -568,6 +574,7 @@ function restartGame() {
   } catch (e) {}
   if (BOOK.resetSeriesOnRestart) seriesProfile = defaultSeriesProfile();
   state = defaultState();
+  TEST_TELEMETRY?.resetRun(state, 'restart');
   saveState(); closeDrawer(); closeModal(); closeJournal(); render();
   try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0,0); }
 }
