@@ -498,6 +498,12 @@
       .test-feedback-page .test-feedback {
         margin-top: 0;
       }
+      body.test-feedback-open .status-tags {
+        display: none !important;
+      }
+      body.test-feedback-open .app-shell {
+        padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+      }
       @media (max-width: 520px) {
         .test-feedback { padding: 18px 10px; }
         .test-feedback-question { padding: 16px 10px 18px; margin: 14px 0; }
@@ -518,6 +524,7 @@
     if (!result || !isQuestionnaireOpen(state)) return false;
 
     ensureQuestionnaireStyle();
+    document.body.classList.add('test-feedback-open');
 
     const chapterNumber = document.getElementById('chapterNumber');
     const chapterTitle = document.getElementById('chapterTitle');
