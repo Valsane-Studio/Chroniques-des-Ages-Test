@@ -552,6 +552,14 @@ function render() {
 
     choices.appendChild(btn);
   });
+
+  TEST_TELEMETRY?.renderQuestionnaire({
+    state,
+    book: BOOK,
+    renderNodeId,
+    pageByNode: PAGE_BY_NODE,
+    persist: saveState
+  });
 }
 
 function openRestartConfirm() {
