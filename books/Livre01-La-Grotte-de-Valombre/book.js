@@ -7,43 +7,49 @@
 const ENEMIES = {
   shadowMass: {
     name: 'MASSE DANS L’OMBRE',
-    maxHp: 6,
-    force: 8,
-    dexterity: 5
+    maxHp: 8,
+    force: 10,
+    dexterity: 8,
+    damage: 2
   },
   rochebrumeMissing: {
     name: 'DISPARU DE ROCHEBRUME',
     maxHp: 3,
-    force: 3,
-    dexterity: 8
+    force: 7,
+    dexterity: 11,
+    damage: 1
   },
   bridgeWalker: {
     name: 'MARCHEUR SOUS LE PONT',
-    maxHp: 5,
-    force: 8,
-    dexterity: 10
+    maxHp: 8,
+    force: 11,
+    dexterity: 10,
+    damage: 2
   },
   isletCrawler: {
     name: 'RAMPANT DE L’ÎLOT',
     maxHp: 12,
-    force: 18,
-    dexterity: 5
+    force: 12,
+    dexterity: 5,
+    damage: 4
   },
   observationPrisoner: {
     name: 'CHEVALIER TRANSFORMÉ',
     maxHp: 8,
-    force: 8,
-    dexterity: 9
+    force: 10,
+    dexterity: 7,
+    damage: 2
   },
   observationPrisonerCorridor: {
     name: 'CHEVALIER ENRAGÉ',
     maxHp: 8,
     force: 12,
-    dexterity: 9
+    dexterity: 5,
+    damage: 3
   },
-  labyrinthWanderer: { name: 'ERRANT DU DÉDALE', maxHp: 8, force: 9, dexterity: 7 },
-  labyrinthCaiman: { name: 'RAMPANT DE LA CORNICHE', maxHp: 7, force: 9, dexterity: 8 },
-  reserveRat: { name: 'RAT DÉFORMÉ', maxHp: 6, force: 6, dexterity: 8, noContamination: true }
+  labyrinthWanderer: { name: 'ERRANT DU DÉDALE', maxHp: 11, force: 10, dexterity: 8, damage: 2 },
+  labyrinthCaiman: { name: 'RAMPANT DE LA CORNICHE', maxHp: 7, force: 10, dexterity: 8, damage: 2 },
+  reserveRat: { name: 'RAT DÉFORMÉ', maxHp: 6, force: 6, dexterity: 10, damage: 1, noContamination: true }
 };
 
 function roll2D6() {
@@ -66,8 +72,12 @@ function combatState(state, key, enemy) {
   return combat;
 }
 
-function forceDamageBonus(force) {
-  return Math.max(1, Math.floor(Math.max(0, Number(force) || 0) / 4));
+const HERO_BASE_DAMAGE = 2;
+function heroCombatDamage(state) {
+  return HERO_BASE_DAMAGE + (state.weapon === 'none' ? 0 : combatPower(state));
+}
+function enemyCombatDamage(enemy) {
+  return enemy.damage + (Number.isFinite(enemy.weaponPower) ? enemy.weaponPower : 0);
 }
 
 // Le bouclier encaisse avant les pièces d'armure déjà portées.
@@ -196,14 +206,14 @@ function fightRound(state, key, enemy) {
   const enemyDice = roll2D6();
   const heroDexterity = currentDexterity(state);
   const enemyDexterity = enemy.dexterity;
-  const heroAttack = heroDexterity + heroDice[0] + heroDice[1];
-  const enemyAttack = enemyDexterity + enemyDice[0] + enemyDice[1];
+  const heroForce = currentForce(state);
+  const enemyForce = enemy.force;
+  const heroAttack = heroDexterity + heroForce + heroDice[0] + heroDice[1];
+  const enemyAttack = enemyDexterity + enemyForce + enemyDice[0] + enemyDice[1];
   const heroWeaponPower = state.weapon && state.weapon !== 'none' ? combatPower(state) : 0;
-  const heroForceBonus = forceDamageBonus(currentForce(state));
-  const heroDamage = heroForceBonus + heroWeaponPower;
+  const heroDamage = heroCombatDamage(state);
   const enemyWeaponPower = Number.isFinite(enemy.weaponPower) ? enemy.weaponPower : 0;
-  const enemyForceBonus = forceDamageBonus(enemy.force);
-  const enemyDamage = enemyForceBonus + enemyWeaponPower;
+  const enemyDamage = enemyCombatDamage(enemy);
 
   let outcome = 'tie';
   let damage = 0;
@@ -220,7 +230,7 @@ function fightRound(state, key, enemy) {
     outcome = 'enemy';
     damage = enemyDamage;
     const resolution = applyDamage(state, damage);
-    if (resolution.hpLost > 0 && !combat.contaminated && !enemy.noContamination) { raiseContamination(state, 1); combat.contaminated = true; }
+    if (resolution.hpLost > 0 && !combat.contaminated && !enemy.noContamination) { raiseContamination(state, 2); combat.contaminated = true; }
     protectionAbsorbed = resolution.absorbed;
     hpLost = resolution.hpLost;
     protectionBefore = resolution.protectionBefore;
@@ -236,12 +246,10 @@ function fightRound(state, key, enemy) {
     enemyDexterity,
     heroAttack,
     enemyAttack,
-    heroForce: currentForce(state),
-    heroForceBonus,
+    heroForce,
     heroWeaponPower,
     heroDamage,
-    enemyForce: enemy.force,
-    enemyForceBonus,
+    enemyForce,
     enemyWeaponPower,
     enemyDamage,
     damage,
@@ -325,7 +333,7 @@ function enemyCardHtml(state, key, enemy) {
         <div><span class="enemy-icon">◆</span><span>Dextérité</span><strong>${enemy.dexterity}</strong></div>
         <div><span class="enemy-icon">⚔</span><span>Force</span><strong>${enemy.force}</strong></div>
         <div><span class="enemy-icon">†</span><span>Arme</span><strong>${enemy.weaponName || 'Aucune'}</strong></div>
-        <div><span class="enemy-icon">✦</span><span>Dégâts</span><strong>${forceDamageBonus(enemy.force) + (Number.isFinite(enemy.weaponPower) ? enemy.weaponPower : 0)}</strong></div>
+        <div><span class="enemy-icon">✦</span><span>Dégâts</span><strong>${enemyCombatDamage(enemy)}</strong></div>
       </div>
     </div>`;
   return enemyHtml;
@@ -337,11 +345,11 @@ function combatRoundHtml(state, key, enemy) {
   if (!r) return '';
 
   const heroDamageDetail = r.heroWeaponPower > 0
-    ? `Bonus de Force ${r.heroForceBonus} + Puissance de l’arme ${r.heroWeaponPower}`
-    : `Bonus de Force ${r.heroForceBonus}`;
+    ? `Dégâts de base ${HERO_BASE_DAMAGE} + Puissance de l’arme ${r.heroWeaponPower}`
+    : `Dégâts de base ${HERO_BASE_DAMAGE}`;
   const enemyDamageDetail = r.enemyWeaponPower > 0
-    ? `Bonus de Force ${r.enemyForceBonus} + Puissance de l’arme ${r.enemyWeaponPower}`
-    : `Bonus de Force ${r.enemyForceBonus}`;
+    ? `Dégâts ${r.enemyDamage - r.enemyWeaponPower} + Puissance de l’arme ${r.enemyWeaponPower}`
+    : `Dégâts ${r.enemyDamage}`;
 
   const outcomeText = r.outcome === 'hero'
     ? `<strong>Tu remportes l’échange.</strong><br>Tu infliges <strong>${r.damage}</strong> point${r.damage > 1 ? 's' : ''} de dégâts <span class="combat-detail">(${heroDamageDetail})</span>.${combat.hp <= 0 && r.damage > 0 ? '<br><strong>La créature s’effondre. Elle est morte.</strong>' : ''}`
@@ -361,14 +369,14 @@ function combatRoundHtml(state, key, enemy) {
         <div class="combat-side">
           <strong>TOI</strong>
           <div class="combat-dice">${renderDie(r.heroDice[0])}${renderDie(r.heroDice[1])}</div>
-          <p>Dextérité ${r.heroDexterity} + dés ${r.heroDice[0] + r.heroDice[1]}</p>
+          <p>Dextérité ${r.heroDexterity} + Force ${r.heroForce} + dés ${r.heroDice[0] + r.heroDice[1]}</p>
           <p class="combat-total">Attaque : <strong>${r.heroAttack}</strong></p>
         </div>
         <div class="combat-versus">VS</div>
         <div class="combat-side">
           <strong>${enemy.name}</strong>
           <div class="combat-dice">${renderDie(r.enemyDice[0])}${renderDie(r.enemyDice[1])}</div>
-          <p>Dextérité ${r.enemyDexterity} + dés ${r.enemyDice[0] + r.enemyDice[1]}</p>
+          <p>Dextérité ${r.enemyDexterity} + Force ${r.enemyForce} + dés ${r.enemyDice[0] + r.enemyDice[1]}</p>
           <p class="combat-total">Attaque : <strong>${r.enemyAttack}</strong></p>
         </div>
       </div>
@@ -577,6 +585,103 @@ function finalMazeRollHtml(s) {
   }
   return `<div class="dice-result"><p class="roll-number">Passage ${r.attempt} · ${r.dice.length} dé${r.dice.length > 1 ? 's' : ''}</p><div class="dice-faces">${r.dice.map(renderDie).join('')}</div><p>Total : <strong>${r.total}</strong> · Seuil : <strong>${r.threshold}</strong></p><p><strong>${r.success ? 'Tu découvres la sortie.' : 'Le chemin se replie sur lui-même.'}</strong></p>${r.hpLoss ? '<p>La marche forcée rouvre tes blessures. <strong>−1 Vie.</strong></p>' : ''}</div>`;
 }
+function finalPassageDex(s) {
+  const success = roll3D6(s, 'Dextérité — traversée de la faille', Math.min(4, currentDexterity(s)));
+  s.flags.finalPassageDex = {success, dice:[...s.lastDice], total:s.lastTotal, threshold:s.lastStat};
+  if (!success) s.flags.finalPassageBruise = applyDamage(s, 2);
+}
+function finalPassageRecovery(s) {
+  const success = roll3D6(s, 'Dextérité — se rattraper', Math.min(18, currentDexterity(s) + 6));
+  s.flags.finalPassageRecovery = {success, dice:[...s.lastDice], total:s.lastTotal, threshold:s.lastStat};
+}
+function finalPassageDiceHtml(result) {
+  return result ? `<div class="dice-result"><p>Dextérité : ${result.threshold} · Dés : ${result.total}</p><div class="dice-faces">${result.dice.map(renderDie).join('')}</div><p><strong>${result.success ? 'Réussite' : 'Échec'}</strong></p></div>` : '';
+}
+const FINAL_KNIGHT_STATS = { dexterity: 7, force: 12, damage: 3, armor: 3 };
+function ensureFinalKnights(s) {
+  if (!s.flags.finalKnights || !Array.isArray(s.flags.finalKnights.hp))
+    s.flags.finalKnights = {hp:[10,10], armor:[3,3], last:null, contaminated:false, balanceVersion:3, phase:'duel'};
+  const fight=s.flags.finalKnights;
+  if (fight.balanceVersion !== 2 && fight.balanceVersion !== 3) {
+    fight.hp=fight.hp.map(hp=>hp>0?Math.min(10,hp+4):0);
+  }
+  if (!Array.isArray(fight.armor) || fight.armor.length !== 2)
+    fight.armor=fight.hp.map(hp=>hp>0?FINAL_KNIGHT_STATS.armor:0);
+  fight.armor=fight.armor.map(value=>Math.max(0,Math.min(FINAL_KNIGHT_STATS.armor,Number(value)||0)));
+  fight.balanceVersion=3;
+  if (!fight.phase) fight.phase='duel';
+  if (fight.firstDown == null && fight.phase==='duel' && fight.hp.filter(hp=>hp<=0).length===1)
+    fight.firstDown=fight.hp.findIndex(hp=>hp<=0);
+  return fight;
+}
+function finalKnightsRound(s, target, blade) {
+  const fight = ensureFinalKnights(s);
+  if (s.hp <= 0 || fight.phase!=='duel' || fight.hp[target] <= 0 || (blade && !s.throwingBlades)) return;
+  const messages=[];
+  let dice=[];
+  const before=fight.hp[target];
+  if (blade) {
+    s.throwingBlades--;
+    syncThrowingBlades(s);
+    const hit=roll3D6(s, 'Dextérité — lame de jet', currentDexterity(s));
+    dice=[...s.lastDice];
+    fight.hp[target]=Math.max(0,fight.hp[target]-(hit?5:0));
+    messages.push(hit?`Ta lame atteint le chevalier ${target+1} sous l’armure : 5 dégâts.`:`Ta lame manque le chevalier ${target+1}.`);
+    messages.push('Tu restes hors de portée. Aucun des deux ne riposte pendant ce lancer.');
+  } else {
+    const heroDice=roll2D6();
+    const foeDice=roll2D6();
+    dice=heroDice;
+    const heroScore=currentDexterity(s)+currentForce(s)+heroDice[0]+heroDice[1];
+    const foeScore=FINAL_KNIGHT_STATS.dexterity+FINAL_KNIGHT_STATS.force+foeDice[0]+foeDice[1];
+    if (heroScore>foeScore) {
+      const rawDamage=heroCombatDamage(s);
+      const absorbed=Math.min(rawDamage,fight.armor[target]);
+      fight.armor[target]-=absorbed;
+      const damage=rawDamage-absorbed;
+      fight.hp[target]=Math.max(0,fight.hp[target]-damage);
+      messages.push(`Tu touches le chevalier ${target+1} : ${absorbed} absorbé${absorbed>1?'s':''} par son armure, ${damage} dégât${damage>1?'s':''} infligé${damage>1?'s':''}. Protection restante : ${fight.armor[target]}/3.`);
+    } else if (heroScore<foeScore) {
+      const hit=applyDamage(s,FINAL_KNIGHT_STATS.damage);
+      if(hit.hpLost>0&&!fight.contaminated){raiseContamination(s,2);fight.contaminated=true;}
+      messages.push(`Le chevalier ${target+1} te frappe : ${hit.absorbed} absorbé, ${hit.hpLost} Vie perdue.`);
+    } else messages.push(`Tu pares le coup du chevalier ${target+1}.`);
+    const other=1-target;
+    if(fight.hp[other]>0&&s.hp>0){
+      const otherDice=roll2D6();
+      if(FINAL_KNIGHT_STATS.dexterity+FINAL_KNIGHT_STATS.force+otherDice[0]+otherDice[1]>heroScore){
+        const hit=applyDamage(s,FINAL_KNIGHT_STATS.damage);
+        if(hit.hpLost>0&&!fight.contaminated){raiseContamination(s,2);fight.contaminated=true;}
+        messages.push(`L’autre chevalier t’attaque : ${hit.absorbed} absorbé, ${hit.hpLost} Vie perdue.`);
+      }else messages.push('Tu évites le coup du second chevalier.');
+    }
+  }
+  if(fight.hp[target]===0)messages.push(`Le chevalier ${target+1} s’effondre.`);
+  if (fight.firstDown == null && fight.hp[target]===0) fight.firstDown=target;
+  else if (fight.firstDown != null && target!==fight.firstDown && fight.hp[target]<before) {
+    fight.hp[fight.firstDown]=10;
+    fight.phase='revived';
+    messages.push('Un grincement monte derrière toi. Tu n’oses pas encore te retourner.');
+  }
+  fight.last={messages,dice};
+}
+const FINAL_WHITE_AMPOULES=['fiole_rouge','ampoule_blanche','ampoule_blanche_commune','ampoule_blanche_cache','ampoule_femme'];
+function finalWhiteAmpoule(s) {
+  return FINAL_WHITE_AMPOULES.find(id=>hasItem(s,id));
+}
+function throwWhiteAtKnights(s) {
+  const id=finalWhiteAmpoule(s);
+  if (!id || ensureFinalKnights(s).phase!=='revived') return;
+  removeItem(s,id);
+  s.flags.finalKnights.whiteUsed=id;
+  s.flags.finalKnights.phase='cured';
+}
+function dashPastKnights(s) {
+  const success=roll3D6(s,'Dextérité — traverser la salle',currentDexterity(s));
+  const before=s.hp;
+  if (!success) s.hp=Math.max(1,Math.floor(before/2));
+  s.flags.finalKnightsEscape={success,dice:[...s.lastDice],total:s.lastTotal,threshold:s.lastStat,hpLost:before-s.hp};
+}
 function terminalChoices() { return fatalChoices(); }
 
 function dormantPerception(state, location) {
@@ -617,15 +722,20 @@ function equipVeilleurCollar(state) {
   raiseContamination(state, 1); // La poudre entre sous la peau lors de la fixation.
   addItem(state, 'collier_vitalite', 'Collier de vitalité', 'Incrusté dans la peau : +3 Vie maximale et actuelle, −1 Dextérité, +1 contamination à la pose. L’arracher retire les 3 points supplémentaires et cause 1 blessure.');
 }
-const SENTINELS = { maxHp: 4, dexterity: 8, force: 4, name: 'SENTINELLE NOIRE' };
+const SENTINELS = { maxHp: 6, dexterity: 12, force: 9, damage: 1, name: 'SENTINELLE NOIRE' };
 function ensureSentinels(state) {
   if (!state.sentinelFight || !Array.isArray(state.sentinelFight.hp))
-    state.sentinelFight = { hp: [4, 4], round: 0, last: null };
+    state.sentinelFight = { hp: [SENTINELS.maxHp, SENTINELS.maxHp], round: 0, last: null, balanceVersion: 3 };
+  if (state.sentinelFight.balanceVersion !== 3) {
+    state.sentinelFight.hp = state.sentinelFight.hp.map(hp => hp > 0 ? Math.min(SENTINELS.maxHp, hp + 2) : 0);
+    state.sentinelFight.last = null;
+    state.sentinelFight.balanceVersion = 3;
+  }
   return state.sentinelFight;
 }
 function sentinelCardsHtml(state) {
   const f = ensureSentinels(state);
-  const enemyHtml = `<div class="enemy-card"><div class="enemy-card-title">DEUX SENTINELLES NOIRES</div><div class="enemy-card-stats"><div><span>Sentinelle 1</span><strong>${f.hp[0]}/4 Vie</strong></div><div><span>Sentinelle 2</span><strong>${f.hp[1]}/4 Vie</strong></div><div><span>Dextérité</span><strong>8 chacune</strong></div><div><span>Force</span><strong>4 chacune</strong></div><div><span>Dégâts</span><strong>1 chacune</strong></div></div></div>`;
+  const enemyHtml = `<div class="enemy-card"><div class="enemy-card-title">DEUX SENTINELLES NOIRES</div><div class="enemy-card-stats"><div><span>Sentinelle 1</span><strong>${f.hp[0]}/${SENTINELS.maxHp} Vie</strong></div><div><span>Sentinelle 2</span><strong>${f.hp[1]}/${SENTINELS.maxHp} Vie</strong></div><div><span>Dextérité</span><strong>${SENTINELS.dexterity} chacune</strong></div><div><span>Force</span><strong>${SENTINELS.force} chacune</strong></div><div><span>Dégâts</span><strong>${SENTINELS.damage} chacune</strong></div></div></div>`;
   return enemyHtml;
 }
 function sentinelRound(state, target, blade) {
@@ -652,28 +762,28 @@ function sentinelRound(state, target, blade) {
     report.push('Tu restes hors de portée. Aucune des sentinelles ne riposte pendant ce lancer.');
   } else {
     heroDice = roll2D6();
-    heroScore = currentDexterity(state) + heroDice[0] + heroDice[1];
+    heroScore = currentDexterity(state) + currentForce(state) + heroDice[0] + heroDice[1];
     targetDice = roll2D6();
-    targetScore = SENTINELS.dexterity + targetDice[0] + targetDice[1];
+    targetScore = SENTINELS.dexterity + SENTINELS.force + targetDice[0] + targetDice[1];
     if (heroScore > targetScore) {
-      const damage = Math.min(f.hp[target], forceDamageBonus(currentForce(state)) + (state.weapon === 'none' ? 0 : combatPower(state)));
+      const damage = Math.min(f.hp[target], heroCombatDamage(state));
       f.hp[target] -= damage;
       report.push(`Tu touches la sentinelle ${target + 1} : ${damage} dégâts.`);
       if (f.hp[target] <= 0 && damage > 0) report.push(`La sentinelle ${target + 1} s’effondre. Elle est morte.`);
     } else if (heroScore < targetScore) {
-      const result = applyDamage(state, 1);
-      if (result.hpLost > 0 && !f.contaminated) { raiseContamination(state, 1); f.contaminated = true; }
+      const result = applyDamage(state, SENTINELS.damage);
+      if (result.hpLost > 0 && !f.contaminated) { raiseContamination(state, 2); f.contaminated = true; }
       report.push(`La sentinelle ${target + 1} te touche : ${result.absorbed} absorbé, ${result.hpLost} Vie perdue.`);
     } else report.push(`Tu pares la sentinelle ${target + 1} : égalité, aucun dégât.`);
     // Normal melee: the second sentinel gets an independent attack.
     for (let i = 0; i < 2; i++) {
       if (f.hp[i] <= 0 || i === target || state.hp <= 0) continue;
       const enemyDice = roll2D6();
-      const enemyScore = SENTINELS.dexterity + enemyDice[0] + enemyDice[1];
+      const enemyScore = SENTINELS.dexterity + SENTINELS.force + enemyDice[0] + enemyDice[1];
       otherSentinelRolls.push({ index: i, dice: [...enemyDice], score: enemyScore });
       if (enemyScore > heroScore) {
-        const result = applyDamage(state, 1);
-        if (result.hpLost > 0 && !f.contaminated) { raiseContamination(state, 1); f.contaminated = true; }
+        const result = applyDamage(state, SENTINELS.damage);
+        if (result.hpLost > 0 && !f.contaminated) { raiseContamination(state, 2); f.contaminated = true; }
         report.push(`La sentinelle ${i + 1} t'attaque : ${result.absorbed} absorbé, ${result.hpLost} Vie perdue.`);
       } else report.push(`Tu évites l'attaque de la sentinelle ${i + 1}.`);
     }
@@ -712,11 +822,11 @@ function sentinelResultHtml(state) {
   const rolls = r.blade
     ? `<div class="combat-side"><strong>TON LANCER</strong>${diceHtml(r.heroDice)}<p>3 dés : ${heroTotal} · Dextérité : ${r.bladeDexterity}</p><p class="combat-total"><strong>${r.success ? 'Réussite' : 'Échec'}</strong></p></div>`
     : `<div class="combat-roll-grid">
-         <div class="combat-side"><strong>TOI</strong>${diceHtml(r.heroDice)}<p>Dextérité ${r.heroScore - heroTotal} + dés ${heroTotal}</p><p class="combat-total">Attaque : <strong>${r.heroScore}</strong></p></div>
+         <div class="combat-side"><strong>TOI</strong>${diceHtml(r.heroDice)}<p>Dextérité + Force ${r.heroScore - heroTotal} + dés ${heroTotal}</p><p class="combat-total">Attaque : <strong>${r.heroScore}</strong></p></div>
          <div class="combat-versus">VS</div>
-         <div class="combat-side"><strong>SENTINELLE ${r.target + 1}</strong>${diceHtml(r.targetDice)}${Array.isArray(r.targetDice) ? `<p>Dextérité ${SENTINELS.dexterity} + dés ${r.targetDice.reduce((a,b)=>a+b,0)}</p><p class="combat-total">Attaque : <strong>${r.targetScore}</strong></p>` : '<p>Jet adverse non conservé dans cette ancienne sauvegarde.</p>'}</div>
+         <div class="combat-side"><strong>SENTINELLE ${r.target + 1}</strong>${diceHtml(r.targetDice)}${Array.isArray(r.targetDice) ? `<p>Dextérité ${SENTINELS.dexterity} + Force ${SENTINELS.force} + dés ${r.targetDice.reduce((a,b)=>a+b,0)}</p><p class="combat-total">Attaque : <strong>${r.targetScore}</strong></p>` : '<p>Jet adverse non conservé dans cette ancienne sauvegarde.</p>'}</div>
        </div>
-       ${(r.otherSentinelRolls || []).map(a => `<div class="combat-secondary-roll"><strong>Attaque de la sentinelle ${a.index + 1}</strong>${diceHtml(a.dice)}<p>Dextérité ${SENTINELS.dexterity} + dés ${a.dice.reduce((x,y)=>x+y,0)} · Attaque : <strong>${a.score}</strong> contre ${r.heroScore}</p></div>`).join('')}`;
+       ${(r.otherSentinelRolls || []).map(a => `<div class="combat-secondary-roll"><strong>Attaque de la sentinelle ${a.index + 1}</strong>${diceHtml(a.dice)}<p>Dextérité ${SENTINELS.dexterity} + Force ${SENTINELS.force} + dés ${a.dice.reduce((x,y)=>x+y,0)} · Attaque : <strong>${a.score}</strong> contre ${r.heroScore}</p></div>`).join('')}`;
   return `<div class="combat-roll-result"><div class="combat-roll-title">${r.blade ? 'Lame de jet' : `Échange n° ${f.round}`}</div>${rolls}<div class="combat-outcome">${r.report.map(line=>`<p>${line}</p>`).join('')}</div><div class="combat-life-line">Ta Vie : <strong>${state.hp}/${state.maxHp}</strong> · Terre noire : <strong>${contaminationLevel(state)}/13</strong></div></div>`;
 }
 
@@ -841,15 +951,15 @@ const STORY = {
           <div class="hero-info-title">Tes caractéristiques</div>
           <p><strong>Vie :</strong> indique la santé du personnage. Lorsqu’elle atteint zéro, c’est la fin de votre aventure.</p>
           <p><strong>Protection :</strong> provient de certaines pièces d’équipement. Elle absorbe les dégâts avant la Vie et diminue lorsqu’elle encaisse un choc.</p>
-          <p><strong>Force :</strong> représente sa puissance physique. Elle contribue aux dégâts infligés et permet de forcer, retenir ou briser ce qui barre la route.</p>
+          <p><strong>Force :</strong> représente sa puissance physique. Elle s’ajoute à la Dextérité pour remporter les échanges, et permet aussi de forcer, retenir ou briser ce qui barre la route. Elle n’augmente pas directement les dégâts.</p>
           ${state.flags.physicianNotesRead ? "<p><strong>Terre noire :</strong> 0–3 : appel puissant, 4–8 : équilibre précaire, 9–12 : transformation imminente, 13 : transformation définitive.</p>" : ""}
           <p><strong>Dextérité :</strong> représente son aisance et ses réflexes. Elle permet de prendre l’avantage au combat, mais aussi d’éviter pièges, chutes et autres dangers. Elle peut être affectée par ce qui est porté, par exemple une arme lourde.</p>
-          <p><strong>Puissance de l’arme :</strong> valeur propre à l’arme équipée. Elle s’ajoute au bonus de Force lorsque le personnage remporte un échange.</p>
+          <p><strong>Puissance de l’arme :</strong> valeur propre à l’arme équipée. Elle augmente les dégâts infligés lorsque tu remportes un échange.</p>
         </div>
 
         <div class="combat-rules-card">
           <div class="combat-rules-title">Règles des combats</div>
-          <p><strong>Combats :</strong> personnage et adversaire lancent chacun 2 dés et ajoutent leur Dextérité.<br>Le meilleur score remporte l’échange.<br>En cas d’égalité, personne n’est blessé.<br>Le gagnant inflige son <strong>bonus de Force + la Puissance de son arme</strong> s’il en possède une.<br><span class="combat-detail">Bonus de Force = Force ÷ 4, arrondi à l’inférieur, avec un minimum de 1.</span></p>
+          <p><strong>Combats :</strong> personnage et adversaire lancent chacun 2 dés et ajoutent leur Dextérité et leur Force.<br>Le meilleur score remporte l’échange. En cas d’égalité, personne n’est blessé.<br>La Force aide à remporter l’échange, mais ne modifie pas les dégâts. Tes dégâts sont de <strong>2 + la Puissance de ton arme</strong> si tu en possèdes une. Les dégâts adverses sont indiqués sur leur fiche.</p>
         </div>
 
         <div class="hero-weapon">Au départ, tu ne portes encore aucune arme.</div>
@@ -976,7 +1086,7 @@ const STORY = {
     title: 'La place de Valombre',
     image: 'La place de Valombre',
     text: state => {
-      const merchantDone = !!(state.flags.merchantVisited || state.visited?.c4);
+      const merchantDone = !!(state.flags.merchantPotionBought || state.visited?.c120);
       const streetDone = !!(state.flags.valombreStreetVisited || state.visited?.c6 || state.visited?.c7);
       const details = [];
       if (!merchantDone) details.push('Le marchand se tient sous son auvent.');
@@ -990,7 +1100,7 @@ const STORY = {
     },
     choices: state => {
       const list = [];
-      if (!state.flags.merchantVisited && !state.visited?.c4) list.push({ label: 'Voir le marchand', to: 'c4' });
+      if (!state.flags.merchantPotionBought && !state.visited?.c120) list.push({ label: 'Voir le marchand', to: 'c4' });
       list.push({ label: 'Voir la forgeronne', to: 'c5' });
       if (!state.flags.valombreStreetVisited && !state.visited?.c6 && !state.visited?.c7) list.push({ label: 'Approcher la personne dans la ruelle', to: 'c6' });
       list.push({ label: 'Partir vers la grotte', to: 'c8' });
@@ -1005,13 +1115,17 @@ const STORY = {
     image: 'Le marchand de Valombre',
     onEnter: s => { s.flags.merchantVisited = true; },
     text: state => {
-      if (hasItem(state,'potion_guerison')) {
+      if (state.flags.merchantPotionBought || state.visited?.c120 || hasItem(state,'potion_guerison')) {
         return `
           <p>Le marchand reconnaît la potion qui dépasse de ton sac.</p>
           <blockquote>« Garde-la pour le moment où tu en auras vraiment besoin. »</blockquote>
         `;
       }
       if (state.silver >= 3) {
+        if ((state.history || []).filter(id => id === 'c4').length > 1) return `
+          <p>Le marchand te reconnaît et soulève la fiole restée sur son étal.</p>
+          <blockquote>« Tu as changé d’avis ? La potion est toujours disponible. Elle te rendra <strong>1 dé de Vie</strong> pour trois pièces d’argent. »</blockquote>
+        `;
         return `
           <p>Le marchand t’écoute raconter le retour du cheval. Son visage devient grave.</p>
           <p>Il sort alors d’une petite caisse une fiole soigneusement bouchée.</p>
@@ -1024,13 +1138,14 @@ const STORY = {
       `;
     },
     choices: state => {
-      if (!hasItem(state,'potion_guerison') && state.silver >= 3) {
+      if (!state.flags.merchantPotionBought && !state.visited?.c120 && !hasItem(state,'potion_guerison') && state.silver >= 3) {
         return [
           {
             label: 'Acheter la potion de guérison',
             to: 'c120',
             effect: s => {
               s.silver -= 3;
+              s.flags.merchantPotionBought = true;
               addItem(
                 s,
                 'potion_guerison',
@@ -2618,11 +2733,19 @@ const STORY = {
     title: '',
     noImage: true,
     image: 'Ce qui vit entre les pierres',
+    onEnter: state => {
+      if (state.flags.fissureDustExposure) return;
+      state.flags.fissureDustExposure = true;
+      raiseContamination(state, 1);
+    },
     text: state => {
       const r = diceResultHtml(state);
+      const dust = '<p>Une fine poussière noire se détache des fissures et retombe sur toi. Elle s’infiltre sous tes vêtements et dans ta respiration. <strong>Terre noire : +1.</strong></p>';
       if (state.flags.fissurePass === 'success') {
         return r + `
           <p>Tu avances lentement, sans jamais t’arracher à la paroi.</p>
+
+          ${dust}
 
           <p>À plusieurs reprises, quelque chose de pâle affleure dans les fentes puis disparaît avant que tu puisses tourner la tête.</p>
 
@@ -2650,6 +2773,8 @@ const STORY = {
 
       return r + `
         ${weaponLine}
+
+        ${dust}
 
         <p>C’est suffisant.</p>
 
@@ -5532,7 +5657,7 @@ const STORY = {
     choices:s=>!s.flags.cavernCombat?[{label:'Revenir au combat',to:'c201'}]:s.hp<=0 || s.flags.blackEarthTransformed?terminalChoices():[{label:'Approcher de la porte gigantesque',to:'c203'}]
   },
   c203: {
-    number:'PAGE 203',title:'Sir Aldren',
+    number:'PAGE 203',title:'',
     text:s=>`<p>À chaque pas vers la porte, une vibration étrange semble traverser la pierre.</p>
       <blockquote>« ${heroName(s)}… »</blockquote>
       <p>Contre une paroi de la grotte, un homme est adossé à la roche. Tu reconnais Sir Aldren.</p>
@@ -5630,12 +5755,149 @@ const STORY = {
         ${s.flags.finalMazeFound?'<p>Un souffle d’air frais te parvient. Devant toi, une ouverture mène enfin hors du dédale.</p>':''}`;
     },
     choices:s=>s.hp<=0?terminalChoices():s.flags.finalMazeFound
-      ?[{label:'Suivre l’air frais',to:'c210'}]
+      ?[{label:'Suivre l’air frais',to:'c223'}]
       :[{label:'Prendre le passage de gauche',stay:true,effect:t=>finalMazeRoll(t,'gauche')},
         {label:'Prendre le passage de droite',stay:true,effect:t=>finalMazeRoll(t,'droite')}]
   },
+  c223: {
+    number:'PAGE 223',title:'La faille',
+    text:s=>`<p>La sortie du dédale donne sur une faille gigantesque. Tu n’en vois pas le fond. Un courant d’air remonte de l’obscurité.</p>
+      <p>De l’autre côté, la paroi se perd dans une légère brume bleutée. Une grande ouverture semble mener à une autre pièce. Elle ne paraît pas si loin, mais même avec tout l’élan du monde, aucun saut ne pourrait t’y conduire. Tu dois trouver un autre moyen de traverser.</p>
+      <p>Une petite échelle de corde, nouée à un anneau de fer, descend dans le vide. Sur la gauche, des prises irrégulières courent le long de la paroi, directement au-dessus du gouffre. Sur la droite, une fissure juste assez large pour t’y glisser s’enfonce dans la roche.</p>
+      <p>Quelque part en contrebas, trois coups sourds résonnent. Le silence revient avant que tu puisses savoir d’où ils venaient.</p>
+      `,
+    choices:s=>[
+      {label:'Descendre l’échelle de corde',to:'c224'},
+      {label:'Longer la faille en s’accrochant aux prises',to:'c226'},
+      {label:'Se glisser dans l’ouverture de droite',to:'c230'}
+    ]
+  },
+  c224: {
+    number:'PAGE 224',title:'Au bout de l’échelle',
+    text:`<p>Tu descends l’échelle. La roche disparaît derrière la brume et tes bras se raidissent. Au dernier barreau, tu n’as toujours pas atteint le fond. La brume est presque assez proche pour être touchée du pied. Tu ne distingues rien sous elle.</p><p>L’échelle s’arrête ici.</p>`,
+    choices:[
+      {label:'Sauter dans la brume, sans voir le fond',to:'c225',effect:s=>{s.hp=0;}},
+      {label:'Remonter l’échelle',to:'c223'}
+    ]
+  },
+  c225: {
+    number:'PAGE 225',title:'',
+    text:`<p>Tu lâches l’échelle. La brume t’enveloppe aussitôt. Dix secondes passent, puis vingt. Aucun sol, aucune eau. Le courant d’air hurle contre tes oreilles. Après plus de cinquante secondes, la chute s’achève au fond du gouffre. Tu ne vois jamais ce qui t’a attendu en bas.</p>`,
+    choices:terminalChoices()
+  },
+  c226: {
+    number:'PAGE 226',title:'Les prises dans la roche',
+    text:`<p>Tu te plaques contre la paroi et cherches une première prise. Sous tes pieds, il n’y a que le vide. Tu avances de côté, les doigts accrochés à la roche, en déplaçant ton poids d’une aspérité à la suivante.</p><p>Les prises deviennent plus rares. Par endroits, tes pieds ne trouvent qu’une saillie à peine visible. Tu n’oses pas regarder en bas. À mi-chemin, une portion presque lisse te barre la route. Pour atteindre la prise suivante, il faut lâcher une main et te déporter au-dessus du gouffre.</p>`,
+    choices:[
+      {label:'Faire demi-tour',to:'c223'},
+      {label:'Tenter d’avancer',to:'c227'}
+    ]
+  },
+  c227: {
+    number:'PAGE 227',title:'Au-dessus du gouffre',
+    noImage:true,
+    text:`<p>Tu tends la main vers la prise suivante. Pour l’atteindre, tu dois quitter un instant l’appui qui te maintient contre la paroi. Sous tes pieds, le gouffre s’ouvre dans la brume.</p><p>Il faut éprouver ton équilibre et ta Dextérité.</p>`,
+    choices:[{label:'Jeter les dés — Dextérité',to:'c235',effect:finalPassageDex}]
+  },
+  c235: {
+    number:'PAGE 235',title:'',
+    text:s=>s.flags.finalPassageDex?.success
+      ? `${finalPassageDiceHtml(s.flags.finalPassageDex)}<p>Tu retrouves une prise de l’autre côté du passage lisse. La roche te permet enfin de poursuivre.</p>`
+      : `${finalPassageDiceHtml(s.flags.finalPassageDex)}<p>Ton pied glisse. Tu bascules, mais tes doigts agrippent une aspérité. Le choc contre la paroi te coûte ${s.flags.finalPassageBruise?.hpLost||0} Vie${s.flags.finalPassageBruise?.absorbed?` (${s.flags.finalPassageBruise.absorbed} absorbé${s.flags.finalPassageBruise.absorbed>1?'s':''} par ta protection)`:''}. Tu restes suspendu au-dessus du gouffre.</p><p>Il te reste une chance de te hisser sur la prise.</p>`,
+    choices:s=>s.hp<=0?terminalChoices():s.flags.finalPassageDex?.success
+      ?[{label:'Poursuivre la traversée',to:'c228'}]
+      :[{label:'Jeter les dés pour te rattraper',to:'c229',effect:finalPassageRecovery}]
+  },
+  c228: {
+    number:'PAGE 228',title:'L’autre côté de la faille',
+    noImage:true,
+    text:`<p>Tu avances encore de prise en prise, les pieds suspendus au-dessus du vide. Enfin, tes mains atteignent le rebord opposé. Tu te hisses sur un sol stable, les bras tremblants.</p><p>Une galerie s’ouvre devant toi. Au bout, une porte entrebâillée laisse passer une faible lumière.</p>`,
+    choices:[{label:'Rejoindre la pièce éclairée',to:'c210'}]
+  },
+  c229: {
+    number:'PAGE 229',title:'',
+    noImage:true,
+    text:s=>s.flags.finalPassageRecovery?.success
+      ? `${finalPassageDiceHtml(s.flags.finalPassageRecovery)}<p>Tu trouves une seconde prise et te hisses contre la roche. La chute est évitée de justesse.</p>`
+      : `${finalPassageDiceHtml(s.flags.finalPassageRecovery)}<p>La prise cède sous tes doigts. Tu n’as plus aucun appui. La paroi s’éloigne tandis que tu bascules dans le vide.</p>`,
+    choices:s=>s.flags.finalPassageRecovery?.success
+      ?[{label:'Terminer la traversée',to:'c228'}]
+      :[{label:'La chute',to:'c236',effect:s=>{s.hp=0;}}]
+  },
+  c236: {
+    number:'PAGE 236',title:'Au fond du gouffre',
+    text:`<p>Tu tombes dans le vide. La roche s’éloigne, puis la brume efface la dernière lumière. La chute semble ne jamais finir.</p><p>Enfin, tu t’écrases lourdement au fond du gouffre. Le craquement de tes os résonne contre les parois, comme s’il pouvait remonter jusqu’à Valombre.</p>`,
+    choices:terminalChoices()
+  },
+  c230: {
+    number:'PAGE 232',title:'Le passage étroit',
+    text:s=>s.flags.finalKnights?.phase==='revived'
+      ? `<p>Tu te glisses une nouvelle fois par l’ouverture étroite. Les deux chevaliers sont toujours dans la salle devant toi.</p>`
+      : `<p>L’ouverture se resserre autour de toi, puis s’élargit assez pour te laisser avancer. Un second étranglement t’oblige à progresser de profil. Impossible de savoir si tu as choisi une issue ou une impasse.</p>`,
+    choices:[{label:'Poursuivre dans la roche',to:'c237'}]
+  },
+  c237: {
+    number:'PAGE 237',title:'La grande salle',
+    text:s=>s.flags.finalKnights?.phase==='revived'
+      ? `<p>La grande salle s’étend devant toi. Le chevalier que tu avais abattu s’est relevé, et l’autre ne te quitte pas des yeux.</p>`
+      : `<p>Après quelques mètres, la roche s’ouvre enfin sur une grande salle tout en longueur. Elle semble mener droit de l’autre côté du précipice aperçu tout à l’heure.</p><p>À peine en as-tu atteint le milieu que deux silhouettes déboulent de l’extrémité opposée. Sous leurs lourdes armures, leurs mouvements ont quelque chose de féroce, mais elles ont certainement été humaines autrefois. D’anciens chevaliers, à en juger par leurs épées massives.</p>${s.throwingBlades>0?`<p>Tu possèdes ${s.throwingBlades} lame${s.throwingBlades>1?'s':''} de jet. C’est probablement le moment de t’en servir si tu veux traverser cette salle.</p>`:''}<p>Tu ne peux plus leur échapper.</p>`,
+    choices:[{label:'Affronter les deux anciens chevaliers',to:'c231'}]
+  },
+  c231: {
+    number:'PAGE 233',title:'',
+    text:s=>{
+      const f=ensureFinalKnights(s);
+      if (f.phase==='revived') return '<p>Alors que tu viens de blesser le deuxième chevalier, tu entends un grincement sur le côté.</p>';
+      const revival='<p>Les deux anciens chevaliers te barrent le passage. Tu dois en viser un tandis que l’autre cherche une ouverture pour frapper. Leurs armures absorbent les premiers coups, puis se brisent. Tes lames de jet peuvent atteindre les jointures.</p>';
+      return `${revival}<div class="enemy-card"><div class="enemy-card-title">ANCIENS CHEVALIERS</div><div class="enemy-card-stats final-knights-stats"><div><span>Chevalier 1</span><strong>${f.hp[0]}/10 Vie<br>${f.armor[0]}/3 Protection</strong></div><div><span>Chevalier 2</span><strong>${f.hp[1]}/10 Vie<br>${f.armor[1]}/3 Protection</strong></div><div><span>Dextérité</span><strong>${FINAL_KNIGHT_STATS.dexterity} chacun</strong></div><div><span>Force</span><strong>${FINAL_KNIGHT_STATS.force} chacun</strong></div><div><span>Armure</span><strong>${FINAL_KNIGHT_STATS.armor} points chacun</strong></div><div><span>Dégâts</span><strong>${FINAL_KNIGHT_STATS.damage} chacun</strong></div></div></div>${f.last?`<div class="combat-roll-result"><div class="combat-dice">${f.last.dice.map(renderDie).join('')}</div>${f.last.messages.map(m=>`<p>${m}</p>`).join('')}</div>`:''}`;
+    },
+    choices:s=>{
+      if(s.hp<=0)return terminalChoices();
+      const f=ensureFinalKnights(s);
+      if(f.phase==='revived')return [{label:'Entendre un grincement sur le côté',to:'c238'}];
+      if(f.phase==='cured')return [{label:'Traverser la salle',to:'c210'}];
+      return f.hp.flatMap((hp,i)=>hp<=0?[]:[
+        {label:`Jeter les dés contre le chevalier ${i+1} (${hp} Vie)`,stay:true,inlineCombat:true,effect:t=>finalKnightsRound(t,i,false),redirectAfterEffect:t=>t.hp>0&&t.flags.finalKnights?.phase==='revived'?'c239':null},
+        ...((s.throwingBlades||0)>0?[{label:`Lancer une lame sur le chevalier ${i+1} (${s.throwingBlades} restante${s.throwingBlades>1?'s':''})`,stay:true,inlineCombat:true,effect:t=>finalKnightsRound(t,i,true),redirectAfterEffect:t=>t.hp>0&&t.flags.finalKnights?.phase==='revived'?'c239':null}]:[])
+      ]);
+    }
+  },
+  c239: {
+    number:'PAGE 239',title:'',noImage:true,
+    text:'<p>Alors que tu viens de blesser le deuxième chevalier, tu entends un grincement sur le côté.</p>',
+    choices:[{label:'Entendre un grincement sur le côté',to:'c238'}]
+  },
+  c238: {
+    number:'PAGE 238',title:'',
+    text:`<p>Le chevalier que tu avais tué est en train de se relever derrière toi. Son armure craque autour d’un corps qui refuse de rester à terre. Ton arme ne semble pas efficace contre ces monstres sortis tout droit des enfers.</p><p>La sortie est de l’autre côté de la salle. Tu devras te faufiler entre leurs épées si tu veux y accéder. Derrière toi, tu peux encore retrouver l’étroit passage par lequel tu es entré.</p>`,
+    choices:s=>[
+        {label:'Faire demi-tour par l’ouverture étroite',to:'c234'},
+        {label:'Tenter de courir jusqu’à l’autre côté',to:'c232',effect:dashPastKnights},
+        ...(finalWhiteAmpoule(s)?[{label:'Jeter une ampoule de liquide blanc sur les chevaliers',to:'c233',effect:throwWhiteAtKnights}]:[])
+      ]
+  },
+  c232: {
+    number:'PAGE 234',title:'',
+    text:s=>`${finalPassageDiceHtml(s.flags.finalKnightsEscape)}${s.flags.finalKnightsEscape?.success
+      ? '<p>Tu attends que les deux épées se lèvent, puis tu te glisses entre les chevaliers. L’un d’eux tend le bras, trop tard. Tu franchis l’ouverture de l’autre côté de la salle sans te retourner.</p>'
+      : `<p>Tu t’élances vers la sortie. Un chevalier te rattrape et son épée te frappe de plein fouet. Tu perds ${s.flags.finalKnightsEscape?.hpLost||0} Vie : il ne t’en reste que ${s.hp}. Tu parviens pourtant à te dégager et te traînes jusqu’à l’ouverture, hors de leur portée.</p>`}`,
+    choices:[{label:'Poursuivre dans la salle suivante',to:'c210'}]
+  },
+  c233: {
+    number:'PAGE 235',title:'',
+    text:`<p>Tu jettes l’ampoule contre les chevaliers. Le verre éclate sur leurs armures. Le liquide blanc s’infiltre entre les plaques et les deux silhouettes s’arrêtent net.</p><p>Leurs membres semblent reprendre peu à peu une forme humaine. Mais plus la transformation avance, plus de nouvelles aberrations apparaissent : un membre trop long, l’autre trop court. Leurs visages reprennent forme, humains un instant, puis la peau semble aspirée par les orbites. Les joues se creusent, les oreilles pendent. Ils s’effondrent tous les deux dans un craquement d’os.</p><p>Leurs corps, pas plus que leurs esprits, n’ont survécu à toutes ces transformations. Le passage est libre.</p>`,
+    choices:[{label:'Traverser la salle',to:'c210'}]
+  },
+  c234: {
+    number:'PAGE 236',title:'',
+    text:`<p>Tu recules pendant que les chevaliers s’avancent. Tu te glisses de profil dans l’ouverture étroite par laquelle tu es arrivé. Leurs lourdes armures les empêchent de te suivre.</p><p>Te voici de retour devant la faille. Tu dois désormais tenter un autre passage. L’échelle de corde et les prises sur la gauche sont toujours là.</p>`,
+    choices:[
+      {label:'Descendre l’échelle de corde',to:'c224'},
+      {label:'Longer la faille en s’accrochant aux prises',to:'c226'}
+    ]
+  },
   c210: {
-    number:'PAGE 210',title:'Une autre survivante',
+    number:'PAGE 210',title:'',
     text:`<p>Tu entres dans une petite pièce sombre. Une femme inconnue est assise contre la roche. Ses vêtements abîmés laissent deviner qu’elle est une guerrière, mais toute sa force semble l’avoir quittée depuis longtemps.</p>
       <blockquote>« J’y étais presque. À deux doigts de mettre fin au règne de cette chose. »</blockquote>
       <p>Tu lui demandes comment elle sait qu’il faut détruire l’esprit.</p>
@@ -5688,7 +5950,7 @@ const STORY = {
     }
   },
   c213: {
-    number:'PAGE 213',title:'L’esprit libéré',
+    number:'PAGE 213',title:'',
     text:`<p>La lame noire tranche un lien de lumière. Tous les autres se rompent à sa suite. Une vague verte traverse la caverne et t’enveloppe. La chaleur pénètre jusque dans tes os. La douleur, la faim et l’épuisement disparaissent. Tu te redresses avec une force que tu ne te connaissais pas.</p>`,
     choices:[{label:'Reprendre le chemin de la surface',to:'c220'}]
   },
@@ -5704,7 +5966,7 @@ const STORY = {
     choices:[{label:'Voir ce que devient Valombre',to:'c217'}]
   },
   c214: {
-    number:'PAGE 215',title:'La fin de l’esprit',
+    number:'PAGE 215',title:'',
     text:s=>`<p>Tu enfonces la lame noire dans le cœur de la lumière. La sphère se déchire dans un souffle vert. Une onde terrifiante t’arrache presque l’arme des mains et te projette en arrière.</p>
       <p>Puis le souffle faiblit et tout redevient noir. Un noir calme, presque apaisant. Un silence absolu.</p>
       <p>Tu restes longtemps immobile. Après les combats, les pièges et les voix qui t’ont poursuivi jusque dans les profondeurs, tu peux enfin reprendre ta respiration.</p>
@@ -5718,7 +5980,7 @@ const STORY = {
     choices:[{label:'Rejoindre Valombre',to:'c218'}]
   },
   c218: {
-    number:'PAGE 216',title:'Le retour à Valombre',
+    number:'PAGE 216',title:'Valombre',
     text:s=>`<p>De retour au village, tout te paraît calme. Le bruit d’une porte qu’on ouvre, une conversation sur la place, l’odeur du pain : ces choses ordinaires te bouleversent après ce que tu viens de traverser.</p>
       <p>Les semaines passent, puis les mois. Valombre reprend lentement vie. Les étals se remplissent, les familles reviennent et tu aides les habitants à renouer le commerce avec les régions voisines. Rien ne change d’un coup, mais chaque petite victoire compte.</p>
       ${s.flags.aldrenOutcome==='severed'
@@ -5737,7 +5999,7 @@ const STORY = {
     choices:terminalChoices()
   },
   c215: {
-    number:'PAGE 217',title:'L’effondrement',
+    number:'PAGE 217',title:'',
     text:`<p>Tu places la poudre aux quatre coins de la pièce, puis tu déroules les mèches jusqu’au centre.</p>
       <p>Tu repenses à tout le chemin parcouru. Une dernière pensée pour Sir Aldren. Une dernière pensée aussi pour cette vie d’aventure que tu ne vivras pas.</p>
       <p>Tu allumes les mèches. Les flammes brillent doucement et avancent sans trembler le long de la pierre.</p>
@@ -5759,7 +6021,7 @@ const STORY = {
     choices:terminalChoices()
   },
   c217: {
-    number:'PAGE 219',title:'La fin d’un règne',
+    number:'PAGE 219',title:'',
     text:`<p>Un beau jour, sur la place de Valombre, un marchand inconnu s’approche de toi. Il te parle d’une voix douce. Tu te penches pour l’entendre.</p>
       <p>D’un mouvement brutal, il tire une lame noire de sous son manteau et te l’enfonce profondément dans la poitrine.</p>
       <p>Une douleur fulgurante te traverse. La force qui t’habitait depuis la grotte disparaît d’un seul coup. Tu tombes à genoux.</p>
@@ -5769,7 +6031,7 @@ const STORY = {
     choices:terminalChoices()
   },
   c219: {
-    number:'PAGE 220',title:'La transformation',
+    number:'PAGE 220',title:'',
     text:`<p><strong>Ton taux de terre noire vient de dépasser le niveau critique.</strong></p>
       <p>Tu sens d’abord une brûlure, profonde, impossible à localiser.</p>
       <p>Une douleur insoutenable traverse ton corps, comme si quelque chose cherchait à naître sous ta peau.</p>
@@ -5880,6 +6142,23 @@ const STORY = {
     'c208': 'La demande d’Aldren',
     'c222': 'Laisser Aldren',
     'c209': 'Le labyrinthe impossible',
+    'c223': 'La faille',
+    'c224': 'Au bout de l’échelle',
+    'c225': 'La chute',
+    'c226': 'Les prises dans la roche',
+    'c227': 'Au-dessus du gouffre',
+    'c235': 'La prise suivante',
+    'c228': 'L’autre côté de la faille',
+    'c229': 'La dernière prise',
+    'c236': 'Au fond du gouffre',
+    'c230': 'Le passage étroit',
+    'c237': 'La grande salle',
+    'c231': 'Les anciens chevaliers',
+    'c238': 'Le chevalier se relève',
+    'c239': 'Le grincement',
+    'c232': 'Courir entre les lames',
+    'c233': 'Le liquide blanc',
+    'c234': 'Revenir sur ses pas',
     'c210': 'Une autre survivante',
     'c211': 'La chambre de l’esprit',
     'c212': 'La vérité du prisonnier',
@@ -6060,7 +6339,7 @@ const STORY = {
 };
 
   // L'ordre d'affichage peut changer ; les identifiants cN restent stables pour les liens et les sauvegardes.
-  const PAGE_ORDER = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15', 'c16', 'c17', 'c18', 'c19', 'c20', 'c21', 'c22', 'c23', 'c24', 'c25', 'c26', 'c27', 'c28', 'c29', 'c30', 'c31', 'c32', 'c33', 'c34', 'c35', 'c36', 'c37', 'c38', 'c39', 'c40', 'c41', 'c42', 'c43', 'c44', 'c45', 'c46', 'c47', 'c48', 'c49', 'c50', 'c51', 'c52', 'c53', 'c54', 'c55', 'c56', 'c57', 'c58', 'c59', 'c60', 'c61', 'c62', 'c63', 'c64', 'c65', 'c66', 'c67', 'c68', 'c69', 'c70', 'c71', 'c72', 'c73', 'c74', 'c75', 'c76', 'c77', 'c78', 'c79', 'c80', 'c81', 'c82', 'c83', 'c84', 'c85', 'c86', 'c87', 'c88', 'c89', 'c90', 'c91', 'c92', 'c93', 'c94', 'c95', 'c96', 'c97', 'c98', 'c99', 'c100', 'c101', 'c102', 'c103', 'c138', 'c151', 'c196', 'c197', 'c198', 'c199', 'c200', 'c104', 'c105', 'c106', 'c107', 'c139', 'c184', 'c185', 'c186', 'c187', 'c188', 'c189', 'c108', 'c190', 'c140', 'c191', 'c192', 'c193', 'c194', 'c195', 'c109', 'c110', 'c111', 'c112', 'c113', 'c114', 'c115', 'c116', 'c117', 'c118', 'c119', 'c120', 'c121', 'c122', 'c123', 'c124', 'c125', 'c126', 'c127', 'c128', 'c129', 'c130', 'c131', 'c132', 'c133', 'c134', 'c135', 'c136', 'c137', 'c141', 'c142', 'c143', 'c144', 'c145', 'c146', 'c147', 'c148', 'c149', 'c150', 'c152', 'c153', 'c154', 'c155', 'c156', 'c157', 'c158', 'c159', 'c160', 'c161', 'c162', 'c163', 'c164', 'c165', 'c166', 'c167', 'c168', 'c169', 'c170', 'c171', 'c172', 'c173', 'c174', 'c175', 'c176', 'c177', 'c178', 'c179', 'c180', 'c181', 'c182', 'c183', 'c201', 'c202', 'c203', 'c204', 'c205', 'c206', 'c207', 'c208', 'c209', 'c210', 'c211', 'c212', 'c213', 'c220', 'c214', 'c218', 'c215', 'c216', 'c217', 'c219', 'c221', 'c222'];
+  const PAGE_ORDER = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15', 'c16', 'c17', 'c18', 'c19', 'c20', 'c21', 'c22', 'c23', 'c24', 'c25', 'c26', 'c27', 'c28', 'c29', 'c30', 'c31', 'c32', 'c33', 'c34', 'c35', 'c36', 'c37', 'c38', 'c39', 'c40', 'c41', 'c42', 'c43', 'c44', 'c45', 'c46', 'c47', 'c48', 'c49', 'c50', 'c51', 'c52', 'c53', 'c54', 'c55', 'c56', 'c57', 'c58', 'c59', 'c60', 'c61', 'c62', 'c63', 'c64', 'c65', 'c66', 'c67', 'c68', 'c69', 'c70', 'c71', 'c72', 'c73', 'c74', 'c75', 'c76', 'c77', 'c78', 'c79', 'c80', 'c81', 'c82', 'c83', 'c84', 'c85', 'c86', 'c87', 'c88', 'c89', 'c90', 'c91', 'c92', 'c93', 'c94', 'c95', 'c96', 'c97', 'c98', 'c99', 'c100', 'c101', 'c102', 'c103', 'c138', 'c151', 'c196', 'c197', 'c198', 'c199', 'c200', 'c104', 'c105', 'c106', 'c107', 'c139', 'c184', 'c185', 'c186', 'c187', 'c188', 'c189', 'c108', 'c190', 'c140', 'c191', 'c192', 'c193', 'c194', 'c195', 'c109', 'c110', 'c111', 'c112', 'c113', 'c114', 'c115', 'c116', 'c117', 'c118', 'c119', 'c120', 'c121', 'c122', 'c123', 'c124', 'c125', 'c126', 'c127', 'c128', 'c129', 'c130', 'c131', 'c132', 'c133', 'c134', 'c135', 'c136', 'c137', 'c141', 'c142', 'c143', 'c144', 'c145', 'c146', 'c147', 'c148', 'c149', 'c150', 'c152', 'c153', 'c154', 'c155', 'c156', 'c157', 'c158', 'c159', 'c160', 'c161', 'c162', 'c163', 'c164', 'c165', 'c166', 'c167', 'c168', 'c169', 'c170', 'c171', 'c172', 'c173', 'c174', 'c175', 'c176', 'c177', 'c178', 'c179', 'c180', 'c181', 'c182', 'c183', 'c201', 'c202', 'c203', 'c204', 'c205', 'c206', 'c207', 'c208', 'c209', 'c210', 'c211', 'c212', 'c213', 'c220', 'c214', 'c218', 'c215', 'c216', 'c217', 'c219', 'c221', 'c222', 'c223', 'c224', 'c225', 'c226', 'c227', 'c235', 'c228', 'c229', 'c236', 'c230', 'c231', 'c232', 'c233', 'c234', 'c237', 'c238', 'c239'];
   const PAGE_BY_NODE = Object.fromEntries(PAGE_ORDER.map((id, i) => [id, i]));
   const padPage = n => String(n).padStart(3, '0');
 
@@ -6665,6 +6944,17 @@ const STORY = {
   }
 
   const inventory = {
+    displayEntries(state) {
+      const ids=FINAL_WHITE_AMPOULES.filter(id=>id!=='fiole_rouge'||state.flags.physicianNotesRead);
+      const owned=ids.filter(id=>hasItem(state,id));
+      if (!owned.length) return Object.entries(state.inventory);
+      const entries=Object.entries(state.inventory).filter(([id])=>!owned.includes(id));
+      entries.push(['white_ampoules',{
+        name:'Ampoule blanche', quantity:owned.length,
+        description:'Chaque ampoule peut retirer 4 points de terre noire, sans soigner les blessures. Une ampoule est consommée à chaque utilisation.'
+      }]);
+      return entries;
+    },
     topLine(state) {
       return `Argent : ${state.silver} · Or : ${state.goldCoins} · Arme : ${weaponLabel(state)}`;
     },
@@ -6683,10 +6973,11 @@ const STORY = {
         ? `<div class="dice-result"><p class="roll-number">Dernière potion</p><div class="dice-faces">${renderDie(state.lastHealingDie)}</div><p><strong>+${state.lastHealingDie} point${state.lastHealingDie > 1 ? 's' : ''} de Vie</strong></p><p>Vie : <strong>${state.hp} / ${state.maxHp}</strong></p></div>`
         : '';
       const earth = contaminationLevel(state)>0 ? `<div class="inventory-equipment-card"><strong>Terre noire : ${contaminationLevel(state)}/13</strong><p>${state.flags.physicianNotesRead ? "0–3 : appel puissant · 4–8 : équilibre précaire · 9–12 : transformation imminente · 13 : transformation." : "Effets inconnus."}</p></div>` : "";
-      return equipment + earth + healing;
+      return equipment + earth + healing + testInventoryHtml(state);
     },
 
     actionHtml(id, item, state) {
+      if (id === 'white_ampoules') return `<div class="inventory-actions"><button class="inventory-action-btn" data-action="use-white-stack" ${contaminationLevel(state)>0?'':'disabled'}>Utiliser une ampoule : −4 terre noire</button></div>`;
       if (id === 'parchemin') {
         return `<div class="inventory-actions"><button class="inventory-action-btn" data-action="read-parchment">Relire les notes</button></div>`;
       }
@@ -6734,6 +7025,14 @@ const STORY = {
     },
 
     handleAction(action, state, api) {
+      if (action === 'use-white-stack') {
+        if (contaminationLevel(state) <= 0) return true;
+        const id=FINAL_WHITE_AMPOULES.find(key=>hasItem(state,key)&&(key!=='fiole_rouge'||state.flags.physicianNotesRead));
+        if (!id) return true;
+        if (id==='ampoule_blanche') blackEarthTreatment(state);
+        else useWhiteAmpouleForContamination(state,id);
+        api.saveState();api.render();api.openInventory();return true;
+      }
       if (action.startsWith('test-toggle-item:')) {
         const id = action.slice('test-toggle-item:'.length);
         const entry = TEST_ITEM_CATALOG.find(item => item.id === id);
@@ -6881,7 +7180,7 @@ const STORY = {
     const force = currentForce(state);
     const dexterity = currentDexterity(state);
     const weaponPower = state.weapon === 'none' ? 0 : combatPower(state);
-    const damage = forceDamageBonus(force) + weaponPower;
+    const damage = heroCombatDamage(state);
     const armor = [];
     ensureProtectionState(state);
     if (hasItem(state, 'casque_cabosse')) {
@@ -6944,7 +7243,7 @@ const STORY = {
     access: 'free',
     contentVersion: 123,
     pageMapVersion: 86,
-    saveVersion: 27,
+    saveVersion: 26,
     assetBase: './books/Livre01-La-Grotte-de-Valombre/images',
     uiAssetBase: './books/Livre01-La-Grotte-de-Valombre/assets',
     showMissingIllustrationPlaceholder: true, // uniquement pour la version Travail
@@ -6953,12 +7252,18 @@ const STORY = {
     pageByNode: PAGE_BY_NODE,
     navigationTitles: PAGE_NAV_TITLES,
     padPage,
-    imageBaseForPage: n => (n === 178 || n === 179 || n === 202)
-      ? 'La-Grotte-de-Valombre-Combat'
+    imageBaseForPage: n => (n === 233 || n === 234)
+      ? 'La-Grotte-de-Valombre-combat'
+      : (n === 178 || n === 179 || n === 202)
+        ? 'La-Grotte-de-Valombre-Combat'
       : `La-Grotte-de-Valombre-${padPage(n)}`,
-    // Exception : les pages 178, 179 et 202 réutilisent l’illustration de combat.
+    // Les pages 178, 179, 202, 233 et 234 réutilisent l’illustration de combat.
     // Toutes les autres pages continuent à utiliser exclusivement leur propre numéro.
     imageCandidatesForPage: (n, state) => {
+      if (n === 233 || n === 234) return [
+        'La-Grotte-de-Valombre-combat',
+        'pages/La-Grotte-de-Valombre-combat'
+      ];
       if (n === 178 || n === 179 || n === 202) return [
         'La-Grotte-de-Valombre-Combat',
         'pages/La-Grotte-de-Valombre-Combat'
@@ -6977,7 +7282,7 @@ const STORY = {
         ? [filename, `pages/${filename}`]
         : [`pages/${filename}`, filename];
     },
-    imageExtensions: ['jpg', 'jpeg', 'png'],
+    imageExtensions: ['webp', 'jpg', 'jpeg', 'png'],
     createInitialState,
     migrateState: migratePageNumbersV78,
     rules: { currentForce, currentDexterity, combatPower, weaponLabel, currentProtection, maxProtection, applyDamage, raiseContamination },
@@ -6997,8 +7302,17 @@ const STORY = {
     inventory,
     checkpoints: [
       { node: 'c20', label: 'Entrée de la grotte', onlyIfNone: true },
-      { node: 'c201', label: 'La caverne des condamnés' }
+      { node: 'c201', label: 'La caverne des condamnés' },
+      { node: 'c209', label: 'L’entrée du labyrinthe' }
     ],
+    testCheckpointForNode: id => /^c(?:22[3-9]|23[0-9])$/.test(id) ? 'c209' : null,
+    normalizeCheckpoint(saved) {
+      if (saved.node !== 'c223' || saved.currentCheckpoint !== 'La faille') return false;
+      saved.node = 'c209';
+      saved.currentCheckpoint = 'L’entrée du labyrinthe';
+      saved.flags = { ...saved.flags, finalMazeTurns:0, finalMazeFound:false, finalMazeLast:null };
+      return true;
+    },
     legacyStorageKeys: ['ldveh.book.ecuyer-01.save.v1', 'ldveh.book.ecuyer-01-valombre.save.v1', 'valombre_save_v12_3d6_stats18'],
     legacyCheckpointKeys: ['ldveh.book.ecuyer-01.checkpoint.v1', 'ldveh.book.ecuyer-01-valombre.checkpoint.v1', 'valombre_checkpoint_v12_3d6_stats18'],
     exportSeriesMemory(state) {
