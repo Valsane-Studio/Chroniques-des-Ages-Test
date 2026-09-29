@@ -6,8 +6,8 @@
   const SUPABASE_URL = 'https://tlgbzpenhuooabcyrmvf.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_wb7-3q3UEsRfUU5xaWSbLA_MxQWVvaT';
 
-  const SUCCESS_NODES = new Set(['c218']);
-  const NARRATIVE_DEATH_NODES = new Set(['c215','c216','c217','c221','c225','c236']);
+  const SUCCESS_NODES = new Set(['c218','c23']);
+  const NARRATIVE_DEATH_NODES = new Set(['c21','c215','c216','c217','c221','c225','c236']);
   const COMBAT_DEATH_NODES = new Set([
     'c25','c26','c27','c29','c33','c36','c38','c47',
     'c61','c62','c78','c79','c80','c97','c132','c133',
@@ -18,6 +18,7 @@
 
   let getState = null;
   let persistState = null;
+  let lastCompletionContext = null;
   let listenersBound = false;
   let visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
   const inFlight = new Set();
@@ -261,6 +262,7 @@
   }
 
   async function recordCompletion(context) {
+    lastCompletionContext = context || lastCompletionContext;
     const state = context?.state;
     const book = context?.book;
     const renderNodeId = context?.renderNodeId;
@@ -296,15 +298,227 @@
     const state = getState?.();
     const run = ensureRun(state);
     if (!run?.id) throw new Error('Aucune partie TEST active.');
+
+    if (!run.sent && lastCompletionContext) {
+      const ok = await recordCompletion(lastCompletionContext);
+      if (!ok) throw new Error('La partie n’a pas encore pu être enregistrée.');
+    }
+
     const row = {
       partie_id: run.id,
       difficulte: answers?.difficulte ?? null,
       duree: answers?.duree ?? null,
       comprehension: answers?.comprehension ?? null,
       envie_rejouer: answers?.envie_rejouer ?? null,
-      commentaire: answers?.commentaire || null
+      commentaire: null
     };
-    return postRow('test_questionnaires', row);
+    const ok = await postRow('test_questionnaires', row);
+    if (ok) {
+      run.questionnaireSent = true;
+      run.questionnaireSentAt = Date.now();
+      try { persistState?.(); } catch (e) {}
+    }
+    return ok;
+  }
+
+  const QUESTIONNAIRE = [
+    {
+      key: 'difficulte',
+      title: 'Niveau de difficulté éprouvé',
+      low: 'Trop facile',
+      mid: 'Équilibré',
+      high: 'Beaucoup trop difficile'
+    },
+    {
+      key: 'duree',
+      title: 'Durée du jeu',
+      low: 'Trop court',
+      mid: 'Équilibré',
+      high: 'Beaucoup trop long'
+    },
+    {
+      key: 'comprehension',
+      title: 'Compréhension du scénario',
+      low: 'Incompréhensible',
+      mid: 'Agréable mais pas sûr d’avoir tout compris',
+      high: 'Parfait'
+    },
+    {
+      key: 'envie_rejouer',
+      title: 'Envie de faire une deuxième partie',
+      low: 'Pas du tout',
+      mid: 'Pourquoi pas si j’ai le temps',
+      high: 'Je relance tout de suite'
+    }
+  ];
+
+  function ensureQuestionnaireStyle() {
+    if (document.getElementById('testQuestionnaireStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'testQuestionnaireStyle';
+    style.textContent = `
+      .test-feedback {
+        margin: 28px 0 8px;
+        padding: 22px 18px 20px;
+        border: 1px solid rgba(84, 57, 30, .35);
+        border-radius: 12px;
+        background: rgba(236, 220, 181, .16);
+      }
+      .test-feedback h3 { margin: 0 0 10px; text-align: center; }
+      .test-feedback-intro { margin: 0 auto 24px; max-width: 46rem; text-align: center; }
+      .test-feedback-question { margin: 22px 0 26px; }
+      .test-feedback-question-title { margin: 0 0 12px; font-weight: 700; text-align: center; }
+      .test-feedback-labels, .test-feedback-dots {
+        display: grid;
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+        gap: 5px;
+        align-items: end;
+      }
+      .test-feedback-labels { margin-bottom: 7px; min-height: 2.8em; }
+      .test-feedback-label {
+        font-size: .7rem;
+        line-height: 1.15;
+        text-align: center;
+        opacity: .86;
+      }
+      .test-feedback-label.low { grid-column: 1 / span 2; text-align: left; }
+      .test-feedback-label.mid { grid-column: 4 / span 4; }
+      .test-feedback-label.high { grid-column: 9 / span 2; text-align: right; }
+      .test-feedback-dot {
+        appearance: none;
+        width: 100%;
+        aspect-ratio: 1;
+        max-width: 34px;
+        justify-self: center;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        position: relative;
+        padding: 0;
+      }
+      .test-feedback-dot::after {
+        content: attr(data-value);
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: .67rem;
+        font-weight: 700;
+      }
+      .test-feedback-dot.filled { background: currentColor; }
+      .test-feedback-dot.filled::after { color: rgba(245, 235, 208, .96); }
+      .test-feedback-submit {
+        display: block;
+        width: min(100%, 360px);
+        margin: 8px auto 0;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .test-feedback-submit:disabled { opacity: .45; cursor: default; }
+      .test-feedback-status { min-height: 1.4em; margin: 12px 0 0; text-align: center; }
+      .test-feedback-thanks { text-align: center; font-weight: 700; margin: 12px 0 0; }
+      @media (max-width: 520px) {
+        .test-feedback { padding: 18px 10px; }
+        .test-feedback-label { font-size: .62rem; }
+        .test-feedback-labels, .test-feedback-dots { gap: 3px; }
+        .test-feedback-dot { max-width: 30px; border-width: 1.5px; }
+        .test-feedback-dot::after { font-size: .58rem; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderQuestionnaire(context) {
+    lastCompletionContext = context || lastCompletionContext;
+    const state = context?.state;
+    const nodeId = context?.renderNodeId;
+    const result = classifyResult(state, nodeId);
+    const old = document.getElementById('testFeedback');
+    if (!result) {
+      old?.remove();
+      return;
+    }
+
+    ensureQuestionnaireStyle();
+    const choices = document.getElementById('choices');
+    if (!choices) return;
+
+    if (state?.__testAnalytics?.questionnaireSent) {
+      if (old) old.remove();
+      const done = document.createElement('section');
+      done.id = 'testFeedback';
+      done.className = 'test-feedback';
+      done.innerHTML = '<p class="test-feedback-thanks">Merci. Tes réponses ont bien été enregistrées.</p>';
+      choices.insertAdjacentElement('afterend', done);
+      return;
+    }
+
+    if (old) old.remove();
+    const section = document.createElement('section');
+    section.id = 'testFeedback';
+    section.className = 'test-feedback';
+    section.innerHTML = `
+      <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
+      <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
+      <div class="test-feedback-questions"></div>
+      <button class="test-feedback-submit" type="button" disabled>Envoyer mes réponses</button>
+      <p class="test-feedback-status" aria-live="polite"></p>
+    `;
+    choices.insertAdjacentElement('afterend', section);
+
+    const values = {};
+    const questions = section.querySelector('.test-feedback-questions');
+    const submit = section.querySelector('.test-feedback-submit');
+    const statusEl = section.querySelector('.test-feedback-status');
+
+    for (const spec of QUESTIONNAIRE) {
+      const block = document.createElement('div');
+      block.className = 'test-feedback-question';
+      block.innerHTML = `
+        <p class="test-feedback-question-title">${spec.title}</p>
+        <div class="test-feedback-labels" aria-hidden="true">
+          <span class="test-feedback-label low">${spec.low}</span>
+          <span class="test-feedback-label mid">${spec.mid}</span>
+          <span class="test-feedback-label high">${spec.high}</span>
+        </div>
+        <div class="test-feedback-dots" role="radiogroup" aria-label="${spec.title}">
+          ${Array.from({length:10}, (_, i) => `<button type="button" class="test-feedback-dot" data-question="${spec.key}" data-value="${i+1}" role="radio" aria-checked="false" aria-label="${i+1} sur 10"></button>`).join('')}
+        </div>
+      `;
+      questions.appendChild(block);
+    }
+
+    section.querySelectorAll('.test-feedback-dot').forEach(button => {
+      button.addEventListener('click', () => {
+        const key = button.dataset.question;
+        const value = Number(button.dataset.value);
+        values[key] = value;
+        section.querySelectorAll(`.test-feedback-dot[data-question="${key}"]`).forEach(dot => {
+          const filled = Number(dot.dataset.value) <= value;
+          dot.classList.toggle('filled', filled);
+          dot.setAttribute('aria-checked', Number(dot.dataset.value) === value ? 'true' : 'false');
+        });
+        submit.disabled = QUESTIONNAIRE.some(q => !Number.isInteger(values[q.key]));
+      });
+    });
+
+    submit.addEventListener('click', async () => {
+      if (submit.disabled) return;
+      submit.disabled = true;
+      statusEl.textContent = 'Envoi en cours…';
+      try {
+        await submitQuestionnaire(values);
+        section.innerHTML = '<p class="test-feedback-thanks">Merci. Tes réponses ont bien été enregistrées.</p>';
+      } catch (error) {
+        submit.disabled = false;
+        statusEl.textContent = 'L’envoi a échoué. Tu peux réessayer.';
+      }
+    });
   }
 
   function status() {
@@ -327,6 +541,7 @@
     beforeSave,
     recordCompletion,
     submitQuestionnaire,
+    renderQuestionnaire,
     classifyResult,
     status
   };
