@@ -383,8 +383,21 @@
       }
       .test-feedback h3 { margin: 0 0 10px; text-align: center; }
       .test-feedback-intro { margin: 0 auto 24px; max-width: 46rem; text-align: center; }
-      .test-feedback-question { margin: 22px 0 26px; }
-      .test-feedback-question-title { margin: 0 0 12px; font-weight: 700; text-align: center; }
+      .test-feedback-question {
+        margin: 16px 0;
+        padding: 18px 14px 20px;
+        border: 1px solid rgba(84, 57, 30, .28);
+        border-radius: 14px;
+        background: rgba(255, 248, 224, .16);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.18),
+          0 2px 7px rgba(61, 42, 24, .06);
+      }
+      .test-feedback-question-title {
+        margin: 0 0 14px;
+        font-weight: 700;
+        text-align: center;
+      }
       .test-feedback-labels, .test-feedback-dots {
         display: grid;
         grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -487,6 +500,7 @@
       }
       @media (max-width: 520px) {
         .test-feedback { padding: 18px 10px; }
+        .test-feedback-question { padding: 16px 10px 18px; margin: 14px 0; }
         .test-feedback-label { font-size: .62rem; }
         .test-feedback-labels, .test-feedback-dots { gap: 3px; }
         .test-feedback-dot { max-width: 30px; border-width: 1.5px; }
@@ -531,7 +545,7 @@
     storyText.innerHTML = `
       <section id="testFeedback" class="test-feedback">
         <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
-        <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ? Les quatre questions sont sur cette même page.</p>
+        <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ?</p>
         <div class="test-feedback-questions"></div>
         <label class="test-feedback-comment">
           <span>Commentaire ou bug à relever</span>
