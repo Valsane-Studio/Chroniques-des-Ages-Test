@@ -232,7 +232,6 @@
       method: 'POST',
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'resolution=ignore-duplicates,return=minimal'
       },
