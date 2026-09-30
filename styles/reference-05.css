@@ -4299,3 +4299,83 @@ body.library-home-open .app-shell {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+
+/* Providence — lecture claire du combat de groupe */
+.crew-battle-result .crew-strength-preview{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin:10px 0;
+}
+.crew-battle-result .crew-strength-preview>div,
+.crew-battle-result .crew-loss-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  padding:10px 8px;
+  border:1px solid rgba(122,91,56,.28);
+  background:rgba(255,255,255,.055);
+}
+.crew-battle-result .crew-strength-preview span{
+  font-size:14px;
+}
+.crew-advantage{
+  margin:10px 0 12px !important;
+  line-height:1.35;
+}
+.crew-loss-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:10px 0;
+}
+.crew-loss-label{
+  font-size:11px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  opacity:.72;
+}
+.crew-loss-die{
+  display:flex;
+  justify-content:center;
+  margin:3px 0;
+}
+.crew-loss-die .die-visual{
+  width:64px;
+  height:64px;
+  padding:7px;
+}
+.crew-loss-die .die-cell i{
+  width:10px;
+  height:10px;
+}
+.crew-loss-value,
+.crew-loss-calc{
+  font-size:14px;
+}
+.crew-battle-summary{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(122,91,56,.32);
+  font-size:15px;
+  line-height:1.35;
+}
+.crew-battle-ready{
+  margin-top:10px !important;
+}
+@media (max-width:560px){
+  .crew-loss-die .die-visual{
+    width:58px;
+    height:58px;
+    padding:6px;
+  }
+  .crew-loss-die .die-cell i{
+    width:9px;
+    height:9px;
+  }
+}
