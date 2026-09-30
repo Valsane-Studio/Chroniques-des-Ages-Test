@@ -9,6 +9,9 @@ function setHeroIdentity(s,g){s.heroGender=g==='male'?'male':'female';s.heroName
 function currentForce(s){return Math.max(3,(s.baseForce||8)+(s.forceBonus||0));}
 function currentDexterity(s){return Math.max(3,(s.baseDexterity||13)+(s.dexBonus||0)-(s.dexPenalty||0));}
 function combatPower(s){return s.weapon==='naval_sword'?4:0;}
+const HERO_BASE_DAMAGE=2;
+function heroCombatDamage(s){return HERO_BASE_DAMAGE+(s.weapon==='none'?0:combatPower(s));}
+function enemyCombatDamage(e){return e.damage+(Number.isFinite(e.weaponPower)?e.weaponPower:0);}
 function weaponLabel(s){return s.weapon==='naval_sword'?'Sabre court de marine':'Aucune';}
 function currentProtection(s){return Math.max(0,Number(s.protection||0));}
 function applyDamage(s,a){
@@ -186,34 +189,61 @@ function crewBattleHtml(s,key,enemyCount=12){
 function fightRound(s,key,e){
   if(!s.combats)s.combats={};
   const c=s.combats[key]||(s.combats[key]={hp:e.hp,round:0,last:null});
+  if(s.hp<=0||c.hp<=0)return c.last;
+
   const heroDice=[cryptoDie6(),cryptoDie6()];
   const enemyDice=[cryptoDie6(),cryptoDie6()];
-  const heroBase=currentDexterity(s);
-  const enemyBase=e.dex;
-  const ha=heroBase+heroDice[0]+heroDice[1];
-  const ea=enemyBase+enemyDice[0]+enemyDice[1];
-  let outcome='tie',damage=0;
-  if(ha>ea){
+  const heroDexterity=currentDexterity(s);
+  const enemyDexterity=e.dex;
+  const heroForce=currentForce(s);
+  const enemyForce=e.force;
+  const heroAttack=heroDexterity+heroForce+heroDice[0]+heroDice[1];
+  const enemyAttack=enemyDexterity+enemyForce+enemyDice[0]+enemyDice[1];
+  const heroWeaponPower=s.weapon&&s.weapon!=='none'?combatPower(s):0;
+  const heroDamage=heroCombatDamage(s);
+  const enemyWeaponPower=Number.isFinite(e.weaponPower)?e.weaponPower:0;
+  const enemyDamage=enemyCombatDamage(e);
+
+  let outcome='tie',damage=0,protectionAbsorbed=0,hpLost=0;
+
+  if(heroAttack>enemyAttack){
     outcome='hero';
-    damage=Math.max(1,Math.floor(currentForce(s)/4))+combatPower(s);
+    damage=heroDamage;
     c.hp=Math.max(0,c.hp-damage);
-  }else if(ha<ea){
+  }else if(heroAttack<enemyAttack){
     outcome='enemy';
-    damage=e.damage;
-    applyDamage(s,damage);
+    damage=enemyDamage;
+    const resolution=applyDamage(s,damage);
+    protectionAbsorbed=resolution.absorbed;
+    hpLost=resolution.hpLost;
   }
+
   c.round++;
   c.last={
+    round:c.round,
     heroDice,
     enemyDice,
-    heroBase,
-    enemyBase,
-    ha,
-    ea,
+    heroDexterity,
+    enemyDexterity,
+    heroAttack,
+    enemyAttack,
+    heroForce,
+    heroWeaponPower,
+    heroDamage,
+    enemyForce,
+    enemyWeaponPower,
+    enemyDamage,
+    damage,
+    protectionAbsorbed,
+    hpLost,
     outcome,
-    damage
+    heroHp:s.hp,
+    enemyHp:c.hp,
+    ruleVersion:'book01-duel-v1'
   };
+  return c.last;
 }
+
 function fightHtml(s,key,e){
   const c=s.combats?.[key];
   if(!c)return '';
@@ -227,42 +257,68 @@ function fightHtml(s,key,e){
     </div>`;
   }
 
-  const hasDice=Array.isArray(r.heroDice)&&Array.isArray(r.enemyDice);
-  const resultText=r.outcome==='hero'
-    ? `Tu remportes l’échange et infliges <strong>${r.damage} dégâts</strong>.`
+  // Ancienne sauvegarde : on garde un affichage lisible jusqu'au prochain lancer.
+  if(r.ruleVersion!=='book01-duel-v1'){
+    const oldText=r.outcome==='hero'
+      ? `Tu remportes l’échange et infliges <strong>${r.damage} dégâts</strong>.`
+      : r.outcome==='enemy'
+        ? `${e.name} remporte l’échange : tu subis <strong>${r.damage} dégâts</strong>.`
+        : 'Égalité : aucun des deux combattants ne parvient à toucher l’autre.';
+    return `<div class="combat-roll-result">
+      <div class="combat-roll-title">${e.name}</div>
+      <div class="combat-roll-grid">
+        <div class="combat-side"><strong>TOI</strong><div class="combat-dice">${renderDie(r.heroDice[0])}${renderDie(r.heroDice[1])}</div><p>Dextérité ${r.heroBase} + dés ${r.heroDice[0]+r.heroDice[1]}</p><p class="combat-total">Attaque : <strong>${r.ha}</strong></p></div>
+        <div class="combat-versus">VS</div>
+        <div class="combat-side"><strong>${e.name}</strong><div class="combat-dice">${renderDie(r.enemyDice[0])}${renderDie(r.enemyDice[1])}</div><p>Dextérité ${r.enemyBase} + dés ${r.enemyDice[0]+r.enemyDice[1]}</p><p class="combat-total">Attaque : <strong>${r.ea}</strong></p></div>
+      </div>
+      <div class="combat-outcome"><strong>${oldText}</strong></div>
+      <div class="combat-life-line">Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></div>
+    </div>`;
+  }
+
+  const heroDamageDetail=r.heroWeaponPower>0
+    ? `Dégâts de base ${HERO_BASE_DAMAGE} + Puissance de l’arme ${r.heroWeaponPower}`
+    : `Dégâts de base ${HERO_BASE_DAMAGE}`;
+  const enemyDamageDetail=r.enemyWeaponPower>0
+    ? `Dégâts ${r.enemyDamage-r.enemyWeaponPower} + Puissance de l’arme ${r.enemyWeaponPower}`
+    : `Dégâts ${r.enemyDamage}`;
+
+  const outcomeText=r.outcome==='hero'
+    ? `<strong>Tu remportes l’échange.</strong><br>Tu infliges <strong>${r.damage}</strong> point${r.damage>1?'s':''} de dégâts <span class="combat-detail">(${heroDamageDetail})</span>.${c.hp<=0&&r.damage>0?'<br><strong>Ton adversaire s’effondre.</strong>':''}`
     : r.outcome==='enemy'
-      ? `${e.name} remporte l’échange : tu subis <strong>${r.damage} dégâts</strong>.`
-      : 'Égalité : aucun des deux combattants ne parvient à toucher l’autre.';
+      ? (() => {
+          const protectionLine=r.protectionAbsorbed>0
+            ? ` Ta protection absorbe <strong>${r.protectionAbsorbed}</strong>${r.hpLost>0?`, tu perds <strong>${r.hpLost}</strong> point${r.hpLost>1?'s':''} de Vie.`:', tu ne perds aucun point de Vie.'}`
+            : ` Tu perds <strong>${r.hpLost}</strong> point${r.hpLost>1?'s':''} de Vie.`;
+          return `<strong>${e.name} remporte l’échange.</strong><br>Il inflige <strong>${r.damage}</strong> point${r.damage>1?'s':''} de dégâts <span class="combat-detail">(${enemyDamageDetail})</span>.${protectionLine}`;
+        })()
+      : '<strong>Égalité.</strong><br>Les deux attaques se neutralisent. Aucun dégât.';
 
   return `<div class="combat-roll-result">
-    <div class="combat-roll-title">${e.name}</div>
-    ${hasDice?`
-      <div class="combat-roll-grid">
-        <div class="combat-side">
-          <strong>Toi</strong>
-          <div class="combat-dice">${renderDie(r.heroDice[0])}${renderDie(r.heroDice[1])}</div>
-          <p>Dextérité ${r.heroBase} + dés ${r.heroDice[0]} + ${r.heroDice[1]}</p>
-          <p class="combat-total">Total : <strong>${r.ha}</strong></p>
-        </div>
-        <div class="combat-versus">VS</div>
-        <div class="combat-side">
-          <strong>${e.name}</strong>
-          <div class="combat-dice">${renderDie(r.enemyDice[0])}${renderDie(r.enemyDice[1])}</div>
-          <p>Dextérité ${r.enemyBase} + dés ${r.enemyDice[0]} + ${r.enemyDice[1]}</p>
-          <p class="combat-total">Total : <strong>${r.ea}</strong></p>
-        </div>
+    <div class="combat-roll-title">Échange n° ${r.round}</div>
+    <div class="combat-roll-grid">
+      <div class="combat-side">
+        <strong>TOI</strong>
+        <div class="combat-dice">${renderDie(r.heroDice[0])}${renderDie(r.heroDice[1])}</div>
+        <p>Dextérité ${r.heroDexterity} + Force ${r.heroForce} + dés ${r.heroDice[0]+r.heroDice[1]}</p>
+        <p class="combat-total">Attaque : <strong>${r.heroAttack}</strong></p>
       </div>
-    `:`
-      <p>Attaque : <strong>${r.ha}</strong> contre <strong>${r.ea}</strong></p>
-    `}
-    <p class="combat-outcome"><strong>${resultText}</strong></p>
-    <p class="combat-life-line">Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></p>
+      <div class="combat-versus">VS</div>
+      <div class="combat-side">
+        <strong>${e.name}</strong>
+        <div class="combat-dice">${renderDie(r.enemyDice[0])}${renderDie(r.enemyDice[1])}</div>
+        <p>Dextérité ${r.enemyDexterity} + Force ${r.enemyForce} + dés ${r.enemyDice[0]+r.enemyDice[1]}</p>
+        <p class="combat-total">Attaque : <strong>${r.enemyAttack}</strong></p>
+      </div>
+    </div>
+    <div class="combat-outcome">${outcomeText}</div>
+    <div class="combat-life-line">Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Protection : <strong>${currentProtection(s)}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></div>
   </div>`;
 }
-const CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
-const NORTH_CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
-const BANDIT_CHIEF={name:'CHEF DES FAUX MARCHANDS',hp:9,dex:9,damage:2};
-const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,damage:3};
+const CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,force:8,damage:2};
+const NORTH_CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,force:8,damage:2};
+const BANDIT_CHIEF={name:'CHEF DES FAUX MARCHANDS',hp:9,dex:9,force:8,damage:2};
+const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,force:8,damage:3};
 
 function createInitialState(){
   return {
@@ -294,7 +350,12 @@ const STORY={
     <div class="tag"><span class="tag-copy"><small>Arme</small><strong>+4</strong></span></div>
     <div class="tag"><span class="tag-copy"><small>Protection</small><strong>${currentProtection(s)}</strong></span></div>
     <div class="tag"><span class="tag-copy"><small>Soldats</small><strong>${s.soldiers}</strong></span></div>
-   </div></div>`,choices:[{label:'Commencer l’aventure',to:'c0'}]},
+   </div>
+   <div class="combat-rules-card">
+     <div class="combat-rules-title">Règles des combats individuels</div>
+     <p>Personnage et adversaire lancent chacun <strong>2 dés</strong> et ajoutent leur <strong>Dextérité</strong> et leur <strong>Force</strong>.<br>Le meilleur score remporte l’échange. En cas d’égalité, personne n’est blessé.<br>La Force aide à remporter l’échange, mais ne modifie pas les dégâts. Tes dégâts sont de <strong>2 + la Puissance de ton arme</strong> si tu en possèdes une. Les dégâts adverses sont indiqués pendant le combat.</p>
+   </div>
+   </div>`,choices:[{label:'Commencer l’aventure',to:'c0'}]},
  c0:{title:'Avant le Providence',text:s=>heroGender(s)==='female'?`<p>Tu es née en 1691, près des quais de Portsmouth. Ton père travaillait autour des navires et, très tôt, tu as appris à reconnaître une voile mal réglée, le bruit d’un gréement fatigué et l’odeur du mauvais temps avant même que le ciel ne change.</p><p>Mais la mer n’était pas un avenir destiné aux femmes.</p><p>À quinze ans, tu as coupé tes cheveux, abandonné tes robes et pris une identité masculine. Pour la Royal Navy, tu es devenue <strong>Edward</strong>. Seules quelques personnes connaissent encore ton véritable prénom : <strong>Eleanor</strong>.</p><p>Les années ont passé. Tu as appris à vivre parmi les hommes sans jamais laisser tomber le masque. Tu as servi pendant la guerre, connu les tempêtes, les abordages et les longues traversées. Ton sang-froid et ton sens de la navigation t’ont permis de gravir lentement les échelons.</p><p>Aujourd’hui, à vingt-huit ans, tu portes le grade de lieutenant. Une belle carrière s’ouvre devant toi, à condition que personne ne découvre jamais qui tu es réellement.</p><p>Depuis plusieurs mois, tu sers dans les Caraïbes. Port Royal est devenu ton port d’attache.</p>`:`<p>Tu es né en 1691, près des quais de Portsmouth. Ton père travaillait autour des navires et, très tôt, tu as appris à reconnaître une voile mal réglée, le bruit d’un gréement fatigué et l’odeur du mauvais temps avant même que le ciel ne change.</p><p>À quinze ans, tu as rejoint la Royal Navy.</p><p>Les années ont passé. Tu as servi pendant la guerre, connu les tempêtes, les abordages et les longues traversées. Ton sang-froid et ton sens de la navigation t’ont permis de gravir lentement les échelons.</p><p>Aujourd’hui, à vingt-huit ans, tu portes le grade de lieutenant. Tu n’es pas encore un grand nom de la Navy, mais tes supérieurs savent que tu es capable de ramener un navire et ses hommes lorsque la situation tourne mal.</p><p>Depuis plusieurs mois, tu sers dans les Caraïbes. Port Royal est devenu ton port d’attache.</p>`,choices:[{label:'Port Royal — 1719',to:'c1'}]},
  c1:{title:'La mission',text:`<p><strong>Port Royal, Jamaïque — 1719.</strong></p><p>Le jour n’est pas encore complètement levé lorsque tu traverses les quais. L’air est déjà chaud. Entre les mâts serrés dans le port, les cris des dockers se mêlent au claquement des voiles, à l’odeur du goudron, du sel et du bois humide.</p><p>La Jamaïque vit dans une tension permanente. La Grande-Bretagne est en guerre contre l’Espagne, et les routes maritimes des Caraïbes attirent autant les corsaires que les pirates.</p><p>L’ordre qui t’attend porte l’autorité du gouverneur de l’île, <strong>Sir Nicholas Lawes</strong>. À Londres, le Board of Admiralty est dirigé par <strong>James Berkeley, comte de Berkeley</strong>, mais ici les décisions doivent parfois être prises sans attendre plusieurs mois qu’un courrier traverse l’Atlantique.</p><p>Si cette mission t’est confiée, ce n’est pas par hasard. Tu connais déjà ces eaux. Tu as escorté des bâtiments marchands, poursuivi des navires suspects et, quelques mois plus tôt, ramené à Port Royal un bâtiment endommagé qu’une partie de son équipage croyait perdu.</p><p>Cette fois, il ne s’agit pourtant pas d’un combat.</p><p>Le <strong>Providence</strong>, navire marchand appartenant à Edmund Harcourt, aurait dû rentrer depuis quatre jours. Vingt-sept hommes se trouvaient à bord. Aucun message. Aucun survivant. Aucune épave.</p><p>On te confie le <strong>Resolute</strong>, un petit sloop armé, rapide et suffisamment maniable pour s’approcher des côtes difficiles. Environ <strong>soixante-dix marins chevronnés</strong> assurent la navigation, les voiles et les canons.</p><p>À eux s’ajoutent <strong>dix soldats aguerris</strong> de la garnison de Port Royal. Tu les connais. Certains ont déjà combattu sous tes ordres. Tu leur fais confiance et, si des pirates tentent un abordage, ils sauront se défendre.</p><p>Comme avant chaque mission, tu décides d’étudier les différents chemins possibles afin d’arriver rapidement, mais aussi avec le moins de risques possible.</p><p>Chaque heure perdue risque de rendre le sauvetage plus compliqué et tu le sais. Malheureusement, certains passages sont dangereux à traverser.</p><p><strong>Il va falloir prendre une décision.</strong></p>`,choices:[{label:'Étudier la carte',to:'c2'}]},
  c2:{title:'Deux routes',text:`<p>Tu poses la carte sur une caisse et suis du doigt les deux routes possibles.</p><p><strong>La première longe la côte.</strong></p><p>Elle serpente entre les récifs, les hauts-fonds et de nombreuses petites îles. La navigation y est lente et demande une attention constante. Une erreur de quelques dizaines de mètres peut suffire à endommager la coque.</p><p>Mais tes marins sont expérimentés. Ils connaissent les courants et savent lire les changements de couleur de l’eau qui trahissent les récifs.</p><p>Surtout, cette route traverse plusieurs villages de pêcheurs et de petits ports. Si le Providence est passé dans la région, quelqu’un l’a peut-être vu. Tu pourrais y recueillir des témoignages, connaître sa direction ou apprendre ce qui s’est produit avant sa disparition.</p><p>Le problème est le temps. En longeant la côte, tu peux perdre presque une journée entière.</p><p><strong>La seconde route passe directement par le large.</strong></p><p>Elle est beaucoup plus courte. Avec un vent favorable, elle te mènera presque directement vers la dernière position connue du Providence.</p><p>Mais cette partie de la mer est peu surveillée. Les bâtiments marchands qui s’y aventurent sans escorte sont des proies faciles, et les attaques de pirates y sont fréquentes.</p><p>Par cette route, tu gagnerais de précieuses heures.</p><p>À condition d’arriver jusqu’au bout.</p>`,choices:[{label:'Longer la côte et interroger les villages',to:'c3'},{label:'Prendre la route directe par le large',to:'c12'}]},
@@ -580,7 +641,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:32,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:33,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
