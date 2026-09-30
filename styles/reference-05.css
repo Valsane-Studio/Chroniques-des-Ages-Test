@@ -4438,3 +4438,18 @@ body.library-home-open .app-shell {
     height:5px;
   }
 }
+
+
+/* Providence — bilan et pertes du combat de groupe */
+.crew-battle-summary{
+  font-size:inherit;
+}
+.crew-battle-summary > strong{
+  font-size:inherit;
+}
+.crew-casualty-line{
+  color:var(--danger, #8b4b40);
+}
+.crew-casualty-line strong{
+  color:inherit;
+}
