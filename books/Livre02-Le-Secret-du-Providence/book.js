@@ -464,7 +464,7 @@ const STORY={
    {label:'Laisser le rhum et repartir',to:'c21'}
  ]},
 
- east1:{title:'',text:`<p>Tu choisis la route de l’est.</p><p>Sur la carte, plusieurs voies marchandes se croisent dans cette direction. Tu t’attends à rencontrer des caboteurs, des navires chargés de sucre, peut-être un bâtiment venant de Cuba ou des petites Antilles.</p><p>Mais les heures passent.</p><p>La mer reste étonnamment vide.</p><p>À midi, aucune voile.</p><p>Dans l’après-midi, toujours rien.</p><p>Cette absence finit par devenir plus étrange qu’une rencontre.</p><p>Le soleil touche presque l’horizon lorsqu’un petit sloop apparaît enfin au loin.</p><p>Il porte un pavillon marchand et avance lentement sous une voilure réduite.</p><p>Lorsque vous approchez, plusieurs hommes viennent au rambarde.</p><p>Ils vous saluent avec de grands gestes.</p><p>Trop grands, peut-être.</p><p>Leur capitaine sourit avant même que les deux navires soient assez proches pour parler.</p><blockquote>« Royal Navy ! Voilà une compagnie qui se fait rare par ici. Venez donc boire un verre. Nous avons sûrement quelques histoires à échanger. »</blockquote>`,choices:[
+ east1:{title:'',text:`<p>Tu choisis la route de l’est.</p><p>Sur la carte, plusieurs voies marchandes se croisent dans cette direction. Tu t’attends à rencontrer des caboteurs, des navires chargés de sucre, peut-être un bâtiment venant de Cuba ou des petites Antilles.</p><p>Mais les heures passent.</p><p>La mer reste étonnamment vide.</p><p>À midi, aucune voile.</p><p>Dans l’après-midi, toujours rien.</p><p>Cette absence finit par devenir plus étrange qu’une rencontre.</p><p>Le soleil touche presque l’horizon lorsqu’un petit sloop apparaît enfin au loin.</p><p>Il porte un pavillon marchand et avance lentement sous une voilure réduite.</p><p>Lorsque vous approchez, plusieurs hommes viennent à la rambarde.</p><p>Ils vous saluent avec de grands gestes.</p><p>Trop grands, peut-être.</p><p>Leur capitaine sourit avant même que les deux navires soient assez proches pour parler.</p><blockquote>« Royal Navy ! Voilà une compagnie qui se fait rare par ici. Venez donc boire un verre. Nous avons sûrement quelques histoires à échanger. »</blockquote>`,choices:[
    {label:'Accepter et monter à bord',to:'east2'},
    {label:'Refuser et rester sur le Resolute',to:'eastRefuse'}
  ]},
@@ -663,7 +663,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:52,pageMapVersion:4,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:53,pageMapVersion:4,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
