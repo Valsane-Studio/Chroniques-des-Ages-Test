@@ -6,7 +6,7 @@
 {id:'bracelet:c7',page:'c7',title:'Le bracelet',text:'La femme espagnole pense que personne ne te reverra. Elle t’a donné un bracelet qui augmente ta Force de 2.',requiresFlag:'forceBracelet'},
 {id:'agresseur:c9',page:'c9',title:'Le cercle revient',text:'L’homme venu te tuer a parlé d’un trésor qui devait disparaître. Un cercle noir fermé était tatoué sur son poignet.'},
 {id:'pirate:c16',page:'c16',title:'Quelque chose le gardait',text:'Des pirates ont tenté d’approcher le Providence. La mer retenait leur coque, puis une immense ombre les a frappés. Le Providence est resté intact.'},
-{id:'debris:c20',page:'c20',title:'Une preuve dans le courant',text:'Une planche marquée E. Harcourt provient presque certainement du Providence. Le courant indique qu’elle vient du sud ou du sud-est.'},
+{id:'debris:c20',page:'c20',title:'Une preuve dans le courant',text:'Une planche marquée E. Harcourt provient presque certainement du Providence. Le courant vient du sud-est. Un vieux dicton revient : « l’île mange les marins et recrache les bateaux ». '},
 {id:'nord:north4',page:'north4',title:'L’île à éviter',text:'Des pirates ont vu le Providence, silencieux, prendre le cap de l’île que les équipages du secteur évitent. Leur capitaine a interdit l’abordage.'},
 {id:'est:east6',page:'east6',title:'Deux lumières vertes',text:'Un assaillant affirme avoir vu le Providence sans lanternes, avec deux lumières vertes sous la coque, semblables à des yeux.'},
 {id:'sud:south2',page:'south2',title:'Le Providence au sud-est',text:'Un capitaine marchand a croisé le Providence deux jours plus tôt. Des hommes étaient visibles sur le pont, mais personne n’a répondu aux signaux.'},
