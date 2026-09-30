@@ -163,7 +163,7 @@ function crewBattleHtml(s,key,enemyCount=12){
         <span>Valeur de combat <strong>${l.soldierCombat}</strong> · réussite sur <strong>1, 2 ou 3</strong></span>
       </div>
       <div class="crew-training-dice">${diceRow(l.soldierDice,l.soldierCombat)}</div>
-      <p><strong>${l.soldierHits} réussite${l.soldierHits>1?'s':''}</strong> → les pirates perdent <strong>${l.enemyLoss}</strong> homme${l.enemyLoss>1?'s':''}.</p>
+      <p class="${l.enemyLoss>0?'crew-casualty-line':''}"><strong>${l.soldierHits} réussite${l.soldierHits>1?'s':''}</strong> → les pirates perdent <strong>${l.enemyLoss}</strong> homme${l.enemyLoss>1?'s':''}.</p>
     </div>
 
     <div class="crew-training-side">
@@ -172,11 +172,11 @@ function crewBattleHtml(s,key,enemyCount=12){
         <span>Valeur de combat <strong>${l.enemyCombat}</strong> · réussite uniquement sur <strong>1</strong></span>
       </div>
       <div class="crew-training-dice">${diceRow(l.enemyDice,l.enemyCombat)}</div>
-      <p><strong>${l.enemyHits} réussite${l.enemyHits>1?'s':''}</strong> → tes soldats perdent <strong>${l.soldierLoss}</strong> homme${l.soldierLoss>1?'s':''}.</p>
+      <p class="${l.soldierLoss>0?'crew-casualty-line':''}"><strong>${l.enemyHits} réussite${l.enemyHits>1?'s':''}</strong> → tes soldats perdent <strong>${l.soldierLoss}</strong> homme${l.soldierLoss>1?'s':''}.</p>
     </div>
 
     <div class="crew-battle-summary">
-      <strong>Bilan de l’assaut</strong>
+      <strong>Bilan du combat</strong>
       <span>Soldats : <strong>${l.soldierCount} → ${soldierAfter}</strong></span>
       <span>Pirates : <strong>${l.enemyCount} → ${enemyAfter}</strong></span>
     </div>
@@ -521,7 +521,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:29,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:30,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
