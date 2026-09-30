@@ -54,7 +54,7 @@ function rollDex(s,bonus=0,label='Dextérité'){
   const target=currentDexterity(s)-Math.max(0,bonus);
   return roll3D6(s,bonus?label+' — malus +'+bonus:label,target);
 }
-function startCrewBattle(s,key,enemyCount=12,soldierPower=3,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
+function startCrewBattle(s,key,enemyCount=12,soldierPower=4,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
   if(!s.crewBattles)s.crewBattles={};
   s.crewBattles[key]={
     enemy:enemyCount,
@@ -67,7 +67,7 @@ function startCrewBattle(s,key,enemyCount=12,soldierPower=3,enemyPower=1,retreat
     ruleVersion:'combat-rating-dice-v1'
   };
 }
-function normalizeCrewBattle(b,enemyCount=12,soldierPower=3,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
+function normalizeCrewBattle(b,enemyCount=12,soldierPower=4,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
   if(!b)return null;
   if(!Number.isFinite(b.initialEnemy))b.initialEnemy=enemyCount;
   if(!Number.isFinite(b.soldierPower))b.soldierPower=soldierPower;
@@ -78,13 +78,13 @@ function normalizeCrewBattle(b,enemyCount=12,soldierPower=3,enemyPower=1,retreat
   if(b.last && (!Array.isArray(b.last.soldierDice) || !Array.isArray(b.last.enemyDice)))b.last=null;
   return b;
 }
-function ensureCrewBattle(s,key,enemyCount=12,soldierPower=3,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
+function ensureCrewBattle(s,key,enemyCount=12,soldierPower=4,enemyPower=1,retreatAt=Math.floor(enemyCount/2)){
   if(!s.crewBattles)s.crewBattles={};
   if(!s.crewBattles[key])startCrewBattle(s,key,enemyCount,soldierPower,enemyPower,retreatAt);
   const b=normalizeCrewBattle(s.crewBattles[key],enemyCount,soldierPower,enemyPower,retreatAt);
   if(b.ruleVersion!=='combat-rating-dice-v1'){
     b.ruleVersion='combat-rating-dice-v1';
-    b.soldierPower=3;
+    b.soldierPower=4;
     b.enemyPower=1;
     b.last=null;
     b.resolved=false;
@@ -92,7 +92,7 @@ function ensureCrewBattle(s,key,enemyCount=12,soldierPower=3,enemyPower=1,retrea
   return b;
 }
 function crewBattleRound(s,key,enemyCount=12){
-  const b=ensureCrewBattle(s,key,enemyCount,3,1,0);
+  const b=ensureCrewBattle(s,key,enemyCount,4,1,0);
   if(b.enemy<=0||s.soldiers<=0)return;
 
   const soldierCount=s.soldiers;
@@ -133,9 +133,9 @@ function crewBattleRound(s,key,enemyCount=12){
 }
 
 function crewBattleHtml(s,key,enemyCount=12){
-  const b=ensureCrewBattle(s,key,enemyCount,3,1,0);
+  const b=ensureCrewBattle(s,key,enemyCount,4,1,0);
   const l=b.last;
-  const soldierCombat=Number.isFinite(b.soldierPower)?b.soldierPower:3;
+  const soldierCombat=Number.isFinite(b.soldierPower)?b.soldierPower:4;
   const enemyCombat=Number.isFinite(b.enemyPower)?b.enemyPower:1;
   const hasNewResult=!!(l&&l.mode==='combat_rating_dice');
 
@@ -146,7 +146,7 @@ function crewBattleHtml(s,key,enemyCount=12){
       <div class="combat-roll-title">Combat de groupe</div>
       <p><strong>${s.soldiers} soldats</strong> contre <strong>${b.enemy} pirates</strong></p>
       <div class="crew-strength-preview">
-        <div><strong>Soldats</strong><span>Valeur de combat : <strong>${soldierCombat}</strong></span><span>Réussite sur <strong>1, 2 ou 3</strong></span></div>
+        <div><strong>Soldats</strong><span>Valeur de combat : <strong>${soldierCombat}</strong></span><span>Réussite sur <strong>1, 2, 3 ou 4</strong></span></div>
         <div><strong>Pirates</strong><span>Valeur de combat : <strong>${enemyCombat}</strong></span><span>Réussite sur <strong>1</strong></span></div>
       </div>
       <p>La Valeur de combat représente <strong>l’équipement et l’entraînement</strong>. Chaque combattant lance 1D6 : un résultat inférieur ou égal à sa Valeur de combat est une réussite.</p>
@@ -163,7 +163,7 @@ function crewBattleHtml(s,key,enemyCount=12){
     <div class="crew-training-side">
       <div class="crew-training-heading">
         <strong>Soldats — ${l.soldierCount} combattants</strong>
-        <span>Valeur de combat <strong>${l.soldierCombat}</strong> · réussite sur <strong>1, 2 ou 3</strong></span>
+        <span>Valeur de combat <strong>${l.soldierCombat}</strong> · réussite sur <strong>1, 2, 3 ou 4</strong></span>
       </div>
       <div class="crew-training-dice">${diceRow(l.soldierDice,l.soldierCombat)}</div>
       <p class="${l.enemyLoss>0?'crew-casualty-line':''}"><strong>${l.soldierHits} réussite${l.soldierHits>1?'s':''}</strong> → les pirates perdent <strong>${l.enemyLoss}</strong> homme${l.enemyLoss>1?'s':''}.</p>
@@ -410,17 +410,17 @@ const STORY={
    +`<p>Tu allumes la petite lampe posée près du lit.</p><p>Tu ne reconnais pas ton agresseur.</p><p>Un homme du village, peut-être. Ou quelqu’un arrivé après vous.</p><p>Il essaie de respirer.</p><p>Tu t’accroupis près de lui.</p><blockquote>« Qui vous envoie ? »</blockquote><p>Il secoue lentement la tête.</p><p>Puis ses doigts se referment sur ta manche.</p><blockquote>« Abandonnez les recherches... »</blockquote><p>Sa voix n’est plus qu’un souffle.</p><blockquote>« Le trésor doit disparaître à jamais. »</blockquote><p>Sa main retombe.</p><p>Il ne répond plus.</p>`,choices:[{label:'Fouiller son corps',to:'c10',effect:s=>{if(!s.flags.assassinLoot){s.flags.assassinLoot=true;addGold(s,8);addItem(s,'couteaux_jet','Deux couteaux équilibrés','Deux petits couteaux parfaitement équilibrés, adaptés au lancer.',{quantity:2});}}}]},
 
  c10:{title:'',text:s=>`<p>Tu fouilles rapidement les vêtements de l’homme.</p><p>Il ne porte aucun document.</p><p>Aucun signe permettant de connaître son origine.</p><p>Dans une petite bourse, tu trouves <strong>huit pièces d’or</strong>.</p><p>Sous son manteau sont dissimulés <strong>deux petits couteaux parfaitement équilibrés</strong>. Plus courts que ton arme de combat, mais conçus pour être lancés avec précision.</p><p>Tu les ajoutes à ton équipement.</p><p>Le reste de la nuit est court.</p><p>Lorsque tu redescends dans la salle, le jour commence à peine à entrer par les fenêtres.</p><p>Le tavernier est déjà là, mais il évite ton regard.</p>${s.flags.oldSailorDone?'<p>La table du vieux marin est vide.</p>':''}${s.flags.spanishWomanDone?'<p>La femme espagnole a elle aussi disparu.</p>':''}<p>Personne ne demande ce qui s’est passé dans ta chambre.</p><p>Personne ne semble surpris.</p><p>Quelques minutes plus tard, tu rejoins la jetée.</p><p>À bord du Resolute, les marins terminent de préparer les voiles. Tes dix soldats vérifient leurs armes.</p><p>Tu jettes un dernier regard vers le village.</p><p>Puis tu donnes l’ordre de larguer les amarres.</p><p><strong>Le Providence vous attend quelque part au-delà de la côte.</strong></p>`,choices:[{label:'Rejoindre la zone de disparition',to:'c20'}]},
- c12:{title:'Le pavillon noir',text:`<p>Le Resolute quitte progressivement les eaux côtières et prend la route du large.</p><p>Derrière vous, la ligne de terre s’efface peu à peu jusqu’à disparaître complètement.</p><p>Bientôt, il ne reste plus que la mer.</p><p>De l’eau dans toutes les directions, jusqu’à l’horizon.</p><p>Le vent est régulier et le sloop avance vite, mais à bord l’atmosphère est différente de celle des premières heures.</p><p>Les marins connaissent ces eaux.</p><p>Ils savent que loin des côtes, un bâtiment isolé peut rester invisible pendant des jours.</p><p>Et ils savent surtout que les navires marchands ne sont pas les seuls à emprunter cette route.</p><p>Puis une voix éclate soudain au-dessus du pont.</p><blockquote>« Voile ! Voile à l’horizon ! »</blockquote><p>La vigie, installée dans la hune, pointe le bras vers l’avant tribord.</p><p>En quelques secondes, les conversations cessent.</p><p>Plusieurs hommes se tournent dans la même direction.</p><p>Au début, tu ne distingues presque rien.</p><p>Un point sombre seulement, posé sur la ligne de l’horizon.</p><p>Tu prends la longue-vue.</p><p>Sa structure est légère et rapide. Trop rapide pour un gros navire de commerce.</p><p>Et surtout, quelque chose flotte en haut du mât.</p><p>Une pièce de tissu noire.</p><p>Le doute disparaît.</p><p><strong>Un pavillon noir.</strong></p><p>Sur ton pont, les soldats se mettent en place.</p><p>Les marins cessent complètement de parler.</p><p>Le navire adverse continue d’approcher.</p><p>Il attend probablement que vous réduisiez la voilure et acceptiez de vous rendre.</p><p>Il en est évidemment hors de question. Tu le fais savoir sans attendre en donnant l’ordre de mettre toute la toile : le Resolute se lance à pleine vitesse droit sur le bâtiment pirate.</p><p>Quelques instants plus tard, le pavillon noir descend.</p><p>Un autre monte lentement à sa place.</p><p><strong>Rouge.</strong></p><p>Cette fois, même les plus jeunes marins comprennent ce que cela signifie.</p><p>Pas de quartier.</p><p>Pas de prisonniers.</p><p>Le navire pirate accélère encore.</p>`,choices:[{label:'Préparer les soldats',to:'c13',effect:s=>startCrewBattle(s,'pirates1',12,3,1,0)}]},
+ c12:{title:'Le pavillon noir',text:`<p>Le Resolute quitte progressivement les eaux côtières et prend la route du large.</p><p>Derrière vous, la ligne de terre s’efface peu à peu jusqu’à disparaître complètement.</p><p>Bientôt, il ne reste plus que la mer.</p><p>De l’eau dans toutes les directions, jusqu’à l’horizon.</p><p>Le vent est régulier et le sloop avance vite, mais à bord l’atmosphère est différente de celle des premières heures.</p><p>Les marins connaissent ces eaux.</p><p>Ils savent que loin des côtes, un bâtiment isolé peut rester invisible pendant des jours.</p><p>Et ils savent surtout que les navires marchands ne sont pas les seuls à emprunter cette route.</p><p>Puis une voix éclate soudain au-dessus du pont.</p><blockquote>« Voile ! Voile à l’horizon ! »</blockquote><p>La vigie, installée dans la hune, pointe le bras vers l’avant tribord.</p><p>En quelques secondes, les conversations cessent.</p><p>Plusieurs hommes se tournent dans la même direction.</p><p>Au début, tu ne distingues presque rien.</p><p>Un point sombre seulement, posé sur la ligne de l’horizon.</p><p>Tu prends la longue-vue.</p><p>Sa structure est légère et rapide. Trop rapide pour un gros navire de commerce.</p><p>Et surtout, quelque chose flotte en haut du mât.</p><p>Une pièce de tissu noire.</p><p>Le doute disparaît.</p><p><strong>Un pavillon noir.</strong></p><p>Sur ton pont, les soldats se mettent en place.</p><p>Les marins cessent complètement de parler.</p><p>Le navire adverse continue d’approcher.</p><p>Il attend probablement que vous réduisiez la voilure et acceptiez de vous rendre.</p><p>Il en est évidemment hors de question. Tu le fais savoir sans attendre en donnant l’ordre de mettre toute la toile : le Resolute se lance à pleine vitesse droit sur le bâtiment pirate.</p><p>Quelques instants plus tard, le pavillon noir descend.</p><p>Un autre monte lentement à sa place.</p><p><strong>Rouge.</strong></p><p>Cette fois, même les plus jeunes marins comprennent ce que cela signifie.</p><p>Pas de quartier.</p><p>Pas de prisonniers.</p><p>Le navire pirate accélère encore.</p>`,choices:[{label:'Préparer les soldats',to:'c13',effect:s=>startCrewBattle(s,'pirates1',12,4,1,0)}]},
  c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>
   <div class="dice-result">
     <p class="roll-number">Règle du combat de groupe</p>
     <p>Chaque groupe possède une <strong>Valeur de combat</strong> qui représente à la fois son équipement et son entraînement.</p>
-    <p>Tes soldats sont aguerris et bien équipés : <strong>Valeur de combat 3</strong>. Chaque dé faisant <strong>1, 2 ou 3</strong> est une réussite.</p>
+    <p>Tes soldats sont aguerris et bien équipés : <strong>Valeur de combat 4</strong>. Chaque dé faisant <strong>1, 2, 3 ou 4</strong> est une réussite.</p>
     <p>Les pirates sont plus nombreux mais moins disciplinés et moins bien équipés : <strong>Valeur de combat 1</strong>. Seul un <strong>1</strong> est une réussite.</p>
     <p>Chaque combattant lance <strong>1D6</strong>. <strong>Chaque réussite élimine un adversaire.</strong></p>
     <p>Après chaque assaut, les survivants relancent leurs dés jusqu’à l’élimination complète d’un des deux groupes.</p>
   </div>
-  ${crewBattleHtml(s,'pirates1',12)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,3,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
+  ${crewBattleHtml(s,'pirates1',12)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,4,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu prends appui sur le bastingage et sautes sur le pont adverse.</p><p>Autour de toi, la mêlée se disperse entre les cordages et les canons. Des hommes reculent, d’autres se jettent les uns sur les autres dans le vacarme des lames et du bois frappé.</p><p>Puis tu le vois.</p><p>Le capitaine pirate ne ressemble pas aux hommes qui se battent autour de lui. Grand, massif, le visage mangé par une barbe noire, il porte un long manteau usé dont les manches sont tachées de sel. Une cicatrice épaisse part de sa pommette et disparaît sous sa barbe.</p><p>Il regarde ses hommes tomber sans bouger.</p><p>Quand ses yeux se posent sur toi, il sourit.</p><p>Il tire lentement son sabre d’abordage. La lame est large, ébréchée près de la pointe.</p><p>Du bout de l’arme, il te fait signe d’approcher.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
  c16:{title:'Les gantelets',text:`<p>Le capitaine porte des gantelets de cuir renforcés de petites plaques métalliques rivetées.</p><p><strong>Protection +4.</strong></p>`,choices:[{label:'Les prendre et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;s.protection=4;addItem(s,'gantelets','Gantelets renforcés','Gantelets de cuir renforcés. Protection +4.');}}}]},
  c20:{title:'',text:`<p>Le Resolute atteint enfin la zone où le Providence aurait dû être aperçu pour la dernière fois.</p><p>Tu fais réduire la voilure et ordonnes une première recherche méthodique.</p><p>Deux hommes montent dans la mature avec des longues-vues. D’autres scrutent la surface à la recherche d’un débris, d’un tonneau, d’une voile déchirée, de n’importe quoi qui pourrait trahir le passage d’un navire.</p><p>La mer est vaste, presque vide.</p><p>Une heure passe.</p><p>Puis une autre.</p><p>Vous croisez un banc de poissons volants, quelques oiseaux et une longue ligne d’algues poussée par le courant.</p><p>Rien qui appartienne au Providence.</p><p>À la fin de la journée, tu fais reporter sur la carte toutes les zones déjà parcourues.</p><p>La surface couverte paraît dérisoire.</p>`,choices:[{label:'Poursuivre les recherches',to:'search1'}]},
@@ -433,15 +433,15 @@ const STORY={
    {label:'Descendre vers le sud — les eaux instables',to:'south1'}
  ]},
 
- north1:{title:'',text:`<p>Le Resolute remonte vers le nord.</p><p>Le paysage change peu à peu. De petites îles basses apparaissent, séparées par des chenaux profonds. Certaines ne sont que des bandes de sable couvertes de végétation. D’autres portent les restes de cabanes abandonnées.</p><p>Vous passez près d’une épave ancienne échouée sur un récif. Il ne reste de la coque que quelques membrures noircies dressées hors de l’eau.</p><p>Personne n’a besoin de rappeler pourquoi cette zone est évitée par les marchands isolés.</p><p>Vers le milieu de l’après-midi, une voile apparaît derrière une île.</p><p>Le bâtiment ne porte aucun pavillon.</p><p>Il conserve d’abord sa route.</p><p>Puis il vire.</p><p>Droit vers vous.</p><p>Quelques minutes plus tard, un pavillon noir monte lentement au mât.</p><p>Sur le pont du Resolute, tes soldats prennent leurs armes sans attendre ton ordre.</p>`,choices:[{label:'Préparer la défense',to:'north2',effect:s=>startCrewBattle(s,'piratesNorth',12,3,1,0)}]},
+ north1:{title:'',text:`<p>Le Resolute remonte vers le nord.</p><p>Le paysage change peu à peu. De petites îles basses apparaissent, séparées par des chenaux profonds. Certaines ne sont que des bandes de sable couvertes de végétation. D’autres portent les restes de cabanes abandonnées.</p><p>Vous passez près d’une épave ancienne échouée sur un récif. Il ne reste de la coque que quelques membrures noircies dressées hors de l’eau.</p><p>Personne n’a besoin de rappeler pourquoi cette zone est évitée par les marchands isolés.</p><p>Vers le milieu de l’après-midi, une voile apparaît derrière une île.</p><p>Le bâtiment ne porte aucun pavillon.</p><p>Il conserve d’abord sa route.</p><p>Puis il vire.</p><p>Droit vers vous.</p><p>Quelques minutes plus tard, un pavillon noir monte lentement au mât.</p><p>Sur le pont du Resolute, tes soldats prennent leurs armes sans attendre ton ordre.</p>`,choices:[{label:'Préparer la défense',to:'north2',effect:s=>startCrewBattle(s,'piratesNorth',12,4,1,0)}]},
 
  north2:{title:'',text:s=>`<p>Les deux bâtiments se rapprochent jusqu’à ce que les grappins passent d’un pont à l’autre.</p><p>Les premiers pirates franchissent le bastingage dans un fracas de bois et de métal.</p><p>Cette fois, il n’y a plus de négociation possible.</p>
   <div class="dice-result">
     <p class="roll-number">Combat de groupe</p>
-    <p>Chaque groupe possède une <strong>Valeur de combat</strong> liée à son équipement et à son entraînement. Tes soldats ont <strong>3</strong> : ils réussissent sur <strong>1, 2 ou 3</strong>. Les pirates ont <strong>1</strong> : ils ne réussissent que sur <strong>1</strong>.</p>
+    <p>Chaque groupe possède une <strong>Valeur de combat</strong> liée à son équipement et à son entraînement. Tes soldats ont <strong>3</strong> : ils réussissent sur <strong>1, 2, 3 ou 4</strong>. Les pirates ont <strong>1</strong> : ils ne réussissent que sur <strong>1</strong>.</p>
     <p>Chaque combattant lance <strong>1D6</strong>. <strong>Chaque réussite élimine un adversaire.</strong> Les survivants rejouent jusqu’à l’élimination d’un groupe.</p>
   </div>
-  ${crewBattleHtml(s,'piratesNorth',12)}`,choices:s=>{const b=ensureCrewBattle(s,'piratesNorth',12,3,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Passer sur le navire pirate',to:'north3'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'piratesNorth',12)}];}},
+  ${crewBattleHtml(s,'piratesNorth',12)}`,choices:s=>{const b=ensureCrewBattle(s,'piratesNorth',12,4,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Passer sur le navire pirate',to:'north3'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'piratesNorth',12)}];}},
 
  north3:{title:'',text:s=>`<p>Le dernier groupe de pirates rompt enfin sous la pression. Certains jettent leurs armes, d’autres disparaissent derrière les caisses et les cordages.</p><p>Tu franchis le bastingage et poses le pied sur leur pont.</p><p>La bataille n’est pourtant pas terminée.</p><p>Un homme t’attend près du grand mât.</p><p>Il est plus grand que la plupart de ses hommes et porte un manteau de cuir sombre renforcé aux épaules. Son crâne est rasé sur les côtés, mais une longue tresse noire retombe dans son dos. Une ancienne brûlure lui couvre une partie du cou et remonte jusqu’à la mâchoire.</p><p>À ses pieds, un de ses propres hommes essaie de ramper hors de la mêlée.</p><p>Le capitaine le repousse brutalement du talon sans même baisser les yeux.</p><p>Puis il te regarde.</p><p>Il ne crie pas. Il ne menace pas.</p><p>Il sort simplement un lourd sabre d’abordage, fait rouler son épaule comme s’il s’échauffait, puis avance vers toi.</p><p>Son calme est plus inquiétant que les hurlements de tout son équipage.</p>${fightHtml(s,'northCaptain',NORTH_CAPTAIN)}`,choices:s=>{const c=s.combats?.northCaptain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le navire pirate',to:'north4'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'northCaptain',NORTH_CAPTAIN)}];}},
 
@@ -505,8 +505,8 @@ const STORY={
 
  c30:{title:'',text:`<p>Tu écartes plusieurs cartes marines et ouvres les tiroirs du bureau.</p><p>Le premier contient des instruments de navigation.</p><p>Le second est vide.</p><p>Dans le troisième, tu trouves un paquet de feuilles pliées.</p><p>Tu les poses sur la table.</p><p>Toutes représentent la même île.</p><p>Toujours la même côte.</p><p>La même baie.</p><p>Le même relief dessiné à l’intérieur des terres.</p><p>Certaines cartes sont propres et soigneusement copiées.</p><p>D’autres ont été couvertes de notes.</p><blockquote>« Là où elle dort. »</blockquote><blockquote>« Les pierres sont réelles. »</blockquote><blockquote>« Nous n’aurions jamais dû ouvrir le coffre. »</blockquote><p>Au fond du bureau, tu découvres enfin le journal du capitaine.</p><p>Les premières pages décrivent une traversée parfaitement normale.</p><p>Puis tout change.</p><p>Le Providence avait atteint une île inconnue.</p><p>L’équipage y avait trouvé quelque chose.</p><p>Le texte reste confus sur la nature exacte de cette découverte, mais une chose est certaine :</p><p><strong>le Providence revenait de cette île lorsqu’une présence a commencé à suivre le navire.</strong></p><p>À partir de là, l’écriture devient de plus en plus irrégulière.</p><p>Une même phrase revient plusieurs fois.</p><blockquote>« Elle nous suit. »</blockquote><p>Tu refermes lentement le journal.</p><p>Tu repenses à la masse sombre aperçue sous le Resolute.</p><p>Sur la table, la carte de l’île est encore ouverte.</p>`,choices:[{label:'Mettre le cap sur l’île',to:'c31'}]},
 
- c31:{title:'Le navire sans pavillon',text:`<p>Un navire apparaît. Aucun pavillon.</p><p>Le contourner ferait perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'c32',effect:s=>startCrewBattle(s,'pirates2',9,3,1,0)}]},
- c32:{title:'Une seconde attaque',text:s=>`<p>Le navire révèle ses pirates.</p>${crewBattleHtml(s,'pirates2',9)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',9,3,1,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',9)}];}},
+ c31:{title:'Le navire sans pavillon',text:`<p>Un navire apparaît. Aucun pavillon.</p><p>Le contourner ferait perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'c32',effect:s=>startCrewBattle(s,'pirates2',9,4,1,0)}]},
+ c32:{title:'Une seconde attaque',text:s=>`<p>Le navire révèle ses pirates.</p>${crewBattleHtml(s,'pirates2',9)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',9,4,1,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',9)}];}},
  c34:{title:'La crique',text:s=>`<p>L’île est petite, sauvage et couverte d’une jungle dense.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats. Tu peux en emmener jusqu’à trois. Au moins deux doivent rester sur les navires.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-2)).map(n=>({label:n===0?'Partir seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
  c35:{title:'À qui confier le commandement ?',text:`<p><strong>William Briggs</strong> est bourru, courageux et efficace. Il prendra la bonne décision, même si elle consiste à partir sans toi.</p><p><strong>Nathaniel Hale</strong> est intelligent et loyal. Il hésite davantage, mais ne t’abandonnera pas.</p>`,choices:[{label:'Choisir William Briggs',to:'c36',effect:s=>s.flags.commander='briggs'},{label:'Choisir Nathaniel Hale',to:'c36',effect:s=>s.flags.commander='hale'}]},
  c36:{title:'Le premier piège',text:s=>`<p>Un énorme tronc hérissé de pieux bascule entre les arbres.</p>${s.expeditionSoldiers>0?'<p>Un de tes hommes est frappé de plein fouet.</p>':'<p>Le tronc fonce vers toi.</p>'}`,onEnter:s=>{if(!s.flags.firstTrap){s.flags.firstTrap=true;s.flags.firstTrapHitCompanion=s.expeditionSoldiers>0;if(s.flags.firstTrapHitCompanion)loseSoldier(s,1);}},choices:s=>!s.flags.firstTrapHitCompanion?[{label:'Éviter le piège — Dextérité',to:'c37',diceTest:true,effect:x=>{x.flags.trapDex=rollDex(x);if(!x.flags.trapDex)rollDamage(x,'jungleTrap',3);}}]:[{label:'Continuer',to:'c38'}]},
@@ -641,7 +641,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:33,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:34,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
