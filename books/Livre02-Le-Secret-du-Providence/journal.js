@@ -12,7 +12,7 @@
 {id:'appat:c29',page:'c29',title:'La pierre et la carte',text:'Dans la cabine en désordre, une carte parfaitement dépliée et une pierre bleue ont été laissées bien en évidence. Cela ressemble à une mise en scène.'},
 {id:'cycle:c30',page:'c30',title:'Le même appât',text:'Le Providence avait lui-même trouvé sur un navire vide une carte et une pierre bleue. Son capitaine a suivi les trois lumières indiquées dessus.'},
 {id:'village:c34',page:'c34',title:'L’île des pêcheurs',text:'Nous avons choisi d’enquêter auprès des anciens pêcheurs avant de suivre les trois lumières. Aucun habitant ne vient accueillir les navires.'},
-{id:'ravin:c50',page:'c50',title:'Un survivant',text:'Un pêcheur blessé affirme que des hommes très pâles sont venus de la mer. Ils attachaient les habitants et les emmenaient vers leurs barques.'},
+{id:'ravin:c50',page:'c50',title:'Un survivant',text:'Un pêcheur blessé affirme que des hommes très pâles sont venus de la mer. Il a arraché à l’un d’eux une bague au crâne qui semble avoir une signification pour leur groupe.'},
 {id:'maisons:c40',page:'c40',title:'Emportés vivants',text:'Les maisons ont été fouillées sans être pillées. Des traces montrent que plusieurs habitants ont été traînés dehors. Aucun corps.'},
 {id:'guet:c43',page:'c43',title:'Un homme pâle',text:'Le poste de guet surveillait l’île au sud-est. Un homme anormalement pâle a été surpris près du village la veille de l’attaque puis s’est enfui.'},
 {id:'archives:c46',page:'c46',title:'Les pierres bleues',text:'Les anciens registres parlent de pierres bleues sur l’île voisine, de trois lumières et de navires retrouvés vides.'},
