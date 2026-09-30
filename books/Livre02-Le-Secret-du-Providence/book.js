@@ -139,32 +139,67 @@ function crewBattleHtml(s,key,enemyCount=12){
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
   const hasNewResult=!!(l&&l.mode==='force_gap_d6');
 
-  const advantage=l
-    ? (l.outcome==='soldiers'
-      ? `Tes soldats ont la plus grande Force. Leur dé de pertes est réduit de <strong>${l.gap}</strong>.`
-      : l.outcome==='pirates'
-        ? `Les pirates ont la plus grande Force. Leur dé de pertes est réduit de <strong>${l.gap}</strong>.`
-        : 'Les deux groupes ont la même Force : aucun camp ne bénéficie de réduction.')
-    : '';
-
-  return `<div class="combat-roll-result"><div class="combat-roll-title">Combat de groupe</div>
-    <p>Soldats : <strong>${s.soldiers}</strong> · Pirates : <strong>${b.enemy}</strong></p>
-    ${hasNewResult?`
-      <div class="dice-result crew-battle-compact">
-        <div class="crew-battle-side">
-          <span><strong>Soldats — ${l.soldierCount} × ${soldierPower} = Force ${l.soldierAttack}</strong></span>
-          <span class="crew-battle-die">${renderDie(l.soldierLossDie)}</span>
-          <span>Dé de pertes : ${l.soldierLossDie}${l.outcome==='soldiers'?` − ${l.gap}`:''} → <strong>−${l.soldierLoss}</strong></span>
-        </div>
-        <div class="crew-battle-side">
-          <span><strong>Pirates — ${l.enemyCount} × ${enemyPower} = Force ${l.enemyAttack}</strong></span>
-          <span class="crew-battle-die">${renderDie(l.enemyLossDie)}</span>
-          <span>Dé de pertes : ${l.enemyLossDie}${l.outcome==='pirates'?` − ${l.gap}`:''} → <strong>−${l.enemyLoss}</strong></span>
-        </div>
-        <p class="crew-battle-outcome"><strong>${advantage}</strong></p>
-        <p><strong>Pertes du tour : Soldats −${l.soldierLoss} · Pirates −${l.enemyLoss}</strong></p>
+  if(!hasNewResult){
+    const soldierAttack=s.soldiers*soldierPower;
+    const enemyAttack=b.enemy*enemyPower;
+    return `<div class="combat-roll-result crew-battle-result">
+      <div class="combat-roll-title">Combat de groupe</div>
+      <div class="crew-strength-preview">
+        <div><strong>Soldats</strong><span>${s.soldiers} × ${soldierPower} = <strong>${soldierAttack}</strong></span></div>
+        <div><strong>Pirates</strong><span>${b.enemy} × ${enemyPower} = <strong>${enemyAttack}</strong></span></div>
       </div>
-    `:''}
+      <p class="crew-battle-ready">Lance les dés pour résoudre les pertes de cet assaut.</p>
+    </div>`;
+  }
+
+  const soldierAfter=Math.max(0,l.soldierCount-l.soldierLoss);
+  const enemyAfter=Math.max(0,l.enemyCount-l.enemyLoss);
+  const stronger=l.outcome==='soldiers'?'soldats':l.outcome==='pirates'?'pirates':'aucun camp';
+  const advantageText=l.outcome==='tie'
+    ? 'Les deux groupes ont la même Force : aucun ne réduit ses pertes.'
+    : `Les <strong>${stronger}</strong> ont l’avantage de Force : <strong>${l.gap}</strong>. Cet écart est retiré de leur propre dé de pertes.`;
+
+  const soldierCalc=l.outcome==='soldiers'
+    ? `${l.soldierLossDie} − ${l.gap} = <strong>${l.soldierLoss} perte${l.soldierLoss>1?'s':''}</strong>`
+    : `${l.soldierLossDie} = <strong>${l.soldierLoss} perte${l.soldierLoss>1?'s':''}</strong>`;
+
+  const enemyCalc=l.outcome==='pirates'
+    ? `${l.enemyLossDie} − ${l.gap} = <strong>${l.enemyLoss} perte${l.enemyLoss>1?'s':''}</strong>`
+    : `${l.enemyLossDie} = <strong>${l.enemyLoss} perte${l.enemyLoss>1?'s':''}</strong>`;
+
+  return `<div class="combat-roll-result crew-battle-result">
+    <div class="combat-roll-title">Résultat de l’assaut</div>
+
+    <div class="crew-strength-preview">
+      <div><strong>Soldats</strong><span>${l.soldierCount} × ${soldierPower} = Force <strong>${l.soldierAttack}</strong></span></div>
+      <div><strong>Pirates</strong><span>${l.enemyCount} × ${enemyPower} = Force <strong>${l.enemyAttack}</strong></span></div>
+    </div>
+
+    <p class="crew-advantage">${advantageText}</p>
+
+    <div class="crew-loss-grid">
+      <div class="crew-loss-card">
+        <strong>Soldats</strong>
+        <span class="crew-loss-label">Dé de pertes</span>
+        <div class="crew-loss-die">${renderDie(l.soldierLossDie)}</div>
+        <div class="crew-loss-value">Résultat : <strong>${l.soldierLossDie}</strong></div>
+        <div class="crew-loss-calc">${soldierCalc}</div>
+      </div>
+
+      <div class="crew-loss-card">
+        <strong>Pirates</strong>
+        <span class="crew-loss-label">Dé de pertes</span>
+        <div class="crew-loss-die">${renderDie(l.enemyLossDie)}</div>
+        <div class="crew-loss-value">Résultat : <strong>${l.enemyLossDie}</strong></div>
+        <div class="crew-loss-calc">${enemyCalc}</div>
+      </div>
+    </div>
+
+    <div class="crew-battle-summary">
+      <strong>Pertes de l’assaut</strong>
+      <span>Soldats : <strong>−${l.soldierLoss}</strong> · Pirates : <strong>−${l.enemyLoss}</strong></span>
+      <span>Effectifs : Soldats <strong>${l.soldierCount} → ${soldierAfter}</strong> · Pirates <strong>${l.enemyCount} → ${enemyAfter}</strong></span>
+    </div>
   </div>`;
 }
 
@@ -506,7 +541,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:24,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:25,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
