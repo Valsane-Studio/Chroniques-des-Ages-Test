@@ -186,19 +186,78 @@ function crewBattleHtml(s,key,enemyCount=12){
 function fightRound(s,key,e){
   if(!s.combats)s.combats={};
   const c=s.combats[key]||(s.combats[key]={hp:e.hp,round:0,last:null});
-  const hd=[cryptoDie6(),cryptoDie6()],ed=[cryptoDie6(),cryptoDie6()];
-  const ha=currentDexterity(s)+hd[0]+hd[1],ea=e.dex+ed[0]+ed[1];
+  const heroDice=[cryptoDie6(),cryptoDie6()];
+  const enemyDice=[cryptoDie6(),cryptoDie6()];
+  const heroBase=currentDexterity(s);
+  const enemyBase=e.dex;
+  const ha=heroBase+heroDice[0]+heroDice[1];
+  const ea=enemyBase+enemyDice[0]+enemyDice[1];
   let outcome='tie',damage=0;
-  if(ha>ea){outcome='hero';damage=Math.max(1,Math.floor(currentForce(s)/4))+combatPower(s);c.hp=Math.max(0,c.hp-damage);}
-  else if(ha<ea){outcome='enemy';damage=e.damage;applyDamage(s,damage);}
-  c.round++;c.last={ha,ea,outcome,damage};
+  if(ha>ea){
+    outcome='hero';
+    damage=Math.max(1,Math.floor(currentForce(s)/4))+combatPower(s);
+    c.hp=Math.max(0,c.hp-damage);
+  }else if(ha<ea){
+    outcome='enemy';
+    damage=e.damage;
+    applyDamage(s,damage);
+  }
+  c.round++;
+  c.last={
+    heroDice,
+    enemyDice,
+    heroBase,
+    enemyBase,
+    ha,
+    ea,
+    outcome,
+    damage
+  };
 }
 function fightHtml(s,key,e){
-  const c=s.combats?.[key];if(!c)return '';
+  const c=s.combats?.[key];
+  if(!c)return '';
   const r=c.last;
-  return `<div class="combat-roll-result"><div class="combat-roll-title">${e.name}</div>
-  <p>Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></p>
-  ${r?`<p>Attaque : ${r.ha} contre ${r.ea}</p><p>${r.outcome==='hero'?`Tu infliges ${r.damage} dégâts.`:r.outcome==='enemy'?`Tu subis ${r.damage} dégâts.`:'Égalité, aucun dégât.'}</p>`:''}</div>`;
+
+  if(!r){
+    return `<div class="combat-roll-result">
+      <div class="combat-roll-title">${e.name}</div>
+      <p>Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></p>
+      <p>Lance les dés pour résoudre le prochain échange.</p>
+    </div>`;
+  }
+
+  const hasDice=Array.isArray(r.heroDice)&&Array.isArray(r.enemyDice);
+  const resultText=r.outcome==='hero'
+    ? `Tu remportes l’échange et infliges <strong>${r.damage} dégâts</strong>.`
+    : r.outcome==='enemy'
+      ? `${e.name} remporte l’échange : tu subis <strong>${r.damage} dégâts</strong>.`
+      : 'Égalité : aucun des deux combattants ne parvient à toucher l’autre.';
+
+  return `<div class="combat-roll-result">
+    <div class="combat-roll-title">${e.name}</div>
+    ${hasDice?`
+      <div class="combat-roll-grid">
+        <div class="combat-side">
+          <strong>Toi</strong>
+          <div class="combat-dice">${renderDie(r.heroDice[0])}${renderDie(r.heroDice[1])}</div>
+          <p>Dextérité ${r.heroBase} + dés ${r.heroDice[0]} + ${r.heroDice[1]}</p>
+          <p class="combat-total">Total : <strong>${r.ha}</strong></p>
+        </div>
+        <div class="combat-versus">VS</div>
+        <div class="combat-side">
+          <strong>${e.name}</strong>
+          <div class="combat-dice">${renderDie(r.enemyDice[0])}${renderDie(r.enemyDice[1])}</div>
+          <p>Dextérité ${r.enemyBase} + dés ${r.enemyDice[0]} + ${r.enemyDice[1]}</p>
+          <p class="combat-total">Total : <strong>${r.ea}</strong></p>
+        </div>
+      </div>
+    `:`
+      <p>Attaque : <strong>${r.ha}</strong> contre <strong>${r.ea}</strong></p>
+    `}
+    <p class="combat-outcome"><strong>${resultText}</strong></p>
+    <p class="combat-life-line">Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></p>
+  </div>`;
 }
 const CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
 const NORTH_CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,damage:2};
@@ -521,7 +580,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:30,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:31,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
