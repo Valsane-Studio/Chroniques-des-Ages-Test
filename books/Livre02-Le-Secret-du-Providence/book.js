@@ -437,10 +437,10 @@ const STORY={
 
  north1:{title:'',text:`<p>Le Resolute remonte vers le nord.</p><p>Le paysage change peu à peu. De petites îles basses apparaissent, séparées par des chenaux profonds. Certaines ne sont que des bandes de sable couvertes de végétation. D’autres portent les restes de cabanes abandonnées.</p><p>Vous passez près d’une épave ancienne échouée sur un récif. Il ne reste de la coque que quelques membrures noircies dressées hors de l’eau.</p><p>Personne n’a besoin de rappeler pourquoi cette zone est évitée par les marchands isolés.</p><p>Vers le milieu de l’après-midi, une voile apparaît derrière une île.</p><p>Le bâtiment ne porte aucun pavillon.</p><p>Il conserve d’abord sa route.</p><p>Puis il vire.</p><p>Droit vers vous.</p><p>Quelques minutes plus tard, un pavillon noir monte lentement au mât.</p><p>Sur le pont du Resolute, tes soldats prennent leurs armes sans attendre ton ordre.</p>`,choices:[{label:'Préparer la défense',to:'north2',effect:s=>startCrewBattle(s,'piratesNorth',12,4,1,0)}]},
 
- north2:{title:'',text:s=>`<p>Les deux bâtiments se rapprochent jusqu’à ce que les grappins passent d’un pont à l’autre.</p><p>Les premiers pirates franchissent le bastingage dans un fracas de bois et de métal.</p><p>Cette fois, il n’y a plus de négociation possible.</p>
+ north2:{title:'',text:s=>`<p>Le bateau ennemi se rapproche rapidement du Resolute, jusqu’à ce que les grappins passent d’un pont à l’autre.</p><p>Les premiers pirates franchissent le bastingage dans un fracas de bois et de métal.</p><p>Cette fois, il n’y a plus de négociation possible.</p>
   <div class="dice-result">
     <p class="roll-number">Combat de groupe</p>
-    <p>Chaque groupe possède une <strong>Valeur de combat</strong> liée à son équipement et à son entraînement. Tes soldats ont <strong>3</strong> : ils réussissent sur <strong>1, 2, 3 ou 4</strong>. Les pirates ont <strong>1</strong> : ils ne réussissent que sur <strong>1</strong>.</p>
+    <p>Chaque groupe possède une <strong>Valeur de combat</strong> liée à son équipement et à son entraînement. Tes soldats ont <strong>4</strong> : ils réussissent sur <strong>1, 2, 3 ou 4</strong>. Les pirates ont <strong>1</strong> : ils ne réussissent que sur <strong>1</strong>.</p>
     <p>Chaque combattant lance <strong>1D6</strong>. <strong>Chaque réussite élimine un adversaire.</strong> Les survivants rejouent jusqu’à l’élimination d’un groupe.</p>
   </div>
   ${crewBattleHtml(s,'piratesNorth',12)}`,choices:s=>{const b=ensureCrewBattle(s,'piratesNorth',12,4,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Passer sur le navire pirate',to:'north3'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'piratesNorth',12)}];}},
@@ -642,7 +642,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:36,pageMapVersion:4,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:37,pageMapVersion:4,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
