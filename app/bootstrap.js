@@ -28,9 +28,18 @@ async function loadBook(id){
     if(loadedBookId===id){showBook(id,true);return;}
     rememberBook(id);rememberView('book');location.reload();return;
   }
-  const e=LibraryApp.byId(id);if(!e)return;
+  const e=LibraryApp.byId(id);
+  if(!e){
+    rememberBook('livre01');
+    showHome(true);
+    return;
+  }
   const m=await LibraryApp.manifest(e);
-  if(!m||(m.status||'available')!=='available')return;
+  if(!m||(m.status||'available')!=='available'){
+    rememberBook('livre01');
+    showHome(true);
+    return;
+  }
   if(!LibraryApp.canOpen(m)){
     showHome(true);
     LibraryApp.showPreview?.(e,m);
@@ -60,5 +69,15 @@ LibraryApp.open=loadBook;
 await LibraryApp.render();
 returnBtn?.addEventListener('click',()=>showHome(true));
 const oldView=rememberedView(),wanted=rememberedBook()||'livre01';
-if(oldView==='book'||oldView==='book01')await loadBook(oldView==='book01'?'livre01':wanted);else showHome(false);
+try{
+  if(oldView==='book'||oldView==='book01'){
+    await loadBook(oldView==='book01'?'livre01':wanted);
+  }else{
+    showHome(false);
+  }
+}catch(error){
+  console.error('APHANES TEST — impossible de restaurer le livre précédent', error);
+  rememberBook('livre01');
+  showHome(true);
+}
 })();
