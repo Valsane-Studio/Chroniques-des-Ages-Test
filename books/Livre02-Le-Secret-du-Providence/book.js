@@ -61,7 +61,7 @@ function startCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retreat
     soldierPower,
     enemyPower,
     retreatAt,
-    ruleVersion:'force-gap-d6-v1'
+    ruleVersion:'training-dice-v1'
   };
 }
 function normalizeCrewBattle(b,enemyCount=12,soldierPower=5,enemyPower=3,retreatAt=Math.floor(enemyCount/2)){
@@ -79,8 +79,8 @@ function ensureCrewBattle(s,key,enemyCount=12,soldierPower=5,enemyPower=3,retrea
   if(!s.crewBattles)s.crewBattles={};
   if(!s.crewBattles[key])startCrewBattle(s,key,enemyCount,soldierPower,enemyPower,retreatAt);
   const b=normalizeCrewBattle(s.crewBattles[key],enemyCount,soldierPower,enemyPower,retreatAt);
-  if(b.ruleVersion!=='force-gap-d6-v1'){
-    b.ruleVersion='force-gap-d6-v1';
+  if(b.ruleVersion!=='training-dice-v1'){
+    b.ruleVersion='training-dice-v1';
     b.last=null;
     b.resolved=false;
   }
@@ -92,113 +92,91 @@ function crewBattleRound(s,key,enemyCount=12){
 
   const soldierCount=s.soldiers;
   const enemyCountNow=b.enemy;
-  const soldierAttack=soldierCount*b.soldierPower;
-  const enemyAttack=enemyCountNow*b.enemyPower;
-  const gap=Math.abs(soldierAttack-enemyAttack);
 
-  const soldierLossDie=cryptoDie6();
-  const enemyLossDie=cryptoDie6();
+  const soldierDice=Array.from({length:soldierCount},()=>cryptoDie6());
+  const enemyDice=Array.from({length:enemyCountNow},()=>cryptoDie6());
 
-  let outcome='tie';
-  let soldierLoss=soldierLossDie;
-  let enemyLoss=enemyLossDie;
+  // La puissance représente l'entraînement du groupe.
+  // Puissance 5 = réussite sur 4+, puissance 4 = 5+, puissance 3 = 6.
+  const soldierTarget=Math.max(2,9-b.soldierPower);
+  const enemyTarget=Math.max(2,9-b.enemyPower);
 
-  if(soldierAttack>enemyAttack){
-    outcome='soldiers';
-    soldierLoss=Math.max(0,soldierLossDie-gap);
-  }else if(enemyAttack>soldierAttack){
-    outcome='pirates';
-    enemyLoss=Math.max(0,enemyLossDie-gap);
-  }
+  const soldierHits=soldierDice.filter(v=>v>=soldierTarget).length;
+  const enemyHits=enemyDice.filter(v=>v>=enemyTarget).length;
 
-  soldierLoss=Math.min(soldierCount,soldierLoss);
-  enemyLoss=Math.min(enemyCountNow,enemyLoss);
+  const soldierLoss=Math.min(soldierCount,enemyHits);
+  const enemyLoss=Math.min(enemyCountNow,soldierHits);
 
   s.soldiers=Math.max(0,s.soldiers-soldierLoss);
   b.enemy=Math.max(0,b.enemy-enemyLoss);
   b.round++;
   b.resolved=false;
+  b.ruleVersion='training-dice-v1';
   b.last={
-    mode:'force_gap_d6',
+    mode:'training_dice',
     soldierCount,
     enemyCount:enemyCountNow,
-    soldierAttack,
-    enemyAttack,
-    gap,
-    soldierLossDie,
-    enemyLossDie,
-    outcome,
+    soldierPower:b.soldierPower,
+    enemyPower:b.enemyPower,
+    soldierTarget,
+    enemyTarget,
+    soldierDice,
+    enemyDice,
+    soldierHits,
+    enemyHits,
     soldierLoss,
     enemyLoss
   };
 }
+
 function crewBattleHtml(s,key,enemyCount=12){
   const b=ensureCrewBattle(s,key,enemyCount,5,3,0);
   const l=b.last;
   const soldierPower=Number.isFinite(b.soldierPower)?b.soldierPower:5;
   const enemyPower=Number.isFinite(b.enemyPower)?b.enemyPower:3;
-  const hasNewResult=!!(l&&l.mode==='force_gap_d6');
+  const soldierTarget=Math.max(2,9-soldierPower);
+  const enemyTarget=Math.max(2,9-enemyPower);
+  const hasNewResult=!!(l&&l.mode==='training_dice');
+
+  const diceRow=(dice,target)=>dice.map(v=>`<span class="crew-training-die ${v>=target?'success':'miss'}">${renderDie(v)}</span>`).join('');
 
   if(!hasNewResult){
-    const soldierAttack=s.soldiers*soldierPower;
-    const enemyAttack=b.enemy*enemyPower;
     return `<div class="combat-roll-result crew-battle-result">
       <div class="combat-roll-title">Combat de groupe</div>
-      <div class="crew-strength-preview">
-        <div><strong>Soldats</strong><span>${s.soldiers} × ${soldierPower} = <strong>${soldierAttack}</strong></span></div>
-        <div><strong>Pirates</strong><span>${b.enemy} × ${enemyPower} = <strong>${enemyAttack}</strong></span></div>
-      </div>
-      <p class="crew-battle-ready">Lance les dés pour résoudre les pertes de cet assaut.</p>
+      <p><strong>${s.soldiers} soldats</strong> contre <strong>${b.enemy} pirates</strong></p>
+      <p>Tes soldats sont mieux entraînés : ils touchent sur <strong>${soldierTarget}, ${soldierTarget+1} ou 6</strong>. Les pirates ne touchent que sur <strong>${enemyTarget}</strong>.</p>
+      <p>Chaque combattant lance un dé. <strong>Chaque réussite élimine un adversaire.</strong></p>
     </div>`;
   }
 
   const soldierAfter=Math.max(0,l.soldierCount-l.soldierLoss);
   const enemyAfter=Math.max(0,l.enemyCount-l.enemyLoss);
-  const stronger=l.outcome==='soldiers'?'soldats':l.outcome==='pirates'?'pirates':'aucun camp';
-  const advantageText=l.outcome==='tie'
-    ? 'Les deux groupes ont la même Force : aucun ne réduit ses pertes.'
-    : `Les <strong>${stronger}</strong> ont l’avantage de Force : <strong>${l.gap}</strong>. Cet écart est retiré de leur propre dé de pertes.`;
-
-  const soldierCalc=l.outcome==='soldiers'
-    ? `${l.soldierLossDie} − ${l.gap} = <strong>${l.soldierLoss} perte${l.soldierLoss>1?'s':''}</strong>`
-    : `${l.soldierLossDie} = <strong>${l.soldierLoss} perte${l.soldierLoss>1?'s':''}</strong>`;
-
-  const enemyCalc=l.outcome==='pirates'
-    ? `${l.enemyLossDie} − ${l.gap} = <strong>${l.enemyLoss} perte${l.enemyLoss>1?'s':''}</strong>`
-    : `${l.enemyLossDie} = <strong>${l.enemyLoss} perte${l.enemyLoss>1?'s':''}</strong>`;
 
   return `<div class="combat-roll-result crew-battle-result">
     <div class="combat-roll-title">Résultat de l’assaut</div>
 
-    <div class="crew-strength-preview">
-      <div><strong>Soldats</strong><span>${l.soldierCount} × ${soldierPower} = Force <strong>${l.soldierAttack}</strong></span></div>
-      <div><strong>Pirates</strong><span>${l.enemyCount} × ${enemyPower} = Force <strong>${l.enemyAttack}</strong></span></div>
+    <div class="crew-training-side">
+      <div class="crew-training-heading">
+        <strong>Soldats — ${l.soldierCount} combattants</strong>
+        <span>Entraînés · réussite sur <strong>${l.soldierTarget}+</strong></span>
+      </div>
+      <div class="crew-training-dice">${diceRow(l.soldierDice,l.soldierTarget)}</div>
+      <p><strong>${l.soldierHits} réussite${l.soldierHits>1?'s':''}</strong> → les pirates perdent <strong>${l.enemyLoss}</strong> homme${l.enemyLoss>1?'s':''}.</p>
     </div>
 
-    <p class="crew-advantage">${advantageText}</p>
-
-    <div class="crew-loss-grid">
-      <div class="crew-loss-card">
-        <strong>Soldats</strong>
-        <span class="crew-loss-label">Dé de pertes</span>
-        <div class="crew-loss-die">${renderDie(l.soldierLossDie)}</div>
-        <div class="crew-loss-value">Résultat : <strong>${l.soldierLossDie}</strong></div>
-        <div class="crew-loss-calc">${soldierCalc}</div>
+    <div class="crew-training-side">
+      <div class="crew-training-heading">
+        <strong>Pirates — ${l.enemyCount} combattants</strong>
+        <span>Moins entraînés · réussite sur <strong>${l.enemyTarget}</strong></span>
       </div>
-
-      <div class="crew-loss-card">
-        <strong>Pirates</strong>
-        <span class="crew-loss-label">Dé de pertes</span>
-        <div class="crew-loss-die">${renderDie(l.enemyLossDie)}</div>
-        <div class="crew-loss-value">Résultat : <strong>${l.enemyLossDie}</strong></div>
-        <div class="crew-loss-calc">${enemyCalc}</div>
-      </div>
+      <div class="crew-training-dice">${diceRow(l.enemyDice,l.enemyTarget)}</div>
+      <p><strong>${l.enemyHits} réussite${l.enemyHits>1?'s':''}</strong> → tes soldats perdent <strong>${l.soldierLoss}</strong> homme${l.soldierLoss>1?'s':''}.</p>
     </div>
 
     <div class="crew-battle-summary">
-      <strong>Pertes de l’assaut</strong>
-      <span>Soldats : <strong>−${l.soldierLoss}</strong> · Pirates : <strong>−${l.enemyLoss}</strong></span>
-      <span>Effectifs : Soldats <strong>${l.soldierCount} → ${soldierAfter}</strong> · Pirates <strong>${l.enemyCount} → ${enemyAfter}</strong></span>
+      <strong>Bilan de l’assaut</strong>
+      <span>Soldats : <strong>${l.soldierCount} → ${soldierAfter}</strong></span>
+      <span>Pirates : <strong>${l.enemyCount} → ${enemyAfter}</strong></span>
     </div>
   </div>`;
 }
@@ -314,11 +292,11 @@ const STORY={
  c13:{title:'L’abordage',text:s=>`<p>Les pirates passent à l’abordage.</p>
   <div class="dice-result">
     <p class="roll-number">Règle du combat de groupe</p>
-    <p>La <strong>Force d’attaque</strong> d’un groupe est égale au <strong>nombre de combattants × leur puissance</strong>.</p>
-    <p><strong>Soldats : puissance 5</strong> · <strong>Pirates : puissance 3</strong>. Au départ : 8 × 5 = <strong>40</strong> contre 12 × 3 = <strong>36</strong>.</p>
-    <p>À chaque assaut, les deux groupes lancent chacun <strong>1D6 de pertes</strong>.</p>
-    <p>Le groupe qui possède la plus grande Force réduit ses propres pertes de <strong>l’écart entre les deux Forces</strong>, sans jamais descendre sous zéro. L’autre groupe subit son dé complet.</p>
-    <p>Les Forces sont recalculées avec les survivants, puis un nouvel assaut commence jusqu’à l’élimination d’un des deux groupes.</p>
+    <p>Chaque combattant lance <strong>1 dé à 6 faces</strong>.</p>
+    <p>Tes soldats sont des hommes aguerris de la garnison de Port Royal. Grâce à leur entraînement, chaque <strong>4, 5 ou 6</strong> est une réussite.</p>
+    <p>Les pirates sont plus nombreux, mais moins disciplinés et moins entraînés : pour eux, seule une face <strong>6</strong> est une réussite.</p>
+    <p><strong>Chaque réussite élimine un combattant adverse.</strong></p>
+    <p>Après chaque assaut, les survivants lancent de nouveau leurs dés jusqu’à l’élimination complète d’un des deux groupes.</p>
   </div>
   ${crewBattleHtml(s,'pirates1',12)}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',12,5,3,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',12)}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu prends appui sur le bastingage et sautes sur le pont adverse.</p><p>Autour de toi, la mêlée se disperse entre les cordages et les canons. Des hommes reculent, d’autres se jettent les uns sur les autres dans le vacarme des lames et du bois frappé.</p><p>Puis tu le vois.</p><p>Le capitaine pirate ne ressemble pas aux hommes qui se battent autour de lui. Grand, massif, le visage mangé par une barbe noire, il porte un long manteau usé dont les manches sont tachées de sel. Une cicatrice épaisse part de sa pommette et disparaît sous sa barbe.</p><p>Il regarde ses hommes tomber sans bouger.</p><p>Quand ses yeux se posent sur toi, il sourit.</p><p>Il tire lentement son sabre d’abordage. La lame est large, ébréchée près de la pointe.</p><p>Du bout de l’arme, il te fait signe d’approcher.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,'captain',CAPTAIN)}];}},
@@ -338,8 +316,8 @@ const STORY={
  north2:{title:'',text:s=>`<p>Les deux bâtiments se rapprochent jusqu’à ce que les grappins passent d’un pont à l’autre.</p><p>Les premiers pirates franchissent le bastingage dans un fracas de bois et de métal.</p><p>Cette fois, il n’y a plus de négociation possible.</p>
   <div class="dice-result">
     <p class="roll-number">Combat de groupe</p>
-    <p>Force d’attaque = <strong>effectif × puissance</strong>. Soldats : puissance 5. Pirates : puissance 3.</p>
-    <p>À chaque assaut, les deux groupes lancent chacun <strong>1D6 de pertes</strong>. Le groupe ayant la Force la plus élevée réduit ses propres pertes de l’écart entre les deux Forces.</p>
+    <p>Chaque combattant lance <strong>1D6</strong>. Tes soldats, mieux entraînés, réussissent sur <strong>4, 5 ou 6</strong>. Les pirates ne réussissent que sur <strong>6</strong>.</p>
+    <p><strong>Chaque réussite élimine un adversaire.</strong> Les survivants rejouent jusqu’à l’élimination d’un groupe.</p>
   </div>
   ${crewBattleHtml(s,'piratesNorth',12)}`,choices:s=>{const b=ensureCrewBattle(s,'piratesNorth',12,5,3,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Passer sur le navire pirate',to:'north3'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'piratesNorth',12)}];}},
 
@@ -541,7 +519,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:25,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:26,pageMapVersion:3,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
