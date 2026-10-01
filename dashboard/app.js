@@ -198,6 +198,10 @@ const MANUAL_CORRECTIONS={
   '30/09/26 09:54':{duree_secondes:3480,checkpoint_uses:1}
 };
 
+const HIDDEN_TEST_SESSIONS=new Set([
+  '29/09/26 14:27'
+]);
+
 function applyManualCorrections(run){
   const correction=MANUAL_CORRECTIONS[fmtDate(run.created_at)];
   if(!correction)return run;
@@ -219,13 +223,15 @@ async function loadData(){
       rest('test_questionnaires?select=*&order=created_at.desc')
     ]);
     const byParty=new Map((questionnaires||[]).map(q=>[q.partie_id,q]));
-    rows=(parties||[]).map(p=>{
-      let joined={...p,questionnaire:byParty.get(p.id)||null};
-      const node=lastNode(joined);
-      if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
-      joined=applyManualCorrections(joined);
-      return joined;
-    });
+    rows=(parties||[])
+      .filter(p=>!HIDDEN_TEST_SESSIONS.has(fmtDate(p.created_at)))
+      .map(p=>{
+        let joined={...p,questionnaire:byParty.get(p.id)||null};
+        const node=lastNode(joined);
+        if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
+        joined=applyManualCorrections(joined);
+        return joined;
+      });
     renderAll();
     lastRefresh.textContent='Mis à jour '+new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit'}).format(new Date());
   }catch(error){
