@@ -191,30 +191,6 @@ function notesHtml(q){
   ].map(([k,v])=>`<span class="note-chip">${k} ${v??'—'}/9</span>`).join('');
 }
 
-const MANUAL_CORRECTIONS={
-  '30/09/26 10:02':{duree_secondes:3480,checkpoint_uses:1},
-  '30/09/26 10:01':{duree_secondes:3480,checkpoint_uses:1},
-  '30/09/26 10:00':{duree_secondes:3480,checkpoint_uses:1},
-  '30/09/26 09:54':{duree_secondes:3480,checkpoint_uses:1}
-};
-
-const HIDDEN_TEST_SESSIONS=new Set([
-  '29/09/26 14:27'
-]);
-
-function applyManualCorrections(run){
-  const correction=MANUAL_CORRECTIONS[fmtDate(run.created_at)];
-  if(!correction)return run;
-  return{
-    ...run,
-    duree_secondes:correction.duree_secondes,
-    parcours:{
-      ...(run.parcours&&typeof run.parcours==='object'?run.parcours:{}),
-      checkpoint_uses:correction.checkpoint_uses
-    }
-  };
-}
-
 async function loadData(){
   refreshBtn.disabled=true;
   try{
@@ -223,15 +199,12 @@ async function loadData(){
       rest('test_questionnaires?select=*&order=created_at.desc')
     ]);
     const byParty=new Map((questionnaires||[]).map(q=>[q.partie_id,q]));
-    rows=(parties||[])
-      .filter(p=>!HIDDEN_TEST_SESSIONS.has(fmtDate(p.created_at)))
-      .map(p=>{
-        let joined={...p,questionnaire:byParty.get(p.id)||null};
-        const node=lastNode(joined);
-        if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
-        joined=applyManualCorrections(joined);
-        return joined;
-      });
+    rows=(parties||[]).map(p=>{
+      const joined={...p,questionnaire:byParty.get(p.id)||null};
+      const node=lastNode(joined);
+      if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
+      return joined;
+    });
     renderAll();
     lastRefresh.textContent='Mis à jour '+new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit'}).format(new Date());
   }catch(error){
