@@ -265,6 +265,7 @@ function renderRows(){
       <td><span class="result-pill ${meta.cls}">${meta.label}</span></td>
       <td>${cleanText(finalLabel(run))}<br><span class="muted">p. ${run.page_finale??'—'} · ${cleanText(lastNode(run)||'')}</span></td>
       <td>${fmtDuration(run.duree_secondes)}</td>
+      <td>${Math.max(0,Number(run?.parcours?.checkpoint_uses)||0)}</td>
       <td>${run.vie??'—'} / ${run.vie_max??'—'}</td>
       <td>${run.terre_noire??0} / 13</td>
       <td>${run.combats_gagnes??0} / ${run.combats_total??0}</td>
@@ -286,6 +287,7 @@ function renderRows(){
       </div>
       <div class="mobile-run-meta">
         <span>${fmtDuration(run.duree_secondes)}</span>
+        <span>Checkpoint ${Math.max(0,Number(run?.parcours?.checkpoint_uses)||0)}</span>
         <span>Vie ${run.vie??'—'}/${run.vie_max??'—'}</span>
         <span>Terre ${run.terre_noire??0}/13</span>
         <span>Combats ${run.combats_gagnes??0}/${run.combats_total??0}</span>
@@ -316,6 +318,7 @@ function openDetail(run){
     <div class="detail-grid">
       ${detailStat('Page finale',run.page_finale)}
       ${detailStat('Durée',fmtDuration(run.duree_secondes))}
+      ${detailStat('Checkpoint',Math.max(0,Number(run?.parcours?.checkpoint_uses)||0))}
       ${detailStat('Pages visitées',run.pages_visitees)}
       ${detailStat('Vie',`${run.vie??'—'} / ${run.vie_max??'—'}`)}
       ${detailStat('Force',run.force)}
