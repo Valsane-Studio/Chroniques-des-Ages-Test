@@ -191,6 +191,26 @@ function notesHtml(q){
   ].map(([k,v])=>`<span class="note-chip">${k} ${v??'—'}/9</span>`).join('');
 }
 
+const MANUAL_CORRECTIONS={
+  '30/09/26 10:02':{duree_secondes:3480,checkpoint_uses:1},
+  '30/09/26 10:01':{duree_secondes:3480,checkpoint_uses:1},
+  '30/09/26 10:00':{duree_secondes:3480,checkpoint_uses:1},
+  '30/09/26 09:54':{duree_secondes:3480,checkpoint_uses:1}
+};
+
+function applyManualCorrections(run){
+  const correction=MANUAL_CORRECTIONS[fmtDate(run.created_at)];
+  if(!correction)return run;
+  return{
+    ...run,
+    duree_secondes:correction.duree_secondes,
+    parcours:{
+      ...(run.parcours&&typeof run.parcours==='object'?run.parcours:{}),
+      checkpoint_uses:correction.checkpoint_uses
+    }
+  };
+}
+
 async function loadData(){
   refreshBtn.disabled=true;
   try{
@@ -200,9 +220,10 @@ async function loadData(){
     ]);
     const byParty=new Map((questionnaires||[]).map(q=>[q.partie_id,q]));
     rows=(parties||[]).map(p=>{
-      const joined={...p,questionnaire:byParty.get(p.id)||null};
+      let joined={...p,questionnaire:byParty.get(p.id)||null};
       const node=lastNode(joined);
       if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
+      joined=applyManualCorrections(joined);
       return joined;
     });
     renderAll();
