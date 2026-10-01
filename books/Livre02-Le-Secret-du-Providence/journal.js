@@ -2,7 +2,7 @@
 {id:'mission:c1',page:'c1',title:'Mission',text:'Le Providence a disparu avec vingt-sept hommes. Son manifeste ne mentionne aucun trésor ni cargaison exceptionnelle.'},
 {id:'cap:c3',page:'c3',title:'Trois éclats bleus',text:'Un calfateur a vu trois éclats bleus au large juste avant que le Providence change de cap vers le sud-est. Aucun phare connu ne se trouve là.'},
 {id:'tavernier:c5',page:'c5',title:'La légende de l’île',text:'Le tavernier affirme que certains navires disparaissent puis sont retrouvés intacts et vides.',requiresFlag:'tavernkeeperAuthority'},
-{id:'cercle:c6',page:'c6',title:'Le cercle noir',text:'Le vieux marin a dessiné un cercle noir fermé dans ta paume. Il t’a conseillé de fuir si tu retrouvais ce signe ailleurs.',requiresFlag:'blackCirclePalm'},
+{id:'cercle:c6',page:'c6',title:'Le cercle noir',text:'Le vieux marin a dessiné un cercle noir fermé dans ta paume. Selon lui, si tu cherches des réponses dans ces eaux, il faut suivre ce signe là où il réapparaît.',requiresFlag:'blackCirclePalm'},
 {id:'agresseur:c9',page:'c9',title:'Le cercle revient',text:'L’homme venu te tuer a parlé d’un trésor qui devait disparaître. Il a ajouté : « Ce ne sont pas les navires qu’ils veulent. »'},
 {id:'pirate:c16',page:'c16',title:'Quelque chose le gardait',text:'Des pirates ont tenté d’approcher le Providence. La mer retenait leur coque, puis une immense ombre les a frappés. Le Providence est resté intact.'},
 {id:'debris:c20',page:'c20',title:'L’île recrache les bateaux',text:'Une planche du Providence dérive depuis le sud-est. Un vieux dicton revient : « l’île mange les marins et recrache les bateaux ».'},
@@ -19,8 +19,8 @@
 {id:'plage:c49',page:'c49',title:'Ils sont repartis par la mer',text:'Les traces montrent que les assaillants ont emporté les habitants vers leurs embarcations, en direction de l’île au sud-est.'},
 {id:'journal:c52',page:'c52',title:'Les derniers mots',text:'Le dernier journal du village se termine par : « Ils sont là. Trop nombreux. Je pars aider les autres. »'},
 {id:'piste:c53',page:'c53',title:'La même piste',text:'La carte locale et celle du Providence désignent la même île. La pierre bleue ressemble désormais moins à un trésor qu’à un hameçon.'},
-{id:'pales:c62',page:'c62',title:'Les Pâles',text:'Les hommes de l’île portent des restes d’uniformes de nombreuses nations. Ce sont d’anciens marins, ou ils l’ont été.'},
-{id:'gardien:c67',page:'c67',title:'Le Gardien',text:'Le village des Pâles vénère une créature marine aux longs bras qu’ils appellent le Gardien.'},
-{id:'captifs:c68',page:'c68',title:'Les captifs',text:'Les habitants du premier village et au moins un marin du Providence sont retenus vivants sur l’île.'},
+{id:'retour:c56',page:'c56',title:'Sauver les hommes',text:'L’objectif a changé : ce n’est plus le Providence que nous cherchons. Ses marins peuvent encore être vivants sur l’île des hommes pâles.'},
+{id:'sanctuaire:caveShrine',page:'caveShrine',title:'Le cycle',text:'Les fresques montrent des navires attirés par trois lumières, une créature qui les protège des intrus, des marins capturés puis des coques vides renvoyées en mer avec une carte et une pierre bleue.',requiresFlag:'caveTruth'},
+{id:'captifs:c68',page:'c68',title:'Les captifs',text:'Des prisonniers sont retenus dans le village, parmi eux au moins un marin du Providence.'},
 {id:'appat2:c69',page:'c69',title:'Le véritable prix',text:'Les pierres bleues servent d’appât. Le Gardien protège les navires piégés jusqu’à ce que leurs équipages puissent être livrés au culte.'}
 ];})();
