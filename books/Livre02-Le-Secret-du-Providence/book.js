@@ -52,6 +52,26 @@ function addRumCrate(s,n=1){
     s.inventory.caisse_rhum.quantity=(s.inventory.caisse_rhum.quantity||1)+n;
   }
 }
+function rumCrateCount(s){
+  const item=s.inventory?.caisse_rhum;
+  return item?Math.max(0,Math.floor(Number(item.quantity)||1)):0;
+}
+function spendRumCrates(s,n){
+  const item=s.inventory?.caisse_rhum;
+  if(!item)return false;
+  const have=rumCrateCount(s);
+  if(have<n)return false;
+  const left=have-n;
+  if(left<=0)delete s.inventory.caisse_rhum;
+  else item.quantity=left;
+  return true;
+}
+function spendGold(s,n){
+  const have=Math.max(0,Math.floor(Number(s.goldCoins)||0));
+  if(have<n)return false;
+  s.goldCoins=have-n;
+  return true;
+}
 function addThrowingBlades(s,n=1){
   if(!s.inventory.couteaux_jet)addItem(s,'couteaux_jet','Lames de lancer','De petites lames équilibrées, conçues pour être lancées avec précision.',{quantity:n});
   else {
@@ -338,7 +358,7 @@ const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,force:8,damage:3};
 
 function createInitialState(){
   return {
-    node:'start',pageMapVersion:8,heroGender:'female',heroName:'Eleanor',
+    node:'start',pageMapVersion:9,heroGender:'female',heroName:'Eleanor',
     inventory:{},flags:{},visited:{},history:[],journal:'',
     hp:18,maxHp:18,baseForce:8,baseDexterity:13,forceBonus:0,dexBonus:0,dexPenalty:0,
     weapon:'naval_sword',protection:0,goldCoins:0,
@@ -521,10 +541,25 @@ c30:{title:'Le journal du Providence',text:`<p>Dans un tiroir du bureau, tu retr
 
 directIsland:{title:'L’île aux pierres bleues',text:`<p>Tu décides de ne pas perdre davantage de temps.</p><p>Le Resolute met le cap sur l’île indiquée par la carte. Peu avant la côte, trois lueurs bleues apparaissent entre les rochers.</p><p>Un. Deux. Trois.</p><p>Exactement comme dans le journal du Providence.</p><p>La crique est calme. Aucun canon. Aucun homme sur la plage. Aucun signe de danger.</p><p>Vous mettez les chaloupes à l’eau.</p><p>Tu es parmi les premiers à débarquer.</p><p>À peine ta botte touche-t-elle le sable qu’un claquement sec éclate dans les arbres.</p><p>Tout se déclenche à la fois.</p><p>Des filets lestés tombent depuis les branches. Des cordes se referment autour des jambes. Un tronc hérissé de pointes traverse le passage derrière vous et coupe toute retraite.</p><p>Des cris éclatent sur toute la plage.</p><p>Puis les hommes pâles surgissent.</p><p>Des dizaines.</p><p>Ils sortent des rochers, des fourrés, de derrière les arbres. Beaucoup portent encore des vêtements de marins.</p><p>Tu tires ton sabre, mais une masse s’abat sur ton poignet.</p><p>Ton arme tombe dans le sable.</p><p>Tu aperçois une dernière fois les trois lueurs bleues au bord de l’eau.</p><p>Puis une lourde pièce de bois s’abat vers ton crâne.</p><p>Tout devient noir.</p><div class="ending">FIN DE L’AVENTURE</div>`,choices:[{label:'Recommencer',action:'restart'}]},
 
-c31:{title:'Une voile sans pavillon',text:`<p>Le Resolute reprend la mer en remorquant le Providence.</p><p>Vous ne mettez pas le cap sur l’île aux trois lumières. Pas encore.</p><p>Votre destination est la petite île habitée indiquée sur les cartes, quelques milles plus au nord. Si ses habitants vivent ici depuis aussi longtemps qu’on le raconte, ils sauront peut-être ce que signifie cette pierre bleue.</p><p>À mi-chemin, une voile apparaît au loin.</p><p>Aucun pavillon ne se distingue.</p><p>Le bâtiment conserve d’abord sa route, puis vire lentement vers vous.</p><p>Des marchands perdus sont encore possibles. Des pirates le sont davantage.</p><p>Le contourner vous fera perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'c32',effect:s=>startCrewBattle(s,'pirates2',pirateCrewSize(s),4,1,0)}]},
- 
-c32:{title:'Une seconde attaque',text:s=>`<p>Le navire révèle ses pirates.</p>${crewBattleHtml(s,'pirates2',pirateCountForBattle(s,'pirates2'))}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',pirateCountForBattle(s,'pirates2'),4,1,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',pirateCountForBattle(x,'pirates2'))}];}},
- c34:{title:'L’île du village',text:s=>`<p>La petite île apparaît enfin devant vous.</p><p>D’après les cartes, un village occupe cette côte depuis plusieurs générations. Tu t’attends à voir de la fumée, des barques de pêche, peut-être quelqu’un venir observer les deux navires qui approchent.</p><p>Tu ne vois rien.</p><p>Quelques toits dépassent pourtant des arbres, plus haut dans les terres.</p><p>Le Resolute mouille à faible distance de la côte, le Providence toujours remorqué derrière lui.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats.</p><p>Tu peux partir seul ou emmener jusqu’à trois hommes. Au moins deux doivent rester près des navires.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-2)).map(n=>({label:n===0?'Descendre seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
+c31:{title:'Une voile sans pavillon',text:`<p>Le Resolute reprend la mer en remorquant le Providence.</p><p>Vous ne mettez pas le cap sur l’île aux trois lumières. Pas encore.</p><p>Votre destination est la petite île habitée indiquée sur les cartes, quelques milles plus au nord. Si ses habitants vivent ici depuis aussi longtemps qu’on le raconte, ils sauront peut-être ce que signifie cette pierre bleue.</p><p>À mi-chemin, une voile apparaît au loin.</p><p>Aucun pavillon ne se distingue.</p><p>Le bâtiment conserve d’abord sa route, puis vire lentement vers vous.</p><p>Des marchands perdus sont encore possibles. Des pirates le sont davantage.</p><p>Le contourner vous fera perdre plusieurs heures.</p>`,choices:[{label:'Contourner le navire',to:'c34',effect:s=>s.flags.islandDelay=true},{label:'Maintenir le cap',to:'pirateApproach'}]},
+
+pirateApproach:{title:'Droit sur les pirates',text:s=>`<p>Tu ordonnes de maintenir le cap.</p><p>La distance se réduit rapidement.</p><p>Cette fois, il n’y a plus de doute : des hommes montent sur le pont adverse, sabres et mousquets à la main. Des grappins sont déjà posés près de la rambarde.</p><p>Ils se préparent à vous prendre à l’abordage.</p><p>Le temps vous est compté. Tes hommes aussi.</p>${rumCrateCount(s)>0||s.goldCoins>=100?'<p>Vous transportez cependant de quoi tenter une négociation. Tu pourrais faire croire à une reddition, approcher sous pavillon blanc et acheter votre passage.</p>':''}<p>Ou donner immédiatement l’ordre de combattre.</p>`,choices:s=>{const out=[];if(rumCrateCount(s)>0||s.goldCoins>=100)out.push({label:'Tenter une approche douce et négocier',to:'pirateParley'});out.push({label:'Un soldat ne se rend jamais — lancer l’assaut',to:'c32',effect:x=>startCrewBattle(x,'pirates2',pirateCrewSize(x),4,1,0)});return out;}},
+
+pirateParley:{title:'Sous pavillon blanc',text:s=>`<p>Tu fais réduire la voilure et hisser un morceau de toile blanche bien visible au-dessus du pont.</p><p>Les pirates ne tirent pas.</p><p>Le Resolute avance lentement jusqu’à ce que les deux bâtiments soient assez proches pour s’entendre sans crier.</p><p>Sur l’autre pont, plusieurs hommes rient déjà. Leur capitaine s’appuie sur la rambarde et attend.</p><blockquote>« Alors, lieutenant ? Qu’est-ce que la Couronne nous offre pour qu’on vous laisse continuer votre promenade ? »</blockquote><p>Tu fais rapidement l’inventaire de ce que vous pouvez céder sans compromettre la mission.</p>`,choices:s=>{const r=rumCrateCount(s),g=Math.max(0,Math.floor(Number(s.goldCoins)||0)),out=[];
+  if(r>=1)out.push({label:'Proposer 1 tonneau de rhum',to:'pirateOfferRejected',effect:x=>{spendRumCrates(x,1);x.flags.pirateOffer='1 tonneau de rhum';}});
+  if(r>=2)out.push({label:'Proposer 2 tonneaux de rhum',to:'pirateDealAccepted',effect:x=>{spendRumCrates(x,2);x.flags.pirateOffer='2 tonneaux de rhum';x.flags.piratesBribed=true;}});
+  if(r>=1&&g>=100)out.push({label:'Proposer 1 tonneau de rhum et 100 pièces d’or',to:'pirateDealAccepted',effect:x=>{spendRumCrates(x,1);spendGold(x,100);x.flags.pirateOffer='1 tonneau de rhum et 100 pièces d’or';x.flags.piratesBribed=true;}});
+  if(r>=2&&g>=100)out.push({label:'Proposer 2 tonneaux de rhum et 100 pièces d’or',to:'pirateDealAccepted',effect:x=>{spendRumCrates(x,2);spendGold(x,100);x.flags.pirateOffer='2 tonneaux de rhum et 100 pièces d’or';x.flags.piratesBribed=true;}});
+  if(r===0&&g>=100)out.push({label:'Proposer 100 pièces d’or',to:'pirateDealAccepted',effect:x=>{spendGold(x,100);x.flags.pirateOffer='100 pièces d’or';x.flags.piratesBribed=true;}});
+  return out;}},
+
+pirateOfferRejected:{title:'Pas assez',text:s=>`<p>Un de tes hommes fait rouler le tonneau jusqu’au bord du pont.</p><p>Le capitaine pirate le regarde, puis éclate de rire.</p><blockquote>« Un seul tonneau ? Pour tout mon équipage ? »</blockquote><p>Les rires se répandent sur son pont.</p><p>Le capitaine se redresse et fait un signe de la main.</p><p>Les mousquets se lèvent. Les grappins passent par-dessus la rambarde.</p><blockquote>« Gardez votre rhum. Enfin… ce qu’il en reste. »</blockquote><p>La négociation est terminée.</p>`,choices:[{label:'Se préparer à l’abordage',to:'c32',effect:s=>startCrewBattle(s,'pirates2',pirateCrewSize(s),4,1,0)}]},
+
+pirateDealAccepted:{title:'Marché conclu',text:s=>`<p>Le capitaine pirate observe l’offre sans sourire.</p><p>Cette fois, personne ne rit.</p><p>Après quelques secondes, il lève la main.</p><blockquote>« Faites passer ça. Ensuite vous continuez votre route… et nous n’avons jamais vu votre pavillon. »</blockquote><p>La marchandise change de bord.</p><p>Les pirates récupèrent leurs grappins et leur bâtiment s’écarte lentement du Resolute.</p><p>Vous avez acheté votre passage sans perdre de temps — ni d’hommes.</p>`,choices:[{label:'Reprendre la route vers l’île des pêcheurs',to:'c34'}]},
+
+c32:{title:'Une seconde attaque',text:s=>`<p>Les pirates passent à l’attaque.</p>${crewBattleHtml(s,'pirates2',pirateCountForBattle(s,'pirates2'))}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',pirateCountForBattle(s,'pirates2'),4,1,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',pirateCountForBattle(x,'pirates2'))}];}},
+
+c34:{title:'L’île du village',text:s=>`<p>La petite île apparaît enfin devant vous.</p><p>D’après les cartes, un village occupe cette côte depuis plusieurs générations. Tu t’attends à voir de la fumée, des barques de pêche, peut-être quelqu’un venir observer les deux navires qui approchent.</p><p>Tu ne vois rien.</p><p>Quelques toits dépassent pourtant des arbres, plus haut dans les terres.</p><p>Le Resolute mouille à faible distance de la côte, le Providence toujours remorqué derrière lui.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats.</p><p>Tu peux partir seul ou emmener jusqu’à trois hommes. Au moins deux doivent rester près des navires.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-2)).map(n=>({label:n===0?'Descendre seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
 
 c35:{title:'À qui confier le commandement ?',text:`<p>Avant de quitter la plage, tu jettes un dernier regard vers le Resolute et le Providence.</p><p><strong>William Briggs</strong> est bourru, courageux et efficace. S’il faut sauver l’équipage, il prendra la décision sans hésiter, même si cela signifie repartir sans toi.</p><p><strong>Nathaniel Hale</strong> est plus réfléchi et profondément loyal. Il hésitera davantage, mais tu sais qu’il aura du mal à t’abandonner.</p><p>Même sur une île supposée habitée, quelqu’un doit rester maître à bord.</p>`,choices:[{label:'Choisir William Briggs',to:'c36',effect:s=>s.flags.commander='briggs'},{label:'Choisir Nathaniel Hale',to:'c36',effect:s=>s.flags.commander='hale'}]},
 
@@ -654,6 +689,10 @@ const PAGE_NAV_TITLES = {
   "c30": "Le journal du Providence",
   "directIsland": "L'île aux pierres bleues",
   "c31": "Vers le village voisin",
+  "pirateApproach": "Droit sur les pirates",
+  "pirateParley": "Sous pavillon blanc",
+  "pirateOfferRejected": "Pas assez",
+  "pirateDealAccepted": "Marché conclu",
   "c32": "Une seconde attaque",
   "c34": "L'île du village",
   "c35": "Choisir le commandement",
@@ -699,7 +738,7 @@ const PAGE_NAV_TITLES = {
   "c69": "Le véritable prix",
   "death": "La fin du voyage"
 };
-const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','directIsland','c31','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','c58','c59','c60','c61','c62','paleRing','c63','c64','c65','c66','c67','c68','c69','death'];
+const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','directIsland','c31','pirateApproach','pirateParley','pirateOfferRejected','pirateDealAccepted','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','c58','c59','c60','c61','c62','paleRing','c63','c64','c65','c66','c67','c68','c69','death'];
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
@@ -718,7 +757,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:66,pageMapVersion:4,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:67,pageMapVersion:9,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
