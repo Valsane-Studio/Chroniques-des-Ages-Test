@@ -106,15 +106,24 @@ function prepareSecondIslandParty(s){
   if(s.flags.secondIslandPartyReady)return;
   s.flags.secondIslandPartyReady=true;s.flags.haleAlive=true;s.flags.companion='hale';
   const expedition=Math.max(0,Math.floor(Number(s.expeditionSoldiers)||0));
+  const shipAnonymous=Math.max(0,Math.floor(Number(s.shipSoldiers)||0));
   if(s.flags.commander==='hale'){
-    const ship=Math.max(0,Math.floor(Number(s.shipSoldiers)||0));
-    const losses=Math.min(3,ship);
-    const survivors=Math.max(0,ship-losses);
+    const anonymousLosses=Math.min(3,shipAnonymous);
+    const survivors=Math.max(0,shipAnonymous-anonymousLosses);
     const volunteers=Math.min(Math.max(0,4-expedition),survivors);
-    s.flags.pirateAttackLoss=losses;s.flags.haleVolunteers=volunteers;s.flags.shipRepairSoldiers=Math.max(0,survivors-volunteers);
-    s.expeditionSoldiers=expedition+volunteers;s.soldiers=s.expeditionSoldiers;
+    s.flags.pirateAnonymousLoss=anonymousLosses;
+    s.flags.pirateAttackLoss=anonymousLosses+1;
+    s.flags.haleVolunteers=volunteers;
+    s.flags.shipRepairSoldiers=Math.max(0,survivors-volunteers);
+    s.expeditionSoldiers=expedition+volunteers;
+    s.soldiers=s.expeditionSoldiers;
   }else{
-    s.flags.pirateAttackLoss=0;s.flags.haleVolunteers=0;s.expeditionSoldiers=expedition;s.soldiers=expedition;
+    const haleEscort=shipAnonymous>0?1:0;
+    s.flags.pirateAttackLoss=0;
+    s.flags.haleVolunteers=0;
+    s.flags.haleEscortSoldier=haleEscort;
+    s.expeditionSoldiers=expedition+haleEscort;
+    s.soldiers=s.expeditionSoldiers;
   }
   s.shipSoldiers=0;
 }
@@ -639,7 +648,7 @@ pirateDealAccepted:{title:'Marché conclu',text:s=>`<p>Le capitaine pirate obser
 
 c32:{title:'Une seconde attaque',text:s=>`<p>Les pirates passent à l’attaque.</p>${crewBattleHtml(s,'pirates2',pirateCountForBattle(s,'pirates2'))}`,choices:s=>{const b=ensureCrewBattle(s,'pirates2',pirateCountForBattle(s,'pirates2'),4,1,0);if(s.soldiers<=0)return[{label:'Tes hommes sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Reprendre la route',to:'c34'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates2',pirateCountForBattle(x,'pirates2'))}];}},
 
-c34:{title:'L’île du village',text:s=>`<p>La petite île apparaît enfin devant vous.</p><p>D’après les cartes, un village occupe cette côte depuis plusieurs générations. Tu t’attends à voir de la fumée, des barques de pêche, peut-être quelqu’un venir observer les deux navires qui approchent.</p><p>Tu ne vois rien.</p><p>Quelques toits dépassent pourtant des arbres, plus haut dans les terres.</p><p>Le Resolute mouille à faible distance de la côte, le Providence toujours remorqué derrière lui.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats.</p><p>Tu peux partir seul ou emmener jusqu’à trois hommes. Au moins deux doivent rester près des navires.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-2)).map(n=>({label:n===0?'Descendre seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
+c34:{title:'L’île du village',text:s=>`<p>La petite île apparaît enfin devant vous.</p><p>D’après les cartes, un village occupe cette côte depuis plusieurs générations. Tu t’attends à voir de la fumée, des barques de pêche, peut-être quelqu’un venir observer les deux navires qui approchent.</p><p>Tu ne vois rien.</p><p>Quelques toits dépassent pourtant des arbres, plus haut dans les terres.</p><p>Le Resolute mouille à faible distance de la côte, le Providence toujours remorqué derrière lui.</p><p>Il te reste <strong>${s.soldiers}</strong> soldats de la garnison disponibles. Briggs et Hale sont également à bord et comptent chacun comme un homme dans les effectifs du navire.</p><p>Tu peux partir seul ou emmener jusqu’à trois soldats avec toi. Il faut laisser au moins <strong>un soldat de la garnison</strong> à bord avec Briggs et Hale : le groupe resté sur les navires comptera donc toujours au minimum trois hommes.</p>`,choices:s=>[0,1,2,3].filter(n=>n<=Math.max(0,s.soldiers-1)).map(n=>({label:n===0?'Descendre seul':`Emmener ${n} soldat${n>1?'s':''}`,to:'c35',effect:x=>{x.expeditionSoldiers=n;x.shipSoldiers=x.soldiers-n;}}))},
 
 c35:{title:'À qui confier le commandement ?',text:`<p>Avant de quitter la plage, tu jettes un dernier regard vers le Resolute et le Providence.</p><p><strong>William Briggs</strong> est bourru, courageux et efficace. S’il faut sauver l’équipage, il prendra la décision sans hésiter, même si cela signifie repartir sans toi.</p><p><strong>Nathaniel Hale</strong> est plus réfléchi et profondément loyal. Il hésitera davantage, mais tu sais qu’il aura du mal à t’abandonner.</p><p>Même sur une île supposée habitée, quelqu’un doit rester maître à bord.</p>`,choices:[{label:'Choisir William Briggs',to:'c36',effect:s=>s.flags.commander='briggs'},{label:'Choisir Nathaniel Hale',to:'c36',effect:s=>s.flags.commander='hale'}]},
 
@@ -695,13 +704,13 @@ c55:{title:'La plage',text:s=>`<p>La mer réapparaît enfin entre les arbres.</p
 
 c56:{title:'Retour à la plage',text:s=>{
   if(s.flags.commander==='hale'){
-    let h='<p>Lorsque la mer réapparaît entre les arbres, le premier bruit que tu entends est celui des marteaux.</p><p>Le <strong>Resolute est toujours là</strong>, mais son gréement a été déchiqueté par les tirs et plusieurs impacts noirs marquent la coque.</p><p>Le Providence est toujours au mouillage un peu plus loin.</p><p>Sur le pont du Resolute, des hommes transportent les blessés.</p><p>Hale vient à ta rencontre, le visage fermé.</p><blockquote>« Les pirates sont arrivés avant votre retour. J’ai attendu trop longtemps. »</blockquote><p>Il baisse les yeux une seconde.</p><blockquote>« Briggs est mort pendant l’abordage. »</blockquote><p>L’attaque a coûté <strong>'+String(s.flags.pirateAttackLoss||0)+' soldat'+((s.flags.pirateAttackLoss||0)>1?'s':'')+'</strong>.</p>';
+    let h='<p>Lorsque la mer réapparaît entre les arbres, le premier bruit que tu entends est celui des marteaux.</p><p>Le <strong>Resolute est toujours là</strong>, mais son gréement a été déchiqueté par les tirs et plusieurs impacts noirs marquent la coque.</p><p>Le Providence est toujours au mouillage un peu plus loin.</p><p>Sur le pont du Resolute, des hommes transportent les blessés.</p><p>Hale vient à ta rencontre, le visage fermé.</p><blockquote>« Les pirates sont arrivés avant votre retour. J’ai attendu trop longtemps. »</blockquote><p>Il baisse les yeux une seconde.</p><blockquote>« Briggs est mort pendant l’abordage. »</blockquote><p>Au total, l’attaque a coûté <strong>'+String(s.flags.pirateAttackLoss||1)+' soldat'+((s.flags.pirateAttackLoss||1)>1?'s':'')+'</strong>, <strong>Briggs compris</strong>.</p>';
     if((s.flags.haleVolunteers||0)>0)h+='<p>Parmi les survivants encore capables de se battre, <strong>'+String(s.flags.haleVolunteers)+' soldat'+((s.flags.haleVolunteers||0)>1?'s ont':' a')+' refusé de t’abandonner</strong>. Avec les hommes revenus du village, votre groupe compte maintenant <strong>'+String(s.soldiers)+' soldat'+(s.soldiers>1?'s':'')+'</strong>.</p>';
     else h+='<p>Les hommes encore capables de tenir debout doivent rester avec les blessés et défendre le Resolute.</p>';
     h+='<p>Tu racontes ce que vous avez découvert dans le village et la possibilité que les marins du Providence soient encore retenus sur l’île voisine.</p><p>Hale se tourne vers une chaloupe intacte.</p><blockquote>« Alors on y va. »</blockquote><p>Pour la première fois depuis le début de la mission, ce n’est plus le navire que tu cherches. Ce sont ses hommes.</p>';
     return h;
   }
-  return '<p>Lorsque tu retrouves la plage, la baie est presque vide.</p><p><strong>Le Providence n’est plus là. Le Resolute non plus.</strong></p><p>Hale t’attend près d’une chaloupe tirée sur le sable.</p><p>À ton approche, il se lève immédiatement.</p><blockquote>« Des pirates ont débouché au large peu après votre départ. Ils ont ouvert le feu. Briggs n’a pas attendu qu’ils ferment la baie. »</blockquote><p>Il t’explique que Briggs a fait reprendre le Providence en remorque et a forcé la sortie avec le Resolute et le gros de l’équipage.</p><blockquote>« Il voulait sauver les deux bâtiments et éloigner les pirates d’ici. J’ai pris cette chaloupe avant leur départ. Je ne pouvais pas partir en vous laissant sur l’île. »</blockquote><p>Les seuls soldats encore avec toi sont ceux revenus du village : <strong>'+String(s.soldiers)+'</strong>.</p><p>Tu racontes à Hale ce que vous avez découvert et la possibilité que les marins du Providence soient encore retenus sur l’île voisine.</p><p>Il regarde la chaloupe.</p><blockquote>« Alors on va les chercher. »</blockquote><p>Pour la première fois depuis le début de la mission, ce n’est plus le navire que tu cherches. Ce sont ses hommes.</p>';
+  return '<p>Lorsque tu retrouves la plage, la baie est presque vide.</p><p><strong>Le Providence n’est plus là. Le Resolute non plus.</strong></p><p>Hale t’attend près d’une chaloupe tirée sur le sable.</p><p>À son côté se tient <strong>un soldat de la garnison</strong> resté avec lui lorsque Briggs a repris la mer.</p><p>À ton approche, Hale se lève immédiatement.</p><blockquote>« Des pirates ont débouché au large peu après votre départ. Ils ont ouvert le feu. Briggs n’a pas attendu qu’ils ferment la baie. »</blockquote><p>Il t’explique que Briggs a fait reprendre le Providence en remorque et a forcé la sortie avec le Resolute et le gros de l’équipage.</p><blockquote>« Il voulait sauver les deux bâtiments et éloigner les pirates d’ici. J’ai pris cette chaloupe avant leur départ. Je ne pouvais pas partir en vous laissant sur l’île. »</blockquote><p>Le soldat resté avec Hale rejoint ceux revenus avec toi du village. Votre groupe compte maintenant <strong>'+String(s.soldiers)+' soldat'+(s.soldiers>1?'s':'')+'</strong>, en plus de Hale.</p><p>Tu racontes ce que vous avez découvert et la possibilité que les marins du Providence soient encore retenus sur l’île voisine.</p><p>Hale regarde la chaloupe.</p><blockquote>« Alors on va les chercher. »</blockquote><p>Pour la première fois depuis le début de la mission, ce n’est plus le navire que tu cherches. Ce sont ses hommes.</p>';
 },onEnter:s=>prepareSecondIslandParty(s),choices:[{label:'Prendre la chaloupe et rejoindre l’île voisine',to:'c57'}]},
 
 c57:{title:'Vers l’île interdite',text:s=>'<p>La petite chaloupe s’éloigne de la côte avec Hale et <strong>'+String(s.soldiers)+' soldat'+(s.soldiers>1?'s':'')+'</strong>.</p><p>L’île des hommes pâles se rapproche lentement.</p><p>Trois lueurs bleues apparaissent au ras de l’eau puis disparaissent derrière les rochers.</p><p>À cette distance, plusieurs approches semblent possibles.</p><p>La plage principale paraît presque déserte. Plus loin, une forêt dense descend jusqu’à la mer. En prenant le temps de contourner l’île, vous pourriez peut-être trouver une entrée plus discrète.</p>'+(s.flags.retreatTried?'<p>Après ce que vous venez de sentir sous la coque, tu sais désormais que reprendre simplement le large ne sera pas si facile.</p>':''),choices:s=>{const out=[{label:'Accoster sur la plage en espérant que ce ne soit pas un piège',to:'islandBeach'},{label:'Tenter d’accoster du côté de la forêt',to:'islandForestLanding'},{label:'Faire le tour de l’île pour repérer avant d’accoster',to:'islandRecon'}];if(!s.flags.retreatTried)out.push({label:'Faire demi-tour et prendre du recul',to:'islandRetreat'});return out;}},
@@ -897,7 +906,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:74,pageMapVersion:12,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:75,pageMapVersion:12,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
