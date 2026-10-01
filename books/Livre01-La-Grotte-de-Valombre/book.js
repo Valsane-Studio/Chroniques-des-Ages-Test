@@ -683,6 +683,7 @@ function dashPastKnights(s) {
   s.flags.finalKnightsEscape={success,dice:[...s.lastDice],total:s.lastTotal,threshold:s.lastStat,hpLost:before-s.hp};
 }
 function terminalChoices() { return fatalChoices(); }
+function trueEndingChoices() { return [{ label: 'Recommencer depuis le début', action: 'restart' }]; }
 
 function dormantPerception(state, location) {
   const earth = contaminationLevel(state);
@@ -6009,7 +6010,7 @@ const STORY = {
       <p>Tu ne sauras jamais si l’esprit est détruit, enseveli ou simplement enfermé plus profondément. Tu espères avoir fait le bon choix.</p>
       <p>La lumière disparaît sous les décombres.</p>
       <p><strong>Fin de l’aventure.</strong></p>`,
-    choices:terminalChoices()
+    choices:trueEndingChoices()
   },
   c216: {
     number:'PAGE 218',title:'',
@@ -6028,7 +6029,7 @@ const STORY = {
       <blockquote>« La malédiction doit prendre fin. »</blockquote>
       <p>Il retire la lame et frappe à nouveau. Tu t’effondres sur les pavés. Ton règne s’achève à Valombre.</p>
       <p><strong>Fin de l’aventure.</strong></p>`,
-    choices:terminalChoices()
+    choices:trueEndingChoices()
   },
   c219: {
     number:'PAGE 220',title:'',
