@@ -199,7 +199,12 @@ async function loadData(){
       rest('test_questionnaires?select=*&order=created_at.desc')
     ]);
     const byParty=new Map((questionnaires||[]).map(q=>[q.partie_id,q]));
-    rows=(parties||[]).map(p=>({...p,questionnaire:byParty.get(p.id)||null}));
+    rows=(parties||[]).map(p=>{
+      const joined={...p,questionnaire:byParty.get(p.id)||null};
+      const node=lastNode(joined);
+      if(node==='c215'||node==='c217') joined.resultat='fin_histoire';
+      return joined;
+    });
     renderAll();
     lastRefresh.textContent='Mis à jour '+new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit'}).format(new Date());
   }catch(error){
