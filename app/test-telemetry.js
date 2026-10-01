@@ -5,6 +5,7 @@
 
   const SUPABASE_URL = 'https://tlgbzpenhuooabcyrmvf.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_wb7-3q3UEsRfUU5xaWSbLA_MxQWVvaT';
+  const SESSION_META_KEY = 'aphanes.test.telemetry.session.v1';
 
   const SUCCESS_NODES = new Set(['c218','c23','c215','c217']);
   const TRUE_END_NODES = new Set(['c215','c217']);
@@ -40,22 +41,46 @@
     return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
   }
 
+  function loadSessionMeta() {
+    try {
+      const value = JSON.parse(localStorage.getItem(SESSION_META_KEY) || 'null');
+      return value && typeof value === 'object' ? value : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveSessionMeta(run) {
+    if (!run || typeof run !== 'object') return;
+    try {
+      localStorage.setItem(SESSION_META_KEY, JSON.stringify({
+        startedAt: Number.isFinite(run.startedAt) ? run.startedAt : Date.now(),
+        activeMs: Math.max(0, Number(run.activeMs) || 0),
+        checkpointUses: Math.max(0, Number(run.checkpointUses) || 0)
+      }));
+    } catch (e) {}
+  }
+
   function freshRun(state, origin) {
     const now = Date.now();
+    const isCheckpoint = origin === 'checkpoint';
+    const session = isCheckpoint ? loadSessionMeta() : null;
     state.__testAnalytics = {
       id: makeUuid(),
       origin: origin || 'start',
-      startedAt: now,
-      activeMs: 0,
-      historyStart: origin === 'checkpoint' && Array.isArray(state.history) ? state.history.length : 0,
+      startedAt: isCheckpoint && Number.isFinite(session?.startedAt) ? session.startedAt : now,
+      activeMs: isCheckpoint ? Math.max(0, Number(session?.activeMs) || 0) : 0,
+      checkpointUses: isCheckpoint ? Math.max(0, Number(session?.checkpointUses) || 0) + 1 : 0,
+      historyStart: isCheckpoint && Array.isArray(state.history) ? state.history.length : 0,
       sent: false,
       sentAt: null,
-      retryCount: 0,
+      retryCount: isCheckpoint ? Math.max(0, Number(session?.checkpointUses) || 0) + 1 : 0,
       feedbackOpen: false,
       feedbackAnswers: {},
       questionnaireSent: false
     };
     visibleSince = document.visibilityState === 'visible' ? now : null;
+    saveSessionMeta(state.__testAnalytics);
     return state.__testAnalytics;
   }
 
@@ -67,6 +92,8 @@
     if (!Number.isFinite(current.startedAt)) current.startedAt = Date.now();
     if (!Number.isInteger(current.historyStart)) current.historyStart = 0;
     if (!Number.isInteger(current.retryCount)) current.retryCount = 0;
+    if (!Number.isInteger(current.checkpointUses)) current.checkpointUses = current.retryCount || 0;
+    saveSessionMeta(current);
     return current;
   }
 
@@ -124,6 +151,7 @@
     if (visibleSince !== null && now >= visibleSince) {
       run.activeMs += now - visibleSince;
       visibleSince = now;
+      saveSessionMeta(run);
     }
   }
 
@@ -283,6 +311,7 @@
         started_at: new Date(run.startedAt).toISOString(),
         ended_at: new Date().toISOString(),
         checkpoint: state?.currentCheckpoint || null,
+        checkpoint_uses: Math.max(0, Number(run.checkpointUses) || 0),
         nodes,
         pages,
         rolls: Number.isFinite(state?.rollCount) ? state.rollCount : 0
