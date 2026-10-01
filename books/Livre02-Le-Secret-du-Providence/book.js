@@ -161,6 +161,259 @@ function resolveNightRaid(s){
   const rolls=[];for(let i=0;i<n;i++)rolls.push(cryptoDie6());
   s.flags.nightRaidRolls=rolls;s.flags.nightRaidAlerts=rolls.filter(v=>v===6).length;s.flags.nightRaidKills=n;
 }
+
+function initVillageAssault(s){
+  if(s.flags.villageAssaultBattle)return s.flags.villageAssaultBattle;
+  const initialEnemy=Math.max(0,9-Math.max(0,Math.floor(Number(s.flags.paleAssaultLoss)||0)));
+  const b={
+    initialEnemy,
+    enemy:initialEnemy,
+    round:0,
+    progress:0,
+    prisonOpen:false,
+    marines:0,
+    marineLosses:0,
+    flankUsed:false,
+    moraleTurns:null,
+    enemyFled:false,
+    enemyDefeated:false,
+    failed:false,
+    last:null
+  };
+  s.flags.villageAssaultBattle=b;
+  return b;
+}
+function villageBattleAllies(s,b){
+  return Math.max(0,Math.floor(Number(s.soldiers)||0))+(s.flags.haleAlive===false?0:1)+Math.max(0,Math.floor(Number(b.marines)||0));
+}
+function removeVillageAssaultSoldiers(s,n){
+  let remaining=Math.max(0,Math.floor(Number(n)||0));
+  const totalLoss=Math.min(Math.max(0,Math.floor(Number(s.soldiers)||0)),remaining);
+  let local=Math.max(0,Math.floor(Number(s.expeditionSoldiers)||0));
+  const localLoss=Math.min(local,remaining);
+  s.expeditionSoldiers=Math.max(0,local-localLoss);
+  remaining-=localLoss;
+  let flank=Math.max(0,Math.floor(Number(s.flags.flankingSoldiers)||0));
+  const flankLoss=Math.min(flank,remaining);
+  s.flags.flankingSoldiers=Math.max(0,flank-flankLoss);
+  remaining-=flankLoss;
+  s.soldiers=Math.max(0,(s.soldiers||0)-totalLoss);
+  return totalLoss;
+}
+function villageBattleDiceRow(dice,threshold){
+  if(!dice||!dice.length)return '<span class="combat-detail">aucun dé</span>';
+  return dice.map(v=>`<span class="crew-training-die ${v<=threshold?'success':'miss'}">${renderDie(v)}</span>`).join('');
+}
+function villageAssaultRound(s,action){
+  const b=initVillageAssault(s);
+  if(b.enemy<=0||b.enemyFled||b.failed||s.hp<=0)return;
+
+  const enemyBefore=b.enemy;
+  const soldiersBefore=Math.max(0,Math.floor(Number(s.soldiers)||0));
+  const marinesBefore=Math.max(0,Math.floor(Number(b.marines)||0));
+  const haleBefore=s.flags.haleAlive!==false;
+  const progressBefore=b.progress;
+  const moraleBefore=b.moraleTurns;
+
+  const soldierDice=Array.from({length:soldiersBefore},()=>cryptoDie6());
+  const haleDice=haleBefore?[cryptoDie6()]:[];
+  const marineDice=Array.from({length:marinesBefore},()=>cryptoDie6());
+
+  const flankCount=!b.flankUsed?Math.min(soldiersBefore,Math.max(0,Math.floor(Number(s.flags.flankingSoldiers)||0))):0;
+  const flankDice=Array.from({length:flankCount},()=>cryptoDie6());
+  if(flankCount>0)b.flankUsed=true;
+
+  let actionSuccess=null;
+  let actionDice=[];
+  let actionTotal=null;
+  let chargeDamage=null;
+  let extraEnemyLoss=0;
+  let coverCancel=0;
+  let enemyCombat=1;
+
+  if(action==='charge'){
+    actionSuccess=roll3D6(s,'Force',currentForce(s));
+    actionDice=Array.isArray(s.lastDice)?[...s.lastDice]:[];
+    actionTotal=s.lastTotal;
+    if(actionSuccess)extraEnemyLoss=1;
+    else{
+      const raw=Math.ceil(cryptoDie6()/2);
+      const resolution=applyDamage(s,raw);
+      chargeDamage={raw,absorbed:resolution.absorbed,hpLost:resolution.hpLost};
+    }
+  }else if(action==='cover'){
+    actionSuccess=roll3D6(s,'Dextérité',currentDexterity(s));
+    actionDice=Array.isArray(s.lastDice)?[...s.lastDice]:[];
+    actionTotal=s.lastTotal;
+    if(actionSuccess)coverCancel=1;
+  }else if(action==='push'){
+    b.progress=Math.min(3,b.progress+1);
+    enemyCombat=2;
+  }
+
+  const soldierHits=soldierDice.filter(v=>v<=4).length;
+  const haleHits=haleDice.filter(v=>v<=3).length;
+  const marineHits=marineDice.filter(v=>v<=3).length;
+  const flankHits=flankDice.filter(v=>v<=4).length;
+  const alliedHits=soldierHits+haleHits+marineHits+flankHits+extraEnemyLoss;
+
+  const enemyDice=Array.from({length:enemyBefore},()=>cryptoDie6());
+  let enemyHits=enemyDice.filter(v=>v<=enemyCombat).length;
+  const prevented=Math.min(enemyHits,coverCancel);
+  enemyHits-=prevented;
+
+  const enemyLoss=Math.min(enemyBefore,alliedHits);
+  b.enemy=Math.max(0,enemyBefore-enemyLoss);
+
+  let remainingHits=enemyHits;
+  const soldierLoss=removeVillageAssaultSoldiers(s,remainingHits);
+  remainingHits-=soldierLoss;
+
+  const marineLoss=Math.min(marinesBefore,remainingHits);
+  b.marines=Math.max(0,marinesBefore-marineLoss);
+  b.marineLosses+=marineLoss;
+  remainingHits-=marineLoss;
+
+  let haleLost=false;
+  if(remainingHits>0&&haleBefore){
+    s.flags.haleAlive=false;
+    s.flags.companion=null;
+    haleLost=true;
+    remainingHits--;
+  }
+
+  let prisonOpenedThisRound=false;
+  if(!b.prisonOpen&&b.progress>=3&&s.hp>0){
+    b.prisonOpen=true;
+    prisonOpenedThisRound=true;
+    b.marines+=3;
+    s.flags.providenceSailorsFreed=true;
+    s.flags.freedDuringAssault=true;
+  }
+
+  if(b.enemy<=0){
+    b.enemy=0;
+    b.enemyDefeated=true;
+  }else if(b.prisonOpen){
+    if(b.enemy<=3){
+      b.enemyFled=true;
+    }else if(moraleBefore===1){
+      b.enemyFled=true;
+      b.moraleTurns=0;
+    }else if(!prisonOpenedThisRound&&b.enemy<=6&&b.moraleTurns===null){
+      b.moraleTurns=1;
+    }else if(prisonOpenedThisRound&&b.enemy>=4&&b.enemy<=6){
+      b.moraleTurns=1;
+    }
+  }
+
+  if(!b.enemyDefeated&&!b.enemyFled&&s.hp>0&&villageBattleAllies(s,b)<=0)b.failed=true;
+
+  b.round++;
+  b.last={
+    action,
+    actionSuccess,
+    actionDice,
+    actionTotal,
+    chargeDamage,
+    soldiersBefore,
+    marinesBefore,
+    haleBefore,
+    soldierDice,
+    haleDice,
+    marineDice,
+    flankDice,
+    flankCount,
+    soldierHits,
+    haleHits,
+    marineHits,
+    flankHits,
+    extraEnemyLoss,
+    enemyBefore,
+    enemyCombat,
+    enemyDice,
+    enemyHits,
+    prevented,
+    enemyLoss,
+    soldierLoss,
+    marineLoss,
+    haleLost,
+    progressBefore,
+    progressAfter:b.progress,
+    prisonOpenedThisRound
+  };
+}
+function villageAssaultHtml(s){
+  const b=initVillageAssault(s);
+  const l=b.last;
+  let h='<p>Le village éclate en mouvement. Les hommes pâles saisissent leurs armes pendant que tes hommes prennent position.</p>';
+  if(b.initialEnemy<9)h+='<p>Grâce à leur hésitation devant la bague, <strong>trois hommes pâles sont déjà tombés</strong>. Il en reste <strong>'+String(b.enemy)+'</strong> au début de l’assaut.</p>';
+  else h+='<p>Tu comptes <strong>'+String(b.enemy)+'</strong> hommes pâles capables de se battre.</p>';
+  if(!b.flankUsed&&(s.flags.flankingSoldiers||0)>0)h+='<p>Tes <strong>'+String(s.flags.flankingSoldiers)+' soldat'+((s.flags.flankingSoldiers||0)>1?'s sont':' est')+' en position de l’autre côté du village</strong>. Au premier échange, chacun lancera un dé supplémentaire grâce au feu croisé.</p>';
+
+  h+=`<div class="combat-roll-result crew-battle-result">
+    <div class="combat-roll-title">Assaut du village</div>
+    <div class="crew-strength-preview">
+      <div><strong>Objectif</strong><span>Atteindre la prison : <strong>${b.progress}/3</strong></span><span>${b.prisonOpen?'Prison ouverte':'Il faut progresser sous le feu'}</span></div>
+      <div><strong>Forces</strong><span>Soldats : <strong>${s.soldiers||0}</strong> · Hale : <strong>${s.flags.haleAlive===false?'hors de combat':'présent'}</strong></span><span>Marins libérés : <strong>${b.marines}</strong> · Hommes pâles : <strong>${b.enemy}</strong></span></div>
+    </div>
+    <p>Chaque soldat réussit sur <strong>1–4</strong>. Hale et les marins du Providence réussissent sur <strong>1–3</strong>. Les hommes pâles réussissent normalement sur <strong>1</strong>.</p>
+    <p><strong>Mener la charge</strong> ajoute un ennemi neutralisé si ton test de Force réussit ; en cas d’échec, tu subis 1D3 dégâts. <strong>Couvrir tes hommes</strong> annule une perte si ton test de Dextérité réussit. <strong>Pousser vers la prison</strong> avance d’une étape, mais les hommes pâles réussissent sur <strong>1–2</strong> pendant ce tour.</p>
+  </div>`;
+
+  if(l){
+    const actionTitle=l.action==='charge'?'Mener la charge':l.action==='cover'?'Couvrir les hommes':'Pousser vers la prison';
+    h+='<div class="combat-roll-result crew-battle-result"><div class="combat-roll-title">'+actionTitle+' — tour '+String(b.round)+'</div>';
+
+    if(l.action==='charge'||l.action==='cover'){
+      h+='<div class="crew-training-side"><strong>Ton test — '+(l.action==='charge'?'Force':'Dextérité')+'</strong><div class="crew-training-dice">'+villageBattleDiceRow(l.actionDice,6)+'</div><p>Total : <strong>'+String(l.actionTotal)+'</strong> — <strong>'+(l.actionSuccess?'réussite':'échec')+'</strong>.</p>';
+      if(l.action==='charge'){
+        if(l.actionSuccess)h+='<p>Tu ouvres une brèche : <strong>1 homme pâle supplémentaire est neutralisé.</strong></p>';
+        else if(l.chargeDamage)h+='<p>La charge échoue. Tu encaisses <strong>'+String(l.chargeDamage.raw)+'</strong> dégât'+(l.chargeDamage.raw>1?'s':'')+'.'+(l.chargeDamage.absorbed>0?' Ta protection en absorbe <strong>'+String(l.chargeDamage.absorbed)+'</strong>.':'')+(l.chargeDamage.hpLost>0?' Tu perds <strong>'+String(l.chargeDamage.hpLost)+'</strong> Vie.':'')+'</p>';
+      }else h+='<p>'+(l.prevented?'<strong>Tu empêches une perte dans tes rangs.</strong>':'Tu ne parviens pas à protéger efficacement le groupe.')+'</p>';
+      h+='</div>';
+    }
+
+    h+='<div class="crew-training-side"><div class="crew-training-heading"><strong>Ton groupe</strong><span>Soldats : réussite sur 1–4 · Hale et marins : 1–3</span></div>';
+    if(l.soldierDice.length)h+='<p>Soldats</p><div class="crew-training-dice">'+villageBattleDiceRow(l.soldierDice,4)+'</div>';
+    if(l.flankDice.length)h+='<p>Feu croisé</p><div class="crew-training-dice">'+villageBattleDiceRow(l.flankDice,4)+'</div>';
+    if(l.haleDice.length)h+='<p>Hale</p><div class="crew-training-dice">'+villageBattleDiceRow(l.haleDice,3)+'</div>';
+    if(l.marineDice.length)h+='<p>Marins du Providence</p><div class="crew-training-dice">'+villageBattleDiceRow(l.marineDice,3)+'</div>';
+    h+='<p><strong>'+String(l.enemyLoss)+' homme'+(l.enemyLoss>1?'s pâles tombent':' pâle tombe')+'.</strong></p></div>';
+
+    h+='<div class="crew-training-side"><div class="crew-training-heading"><strong>Hommes pâles</strong><span>Réussite sur <strong>'+(l.enemyCombat===2?'1 ou 2':'1')+'</strong></span></div><div class="crew-training-dice">'+villageBattleDiceRow(l.enemyDice,l.enemyCombat)+'</div>';
+    if(l.prevented)h+='<p>Une de leurs réussites est annulée par ta couverture.</p>';
+    if(l.soldierLoss)h+='<p><strong>Tu perds '+String(l.soldierLoss)+' soldat'+(l.soldierLoss>1?'s':'')+'.</strong></p>';
+    if(l.marineLoss)h+='<p><strong>'+String(l.marineLoss)+' marin'+(l.marineLoss>1?'s du Providence tombent':' du Providence tombe')+'.</strong></p>';
+    if(l.haleLost)h+='<p><strong>Hale tombe pendant l’affrontement.</strong></p>';
+    if(!l.soldierLoss&&!l.marineLoss&&!l.haleLost)h+='<p>Personne ne tombe dans ton groupe.</p>';
+    h+='</div>';
+
+    if(l.action==='push')h+='<p>Vous gagnez du terrain vers la prison : <strong>'+String(l.progressAfter)+'/3</strong>.</p>';
+    if(l.prisonOpenedThisRound)h+='<p><strong>Vous atteignez la cage.</strong> La porte est forcée dans la confusion. Trois des marins du Providence encore capables de tenir une arme ramassent des sabres et rejoignent immédiatement le combat.</p>';
+    h+='</div>';
+  }
+
+  if(b.prisonOpen&&b.enemyFled)h+='<p>La libération des prisonniers brise ce qui restait de leur assurance. Les hommes pâles encore debout reculent, puis disparaissent entre les huttes et les arbres.</p>';
+  else if(b.enemyDefeated)h+='<p>Le dernier adversaire tombe. Pour quelques secondes, le village devient silencieux.</p>';
+  else if(b.prisonOpen&&b.moraleTurns===1)h+='<p>Les hommes pâles hésitent en voyant les prisonniers libres et armés. Ils tiennent encore, mais leur groupe est en train de se disloquer. <strong>Il faut tenir un dernier échange.</strong></p>';
+  else if(b.prisonOpen&&b.enemy>6)h+='<p>Les prisonniers sont libres, mais les hommes pâles sont encore assez nombreux pour poursuivre le combat. Les trois marins armés viennent renforcer ta ligne.</p>';
+
+  if(b.failed)h+='<p>Tu te retrouves sans aucun homme capable de tenir la ligne avec toi. Les hommes pâles se referment de tous côtés.</p>';
+  return h;
+}
+function villageAssaultChoices(s){
+  const b=initVillageAssault(s);
+  if(s.hp<=0||b.failed)return[{label:'La fin du voyage',to:'death'}];
+  if(b.enemyDefeated||b.enemyFled)return[{label:b.prisonOpen?'Rassembler les survivants':'Forcer la porte de la prison',to:'villageAssaultVictory'}];
+  const out=[
+    {label:'Mener la charge — test de Force',stay:true,inlineCombat:true,effect:x=>villageAssaultRound(x,'charge')},
+    {label:'Couvrir tes hommes — test de Dextérité',stay:true,inlineCombat:true,effect:x=>villageAssaultRound(x,'cover')}
+  ];
+  if(!b.prisonOpen)out.push({label:'Pousser vers la prison — étape '+String(Math.min(3,b.progress+1))+'/3',stay:true,inlineCombat:true,effect:x=>villageAssaultRound(x,'push')});
+  return out;
+}
+
 function addThrowingBlades(s,n=1){
   if(!s.inventory.couteaux_jet)addItem(s,'couteaux_jet','Lames de lancer','De petites lames équilibrées, conçues pour être lancées avec précision.',{quantity:n});
   else {
@@ -447,7 +700,7 @@ const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,force:8,damage:3};
 
 function createInitialState(){
   return {
-    node:'start',pageMapVersion:12,heroGender:'female',heroName:'Eleanor',
+    node:'start',pageMapVersion:13,heroGender:'female',heroName:'Eleanor',
     inventory:{},flags:{},visited:{},history:[],journal:'',
     hp:18,maxHp:18,baseForce:8,baseDexterity:13,forceBonus:0,dexBonus:0,dexPenalty:0,
     weapon:'naval_sword',protection:0,goldCoins:0,
@@ -765,7 +1018,9 @@ ringPrisonRevolt:{title:'La supercherie',text:'<p>Tu n’es plus qu’à quelque
 
 ringKillThree:{title:'Profiter de leur hésitation',text:'<p>Tu fais un signe bref à tes hommes.</p><p>Ils comprennent immédiatement.</p><p>Trois hommes pâles tombent avant que le reste du groupe réalise ce qui se passe.</p><p>Puis un cri retentit.</p><p>La confusion disparaît.</p><p>Les hommes pâles saisissent leurs armes et se jettent sur vous.</p><p>La bataille générale commence, mais ils sont déjà trois de moins.</p>',onEnter:s=>{s.flags.paleAssaultLoss=3;s.flags.ringFraudDiscovered=true;},choices:[{label:'Combattre',to:'villageAssault'}]},
 
-villageAssault:{title:'Donner l’assaut',text:s=>'<p>Tu observes une dernière fois les déplacements dans le village.</p>'+((s.flags.flankingSoldiers||0)>0?'<p>De l’autre côté, ton second groupe attend ton signal.</p>':'')+((s.flags.paleAssaultLoss||0)>0?'<p><strong>Trois hommes pâles sont déjà tombés avant le début de la bataille.</strong></p>':'')+'<p>Tu lèves la main.</p><p>Puis tu l’abats.</p><p>Les premiers coups de feu éclatent presque ensemble. Les hommes pâles se dispersent entre les huttes tandis que plusieurs autres saisissent leurs armes.</p><p>En quelques secondes, le village entier bascule dans le combat.</p>',choices:[]},
+villageAssault:{title:'Donner l’assaut',text:s=>villageAssaultHtml(s),onEnter:s=>initVillageAssault(s),choices:s=>villageAssaultChoices(s)},
+
+villageAssaultVictory:{title:'Les derniers marins du Providence',text:s=>{const b=initVillageAssault(s);let h='';if(b.enemyFled)h+='<p>Les derniers hommes pâles abandonnent la place et disparaissent dans la forêt. Aucun ne tente de revenir.</p>';else h+='<p>Plus aucun homme pâle ne se dresse entre vous et la prison.</p>';if(!b.prisonOpen)h+='<p>Vous rejoignez la cage et attaquez la serrure. Après plusieurs coups, la lourde porte métallique finit par céder.</p>';h+='<p>Derrière les barreaux se trouvent les derniers matelots du <strong>Providence</strong>.</p><p>Ils sont affamés, blessés et épuisés. Certains tiennent à peine debout.</p><p>Lorsqu’ils comprennent que vous êtes venus les chercher, plusieurs restent silencieux quelques secondes, comme s’ils n’osaient pas encore croire qu’ils sont libres.</p>';if(b.prisonOpen)h+='<p>Les trois marins qui ont pris part au combat rendent lentement les armes récupérées. Les autres viennent soutenir les blessés.</p>';h+='<p>La mission n’est pourtant pas terminée. Il faut encore quitter cette île.</p>';return h;},onEnter:s=>{s.flags.providenceSailorsFreed=true;s.flags.villageAssaultWon=true;},choices:[]},
 
 villageNight:{title:'Attendre la nuit',text:s=>'<p>Vous restez cachés jusqu’à la disparition complète du soleil.</p><p>Peu à peu, les feux s’éteignent dans le village.</p><p>Les hommes pâles regagnent leurs huttes.</p><p>Deux sentinelles seulement restent visibles.</p>'+((s.flags.flankingSoldiers||0)>0?'<p>De l’autre côté, tu aperçois parfois le reflet discret d’une lame : l’autre groupe est toujours en position.</p>':'')+'<p>Vous attendez encore.</p><p>Le moment venu, chaque soldat doit progresser sans bruit. Chacun lancera un dé. <strong>Seul un 6 signifie que l’ennemi a le temps de donner l’alerte avant d’être tué.</strong></p>',choices:[{label:'Donner le signal et lancer les dés',to:'villageNightResult',effect:s=>resolveNightRaid(s)}]},
 
@@ -881,13 +1136,14 @@ const PAGE_NAV_TITLES = {
   "ringPrisonRevolt": "La supercherie",
   "ringKillThree": "Profiter de leur hésitation",
   "villageAssault": "Donner l'assaut",
+  "villageAssaultVictory": "Les marins du Providence",
   "villageNight": "Attendre la nuit",
   "villageNightResult": "Dans le silence",
   "c68": "Les captifs",
   "c69": "Le véritable prix",
   "death": "La fin du voyage"
 };
-const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','directIsland','c31','pirateApproach','pirateParley','pirateOfferRejected','pirateDealAccepted','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','islandRetreat','islandBeach','islandBeachFight','islandBeachYield','islandCaptured','islandForestLanding','forestTrap','forestAlligator','islandRecon','coveClearing','caveTunnel','caveShrine','caveExit','villageRear','villageWalkIn','villageStatueSubmission','statuePrison','statueExecution','statueSpareLast','statueKillLast','villageRingReturn','villageRingDominance','ringPrisonApproach','ringPrisonRevolt','ringKillThree','villageAssault','villageNight','villageNightResult','c68','c69','death'];
+const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c22','c23','c24','c25','c26','c27','c28','c29','c30','directIsland','c31','pirateApproach','pirateParley','pirateOfferRejected','pirateDealAccepted','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c47','c48','c49','c51','c52','c53','c54','c55','c56','c57','islandRetreat','islandBeach','islandBeachFight','islandBeachYield','islandCaptured','islandForestLanding','forestTrap','forestAlligator','islandRecon','coveClearing','caveTunnel','caveShrine','caveExit','villageRear','villageWalkIn','villageStatueSubmission','statuePrison','statueExecution','statueSpareLast','statueKillLast','villageRingReturn','villageRingDominance','ringPrisonApproach','ringPrisonRevolt','ringKillThree','villageAssault','villageAssaultVictory','villageNight','villageNightResult','c68','c69','death'];
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
@@ -906,7 +1162,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:75,pageMapVersion:12,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:76,pageMapVersion:13,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
