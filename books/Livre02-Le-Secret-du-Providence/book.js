@@ -1147,49 +1147,22 @@ const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12',
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
-function testSoldierCountHtml(s){
- const options=[0,1,2,3,4].map(n=>`
-   <label class="test-weapon-option">
-     <input type="radio" name="testSoldierCount" data-action="test-set-soldiers:${n}" ${Number(s.soldiers||0)===n&&Number(s.expeditionSoldiers||0)===n&&(s.flags.flankingSoldiers||0)===0?'checked':''}>
-     <span>${n} soldat${n>1?'s':''}</span>
-   </label>`).join('');
- return `<div class="test-inventory-panel">
-   <div class="test-inventory-title">Mode test · soldats</div>
-   <p class="test-inventory-note">Choisis directement le nombre de soldats présents avec toi. Ce réglage place tous les soldats dans ton groupe et annule une éventuelle séparation en tenaille.</p>
-   <div class="test-weapon-list">${options}</div>
- </div>`;
-}
-
 const inventory={
  topLine:s=>`Or : ${s.goldCoins||0} · Arme : ${weaponLabel(s)} · Soldats : ${s.soldiers}`,
- extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${s.expeditionSoldiers||0}</strong></div><div class="inventory-equipment-row"><span>Protection</span><strong>${currentProtection(s)}</strong></div></div>`+testSoldierCountHtml(s),
- actionHtml:()=>'',handleAction(action,s,api){
-   if(action.startsWith('test-set-soldiers:')){
-     const n=Math.max(0,Math.min(4,Math.floor(Number(action.slice('test-set-soldiers:'.length))||0)));
-     s.soldiers=n;
-     s.expeditionSoldiers=n;
-     s.shipSoldiers=0;
-     s.flags.flankingSoldiers=0;
-     delete s.flags.villageAssaultBattle;
-     api.saveState();
-     api.render();
-     api.openInventory();
-     return true;
-   }
-   return false;
- }
+ extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${s.expeditionSoldiers||0}</strong></div><div class="inventory-equipment-row"><span>Protection</span><strong>${currentProtection(s)}</strong></div></div>`,
+ actionHtml:()=>'',handleAction:()=>false
 };
 
 function characterSheetHtml(s){
  return `<div class="character-modal-sheet"><div class="character-modal-name">${heroName(s)}</div><div class="character-modal-rank">${heroRank()}</div><div class="character-modal-stats">
  <div><span class="tag-copy"><small>Vie</small><strong>${s.hp}/${s.maxHp}</strong></span></div><div><span class="tag-copy"><small>Dextérité</small><strong>${currentDexterity(s)}</strong></span></div><div><span class="tag-copy"><small>Force</small><strong>${currentForce(s)}</strong></span></div><div><span class="tag-copy"><small>Arme</small><strong>+4</strong></span></div><div><span class="tag-copy"><small>Protection</small><strong>${currentProtection(s)}</strong></span></div><div><span class="tag-copy"><small>Soldats</small><strong>${s.soldiers}</strong></span></div>
- </div></div>`+testSoldierCountHtml(s);
+ </div></div>`;
 }
 
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:78,pageMapVersion:13,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:79,pageMapVersion:13,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
