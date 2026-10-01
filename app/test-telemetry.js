@@ -74,6 +74,37 @@
     return freshRun(state, origin || 'restart');
   }
 
+  function resumeRunFromCheckpoint(state) {
+    if (!state || typeof state !== 'object') return null;
+    const previous = state.__testAnalytics && typeof state.__testAnalytics === 'object'
+      ? state.__testAnalytics
+      : null;
+    const now = Date.now();
+    const carriedActiveMs = Math.max(0, Number(previous?.activeMs) || 0);
+    const carriedStartedAt = Number.isFinite(previous?.startedAt)
+      ? previous.startedAt
+      : now - carriedActiveMs;
+    const carriedHistoryStart = Number.isInteger(previous?.historyStart)
+      ? previous.historyStart
+      : 0;
+
+    state.__testAnalytics = {
+      id: makeUuid(),
+      origin: 'checkpoint',
+      startedAt: carriedStartedAt,
+      activeMs: carriedActiveMs,
+      historyStart: carriedHistoryStart,
+      sent: false,
+      sentAt: null,
+      retryCount: Math.max(0, Number(previous?.retryCount) || 0) + 1,
+      feedbackOpen: false,
+      feedbackAnswers: {},
+      questionnaireSent: false
+    };
+    visibleSince = document.visibilityState === 'visible' ? now : null;
+    return state.__testAnalytics;
+  }
+
   function openQuestionnaire(state) {
     const run = ensureRun(state);
     if (!run) return false;
@@ -684,6 +715,7 @@
     attach,
     ensureRun,
     resetRun,
+    resumeRunFromCheckpoint,
     beforeSave,
     recordCompletion,
     submitQuestionnaire,
