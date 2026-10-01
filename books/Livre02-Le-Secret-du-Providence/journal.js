@@ -20,7 +20,7 @@
 {id:'journal:c52',page:'c52',title:'Les derniers mots',text:'Le dernier journal du village se termine par : « Ils sont là. Trop nombreux. Je pars aider les autres. »'},
 {id:'piste:c53',page:'c53',title:'La même piste',text:'La carte locale et celle du Providence désignent la même île. La pierre bleue ressemble désormais moins à un trésor qu’à un hameçon.'},
 {id:'retour:c56',page:'c56',title:'Sauver les hommes',text:'L’objectif a changé : ce n’est plus le Providence que nous cherchons. Ses marins peuvent encore être vivants sur l’île des hommes pâles.'},
-{id:'sanctuaire:caveShrine',page:'caveShrine',title:'Le cycle',text:'Les fresques montrent des navires attirés par trois lumières, une créature qui les protège des intrus, des marins capturés puis des coques vides renvoyées en mer avec une carte et une pierre bleue.',requiresFlag:'caveTruth'},
+{id:'sanctuaire:caveShrine',page:'caveShrine',title:'Le cycle',text:'Les fresques montrent un navire plein d’hommes lié à une créature sous sa coque, le même navire sur une plage marquée de trois points bleus, puis la coque repartant vide avec une carte tandis que des tentacules emportent les marins.',requiresFlag:'caveTruth'},
 {id:'captifs:c68',page:'c68',title:'Les captifs',text:'Des prisonniers sont retenus dans le village, parmi eux au moins un marin du Providence.'},
 {id:'appat2:c69',page:'c69',title:'Le véritable prix',text:'Les pierres bleues servent d’appât. Le Gardien protège les navires piégés jusqu’à ce que leurs équipages puissent être livrés au culte.'}
 ];})();
