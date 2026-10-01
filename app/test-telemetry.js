@@ -6,8 +6,9 @@
   const SUPABASE_URL = 'https://tlgbzpenhuooabcyrmvf.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_wb7-3q3UEsRfUU5xaWSbLA_MxQWVvaT';
 
-  const SUCCESS_NODES = new Set(['c218','c23']);
-  const NARRATIVE_DEATH_NODES = new Set(['c21','c215','c216','c217','c221','c225','c236']);
+  const SUCCESS_NODES = new Set(['c218','c23','c215','c217']);
+  const TRUE_END_NODES = new Set(['c215','c217']);
+  const NARRATIVE_DEATH_NODES = new Set(['c21','c216','c221','c225','c236']);
   const COMBAT_DEATH_NODES = new Set([
     'c25','c26','c27','c29','c33','c36','c38','c47',
     'c61','c62','c78','c79','c80','c97','c132','c133',
@@ -566,10 +567,11 @@
         </div>
         <p class="test-feedback-status" aria-live="polite"></p>
         <div class="test-feedback-actions">
+          ${TRUE_END_NODES.has(nodeId) ? '' : `
           <button class="choice-btn test-feedback-restart" type="button" data-test-restart="checkpoint">
             <span class="choice-arrow" aria-hidden="true"></span>
             <span class="choice-copy"><span>Recommencer au point de sauvegarde</span></span>
-          </button>
+          </button>`}
           <button class="choice-btn test-feedback-restart" type="button" data-test-restart="start">
             <span class="choice-arrow" aria-hidden="true"></span>
             <span class="choice-copy"><span>Recommencer au début</span></span>
