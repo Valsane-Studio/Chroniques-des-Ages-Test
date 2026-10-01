@@ -1,0 +1,10 @@
+{
+  "name": "APHANES — Suivi des tests",
+  "short_name": "APHANES Tests",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#091117",
+  "theme_color": "#10191f",
+  "description": "Tableau de bord privé des sessions de test APHANES."
+}
