@@ -2054,10 +2054,8 @@ const STORY = {
       <p>Tu vois des mouvements partout. Tu contrôles mal ton corps. La peur ne te quitte plus.</p>
 
       <p>Finalement, tu redescends jusqu’au village, te caches dans l’écurie et attends que le temps passe… en espérant que la mort finira par tout faire taire.</p>
-    `,    choices: [
-      { label: 'Reprendre à l’entrée de la grotte', action: 'checkpoint' },
-      { label: 'Recommencer depuis le début', action: 'restart' }
-    ]
+    `,
+    choices:trueEndingChoices()
   },
 
   c24: {
@@ -6009,7 +6007,7 @@ const STORY = {
       <p>Tu sens revenir l’élan qui t’avait poussé, un jour, à partir à la recherche d’Aldren.</p>
       <p>Le lendemain, tu prends ton sac, selles ton cheval et quittes Valombre en direction de cette région inconnue. Une nouvelle aventure commence.</p>
       <p><strong>Fin de l’aventure.</strong></p>`,
-    choices:terminalChoices()
+    choices:trueEndingChoices()
   },
   c215: {
     number:'PAGE 217',title:'',
@@ -6058,7 +6056,7 @@ const STORY = {
       <p>Il ne reste plus qu’un corps tordu…</p>
       <p>et une volonté qui n’est plus la tienne.</p>
       <p><strong>Fin de l’aventure.</strong></p>`,
-    choices:terminalChoices()
+    choices:trueEndingChoices()
   },
   c221: {
     number:'PAGE 221',title:'',
