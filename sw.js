@@ -1,6 +1,6 @@
 /* La Grotte de Valombre — Service Worker
    IMPORTANT : augmenter APP_VERSION à chaque nouvelle mise en ligne. */
-const APP_VERSION = 'chroniques-multibook-72-prologue-restart-fix-v86';
+const APP_VERSION = 'reference-68.330-book02-captive-escape-v137';
 const CACHE_PREFIX = 'chroniques-ages-test-';
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}`;
 
