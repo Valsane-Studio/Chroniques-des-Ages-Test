@@ -4453,3 +4453,15 @@ body.library-home-open .app-shell {
 .crew-casualty-line strong{
   color:inherit;
 }
+
+
+/* V68.263 — états vides / image manquante
+   Un HUD sans caractéristiques ne doit jamais laisser sa texture seule à l'écran.
+   Une image marquée hidden doit rester réellement masquée malgré les anciennes règles !important. */
+.status-tags:empty {
+  display: none !important;
+}
+.image-frame .story-image.hidden,
+.image-frame.has-story-image .story-image.hidden {
+  display: none !important;
+}
