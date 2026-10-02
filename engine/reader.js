@@ -47,6 +47,7 @@ const restartConfirmBackdrop = document.getElementById('restartConfirmBackdrop')
 const restartConfirmYes = document.getElementById('restartConfirmYes');
 const restartConfirmNo = document.getElementById('restartConfirmNo');
 const footer = document.querySelector('.footer');
+const storyCard = document.querySelector('.story-card');
 
 bookTitle.textContent = BOOK.title;
 bookEyebrow.textContent = BOOK.readerEyebrow || ('Chroniques d’un autre temps - ' + (BOOK.libraryLabel || ('Livre ' + String(BOOK.libraryNumber || 1).padStart(2,'0'))));
@@ -422,9 +423,10 @@ function render() {
 
   storyText.classList.remove('test-feedback-page');
 
+  storyCard?.classList.toggle('sheet-page', !!node.sheet);
   if (node.sheet) {
     ++pageImageLoadToken; // annule une éventuelle image de la page précédente
-    chapterNumber.textContent = BOOK.sheetLabel || 'FICHE DU HÉROS';
+    chapterNumber.textContent = node.number || BOOK.sheetLabel || 'FICHE DU HÉROS';
     imageFrame.classList.add('hidden');
   } else {
     const mappedPage = PAGE_BY_NODE[renderNodeId];
