@@ -4465,3 +4465,12 @@ body.library-home-open .app-shell {
 .image-frame.has-story-image .story-image.hidden {
   display: none !important;
 }
+
+
+/* V68.264 — prologue en deux écrans.
+   Sur les fiches de prologue, le parchemin doit toujours couvrir toute la hauteur
+   du contenu afin qu'il ne s'arrête jamais au milieu de l'écran sur mobile. */
+.story-card.sheet-page {
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+}
