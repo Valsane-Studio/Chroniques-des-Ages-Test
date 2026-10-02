@@ -8,7 +8,7 @@ BookManifestRegistry.register({
   pitch:'Un navire marchand a disparu. Sa trace conduit vers une île que personne n’aurait dû chercher.',
   status:'available',
   actionLabel:'Découvrir',
-  access:{mode:'free'},
+  access:{mode:'password',label:'Bientôt disponible',password:'motdepasse',storageKey:'aphanes.test.livre02.access'},
   cover:'assets/presentation.jpg',
   libraryImage:'assets/bibliotheque.jpg',
   preview:{
