@@ -2052,6 +2052,8 @@ const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12',
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
+const DEV_TOOLS_ENABLED=typeof window==='undefined'||window.__APHANES_DEV_TOOLS__!==false;
+
 const DEV_TEST_ITEM_CATALOG=[
  {id:'diamant_bleu',name:'Pierre bleue',description:'La pierre laissée près de la carte du Providence.',flag:'baitStone'},
  {id:'couteaux_jet',name:'Lames de lancer',description:'Cinq lames équilibrées pour tester les passages qui les utilisent.',special:'blades'},
@@ -2154,7 +2156,7 @@ function showInventoryEffectResult(api,title,html,terminal=false){
 
 const inventory={
  topLine:s=>`Or : ${s.goldCoins||0} · Arme : ${weaponLabel(s)} · Soldats : ${displayedSoldierCount(s)}`,
- extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${displayedSoldierCount(s)}</strong></div><div class="inventory-equipment-row"><span>Protection restante</span><strong>${currentProtection(s)} / ${maxProtection(s)}</strong></div>${s.flags.combatPowderReady?'<div class="inventory-equipment-row"><span>Poudre de combat</span><strong>Prête pour le prochain combat</strong></div>':''}</div>`+devSoldierCountHtml(s)+devTestInventoryHtml(s),
+ extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${displayedSoldierCount(s)}</strong></div><div class="inventory-equipment-row"><span>Protection restante</span><strong>${currentProtection(s)} / ${maxProtection(s)}</strong></div>${s.flags.combatPowderReady?'<div class="inventory-equipment-row"><span>Poudre de combat</span><strong>Prête pour le prochain combat</strong></div>':''}</div>`+(DEV_TOOLS_ENABLED?devSoldierCountHtml(s)+devTestInventoryHtml(s):''),
  actionHtml:(id,item,s)=>{if(id==='poudre_combat')return '<div class="inventory-actions"><button class="inventory-action-btn" data-action="use-combat-powder">Consommer : +2 Dextérité et +2 Force au prochain combat</button></div>';if(PROTECTION_ITEMS[id]){ensureProtectionState(s);const source=s.protectionItems[id]||{remaining:0,max:PROTECTION_ITEMS[id].max};return '<div class="inventory-protection-state">Protection restante : <strong>'+String(source.remaining)+' / '+String(source.max)+'</strong>'+(source.remaining<=0?'<br><strong>État : endommagé — désormais inutilisable.</strong>':'')+'</div>';}return '';},handleAction(action,s,api){
    if(action==='close-effect-result'){
      api.closeModal();
@@ -2167,6 +2169,7 @@ const inventory={
      }
      return true;
    }
+   if(!DEV_TOOLS_ENABLED&&action.startsWith('dev-'))return false;
    if(action.startsWith('dev-set-soldiers:')){
      const n=Math.max(0,Math.min(4,Math.floor(Number(action.slice('dev-set-soldiers:'.length))||0)));
      s.soldiers=n;
@@ -2234,13 +2237,13 @@ function normalizeProvidenceLoadedState(s){
 function characterSheetHtml(s){
  return `<div class="character-modal-sheet"><div class="character-modal-name">${heroName(s)}</div><div class="character-modal-rank">${heroRank()}</div><div class="character-modal-stats">
  <div><span class="tag-copy"><small>Vie</small><strong>${s.hp}/${s.maxHp}</strong></span></div><div><span class="tag-copy"><small>Dextérité</small><strong>${currentDexterity(s)}</strong></span></div><div><span class="tag-copy"><small>Force</small><strong>${currentForce(s)}</strong></span></div><div><span class="tag-copy"><small>Arme</small><strong>+4</strong></span></div><div><span class="tag-copy"><small>Protection</small><strong>${currentProtection(s)}</strong></span></div><div><span class="tag-copy"><small>Soldats</small><strong>${displayedSoldierCount(s)}</strong></span></div>
- </div></div>`+devSoldierCountHtml(s);
+ </div></div>`+(DEV_TOOLS_ENABLED?devSoldierCountHtml(s):'');
 }
 
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:142,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:143,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
