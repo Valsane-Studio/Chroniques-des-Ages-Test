@@ -11,8 +11,17 @@ function provider(){
   return window.ChroniquesPurchases || null;
 }
 
+function passwordStorageKey(manifest,cfg){
+  return cfg.storageKey||('aphanes.test.password.'+(manifest?.id||manifest?.runtimeId||'book'));
+}
+
 function state(manifest){
   const cfg=config(manifest);
+  if(cfg.mode==='password'){
+    let unlocked=false;
+    try{unlocked=localStorage.getItem(passwordStorageKey(manifest,cfg))==='1';}catch(e){}
+    return {mode:'password',unlocked,productId:null,priceLabel:'',label:cfg.label||'Bientôt disponible'};
+  }
   if(cfg.mode!=='paid'){
     return {mode:cfg.mode||'free',unlocked:true,productId:null,priceLabel:''};
   }
@@ -30,9 +39,18 @@ function state(manifest){
   return {mode:'paid',unlocked,productId,priceLabel};
 }
 
-async function requestUnlock(manifest){
+async function requestUnlock(manifest,credential=''){
   const current=state(manifest);
   if(current.unlocked) return true;
+
+  const cfg=config(manifest);
+  if(current.mode==='password'){
+    if(String(credential)===String(cfg.password||'')){
+      try{localStorage.setItem(passwordStorageKey(manifest,cfg),'1');}catch(e){}
+      return true;
+    }
+    return false;
+  }
 
   const p=provider();
   if(p && typeof p.purchase==='function'){
