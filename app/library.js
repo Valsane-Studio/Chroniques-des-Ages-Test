@@ -75,6 +75,17 @@ const previewAction=document.getElementById('libraryPreviewAction');
 
 let previewSelection=null;
 
+function passwordAccessHtml(m){
+  const access=accessState(m);
+  if(access.mode!=='password'||access.unlocked)return '';
+  return '<div class="library-password-gate">'+
+    '<strong class="library-password-title">Bientôt disponible</strong>'+
+    '<label class="library-password-label" for="libraryPasswordInput">Mot de passe</label>'+
+    '<input id="libraryPasswordInput" class="library-password-input" type="password" autocomplete="current-password" inputmode="text" aria-label="Mot de passe">'+
+    '<span id="libraryPasswordError" class="library-password-error hidden">Mot de passe incorrect.</span>'+
+    '</div>';
+}
+
 function closePreview(){
   if(!previewBackdrop) return;
   previewBackdrop.classList.add('hidden');
@@ -122,6 +133,13 @@ function showPreview(entry,m){
         previewAccess.textContent='';
         previewAccess.classList.add('hidden');
       }
+    }else if(access.mode==='password'){
+      previewAction.textContent='Valider';
+      previewAction.dataset.mode='password';
+      if(previewAccess){
+        previewAccess.innerHTML=passwordAccessHtml(m);
+        previewAccess.classList.remove('hidden');
+      }
     }else{
       previewAction.textContent=access.priceLabel
         ? `Déverrouiller le livre · ${access.priceLabel}`
@@ -136,7 +154,11 @@ function showPreview(entry,m){
 
   previewBackdrop.classList.remove('hidden');
   previewBackdrop.setAttribute('aria-hidden','false');
-  try{previewAction?.focus();}catch(e){}
+  try{
+    if(accessState(m).mode==='password'&&!accessState(m).unlocked){
+      document.getElementById('libraryPasswordInput')?.focus();
+    }else previewAction?.focus();
+  }catch(e){}
 }
 
 async function activatePreview(){
@@ -145,9 +167,18 @@ async function activatePreview(){
   const access=accessState(m);
 
   if(!access.unlocked){
-    const unlocked=await window.LibraryAccess?.requestUnlock(m);
+    const credential=access.mode==='password'
+      ? (document.getElementById('libraryPasswordInput')?.value||'')
+      : '';
+    const unlocked=await window.LibraryAccess?.requestUnlock(m,credential);
     if(!unlocked){
-      if(previewAccess){
+      if(access.mode==='password'){
+        const error=document.getElementById('libraryPasswordError');
+        const input=document.getElementById('libraryPasswordInput');
+        error?.classList.remove('hidden');
+        input?.setAttribute('aria-invalid','true');
+        try{input?.focus();input?.select();}catch(e){}
+      }else if(previewAccess){
         previewAccess.textContent='L’achat sera proposé ici lorsque la boutique sera connectée.';
         previewAccess.classList.remove('hidden');
       }
@@ -161,6 +192,12 @@ async function activatePreview(){
 
 previewClose?.addEventListener('click',closePreview);
 previewAction?.addEventListener('click',activatePreview);
+previewBackdrop?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target?.id==='libraryPasswordInput'){
+    e.preventDefault();
+    activatePreview();
+  }
+});
 previewBackdrop?.addEventListener('click',e=>{
   if(e.target===previewBackdrop) closePreview();
 });
@@ -242,7 +279,7 @@ async function render(){
       action.disabled=true;
       action.textContent=m.statusLabel||'Bientôt';
     }else if(!access.unlocked){
-      action.textContent=access.priceLabel?`Découvrir · ${access.priceLabel}`:'Découvrir';
+      action.textContent=access.mode==='password'?'Découvrir':(access.priceLabel?`Découvrir · ${access.priceLabel}`:'Découvrir');
       action.addEventListener('click',()=>showPreview(e,m));
     }else{
       action.textContent=m.actionLabel||'Découvrir';
