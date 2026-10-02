@@ -7247,7 +7247,7 @@ const STORY = {
     saveVersion: 26,
     assetBase: './books/Livre01-La-Grotte-de-Valombre/images',
     uiAssetBase: './books/Livre01-La-Grotte-de-Valombre/assets',
-    showMissingIllustrationPlaceholder: true, // uniquement pour la version Travail
+    showMissingIllustrationPlaceholder: false, // version TEST : masquer proprement les illustrations encore absentes
     story: STORY,
     pageOrder: PAGE_ORDER,
     pageByNode: PAGE_BY_NODE,
