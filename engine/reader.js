@@ -428,6 +428,10 @@ function render() {
     ++pageImageLoadToken; // annule une éventuelle image de la page précédente
     chapterNumber.textContent = node.number || BOOK.sheetLabel || 'FICHE DU HÉROS';
     imageFrame.classList.add('hidden');
+    imageFrame.classList.remove('has-story-image');
+    storyImage.removeAttribute('src');
+    storyImage.classList.add('hidden');
+    imagePlaceholder.style.display = 'none';
   } else {
     const mappedPage = PAGE_BY_NODE[renderNodeId];
     const declaredPage = node.number ? parseInt(String(node.number).replace(/\D/g, ''), 10) : NaN;
