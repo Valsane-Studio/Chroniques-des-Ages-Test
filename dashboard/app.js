@@ -29,6 +29,7 @@ const loginStatus=$('#loginStatus');
 const logoutBtn=$('#logoutBtn');
 const refreshBtn=$('#refreshBtn');
 const lastRefresh=$('#lastRefresh');
+const bookFilter=$('#bookFilter');
 const resultFilter=$('#resultFilter');
 const searchInput=$('#searchInput');
 const visibleCount=$('#visibleCount');
@@ -152,6 +153,15 @@ function avgLabel(values,suffix=''){
   const a=avg(values);
   return a===null?'—':`${a.toFixed(1).replace('.',',')}${suffix}`;
 }
+function bookMeta(run){
+  const title=String(run?.livre||'').trim();
+  if(/Providence/i.test(title))return{key:'livre02',number:'Livre 02',title:'Le Secret du Providence',short:'Livre 02'};
+  return{key:'livre01',number:'Livre 01',title:'La Grotte de Valombre',short:'Livre 01'};
+}
+function bookBadge(run){
+  const b=bookMeta(run);
+  return `<span class="book-pill ${b.key}">${b.short}</span>`;
+}
 function resultMeta(result){
   switch(result){
     case'fin_histoire':return{label:'Fin de l’histoire',cls:'end'};
@@ -221,27 +231,62 @@ async function loadData(){
   }
 }
 
+function metricsFor(bookKey){
+  const bookRows=rows.filter(r=>bookMeta(r).key===bookKey);
+  const qs=bookRows.map(r=>r.questionnaire).filter(Boolean);
+  return{
+    runs:bookRows.length,
+    ends:bookRows.filter(r=>r.resultat==='fin_histoire').length,
+    deaths:bookRows.filter(r=>r.resultat==='mort_combat'||r.resultat==='mort_subite').length,
+    transforms:bookRows.filter(r=>r.resultat==='transformation_terre_noire').length,
+    duration:bookRows.length?fmtDuration(avg(bookRows.map(r=>r.duree_secondes))):'—',
+    difficulty:avgLabel(qs.map(q=>q.difficulte),' / 9'),
+    comprehension:avgLabel(qs.map(q=>q.comprehension),' / 9'),
+    replay:avgLabel(qs.map(q=>q.envie_rejouer),' / 9')
+  };
+}
+function metricCardsHtml(m,includeTransforms){
+  return `
+    <article class="metric-card"><span>Parties terminées</span><strong>${m.runs}</strong></article>
+    <article class="metric-card"><span>Fins de l’histoire</span><strong>${m.ends}</strong></article>
+    <article class="metric-card"><span>Morts</span><strong>${m.deaths}</strong></article>
+    ${includeTransforms?`<article class="metric-card"><span>Transformations</span><strong>${m.transforms}</strong></article>`:''}
+    <article class="metric-card"><span>Durée moyenne</span><strong>${m.duration}</strong></article>
+    <article class="metric-card"><span>Difficulté moyenne</span><strong>${m.difficulty}</strong></article>
+    <article class="metric-card"><span>Compréhension</span><strong>${m.comprehension}</strong></article>
+    <article class="metric-card"><span>Envie de rejouer</span><strong>${m.replay}</strong></article>
+  `;
+}
 function renderMetrics(){
-  $('#metricRuns').textContent=rows.length;
-  $('#metricEnds').textContent=rows.filter(r=>r.resultat==='fin_histoire').length;
-  $('#metricDeaths').textContent=rows.filter(r=>r.resultat==='mort_combat'||r.resultat==='mort_subite').length;
-  $('#metricTransforms').textContent=rows.filter(r=>r.resultat==='transformation_terre_noire').length;
-  $('#metricDuration').textContent=rows.length?fmtDuration(avg(rows.map(r=>r.duree_secondes))):'—';
-  const qs=rows.map(r=>r.questionnaire).filter(Boolean);
-  $('#metricDifficulty').textContent=avgLabel(qs.map(q=>q.difficulte),' / 9');
-  $('#metricComprehension').textContent=avgLabel(qs.map(q=>q.comprehension),' / 9');
-  $('#metricReplay').textContent=avgLabel(qs.map(q=>q.envie_rejouer),' / 9');
+  const root=$('#bookSummaries');
+  if(!root)return;
+  const books=[
+    {key:'livre01',number:'Livre 01',title:'La Grotte de Valombre',transforms:true},
+    {key:'livre02',number:'Livre 02',title:'Le Secret du Providence',transforms:false}
+  ];
+  root.innerHTML=books.map(book=>`
+    <section class="book-summary ${book.key}">
+      <div class="book-summary-head">
+        <span class="book-pill ${book.key}">${book.number}</span>
+        <h2>${book.title}</h2>
+      </div>
+      <div class="summary-grid">${metricCardsHtml(metricsFor(book.key),book.transforms)}</div>
+    </section>
+  `).join('');
 }
 
 function applyFilters(){
+  const book=bookFilter.value;
   const result=resultFilter.value;
   const search=searchInput.value.trim().toLowerCase();
   filtered=rows.filter(r=>{
+    if(book!=='all'&&bookMeta(r).key!==book)return false;
     if(result!=='all'&&r.resultat!==result)return false;
     if(!search)return true;
     const q=r.questionnaire||{};
+    const b=bookMeta(r);
     const hay=[
-      r.resultat,finalLabel(r),r.page_finale,r.arme,r.protection,
+      b.number,b.title,r.livre,r.resultat,finalLabel(r),r.page_finale,r.arme,r.protection,
       q.commentaire,lastNode(r),JSON.stringify(r.inventaire||{})
     ].join(' ').toLowerCase();
     return hay.includes(search);
@@ -262,6 +307,7 @@ function renderRows(){
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${fmtDate(run.created_at)}</td>
+      <td>${bookBadge(run)}<br><span class="book-title-small">${cleanText(bookMeta(run).title)}</span></td>
       <td><span class="result-pill ${meta.cls}">${meta.label}</span></td>
       <td>${cleanText(finalLabel(run))}<br><span class="muted">p. ${run.page_finale??'—'} · ${cleanText(lastNode(run)||'')}</span></td>
       <td>${fmtDuration(run.duree_secondes)}</td>
@@ -280,6 +326,7 @@ function renderRows(){
     card.innerHTML=`
       <div class="mobile-run-head">
         <div>
+          <div class="mobile-book-line">${bookBadge(run)} <span>${cleanText(bookMeta(run).title)}</span></div>
           <h3>${cleanText(finalLabel(run))}</h3>
           <p>${fmtDate(run.created_at)} · page ${run.page_finale??'—'}</p>
         </div>
@@ -311,6 +358,7 @@ function openDetail(run){
   detailContent.innerHTML=`
     <div class="detail-title">
       <div class="eyebrow">Partie du ${fmtDate(run.created_at)}</div>
+      <div class="detail-book">${bookBadge(run)} <strong>${cleanText(bookMeta(run).title)}</strong></div>
       <h2>${cleanText(finalLabel(run))}</h2>
       <p><span class="result-pill ${meta.cls}">${meta.label}</span></p>
     </div>
@@ -416,6 +464,7 @@ logoutBtn.addEventListener('click',async()=>{
   clearSession();
 });
 refreshBtn.addEventListener('click',()=>loadData());
+bookFilter.addEventListener('change',applyFilters);
 resultFilter.addEventListener('change',applyFilters);
 searchInput.addEventListener('input',applyFilters);
 detailClose.addEventListener('click',closeDetail);
