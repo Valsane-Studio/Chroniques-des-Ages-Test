@@ -21,7 +21,7 @@ BookManifestRegistry.register({
   journalScript:'journal.js',
   extraScripts:['map.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:158,
+  contentVersion:159,
   assetVersion:187,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
