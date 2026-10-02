@@ -957,13 +957,24 @@ const STORY = {
           <p><strong>Dextérité :</strong> représente son aisance et ses réflexes. Elle permet de prendre l’avantage au combat, mais aussi d’éviter pièges, chutes et autres dangers. Elle peut être affectée par ce qui est porté, par exemple une arme lourde.</p>
           <p><strong>Puissance de l’arme :</strong> valeur propre à l’arme équipée. Elle augmente les dégâts infligés lorsque tu remportes un échange.</p>
         </div>
+      </div>
+    `,
+    choices: [{ label: 'Continuer', to: 'startRules', effect: s => setHeroIdentity(s, heroGender(s)) }]
+  },
 
+  startRules: {
+    sheet: true,
+    number: 'RÈGLES DU JEU',
+    title: 'Avant de commencer',
+    text: state => `
+      <div class="hero-sheet">
         <div class="combat-rules-card">
           <div class="combat-rules-title">Règles des combats</div>
           <p><strong>Combats :</strong> personnage et adversaire lancent chacun 2 dés et ajoutent leur Dextérité et leur Force.<br>Le meilleur score remporte l’échange. En cas d’égalité, personne n’est blessé.<br>La Force aide à remporter l’échange, mais ne modifie pas les dégâts. Tes dégâts sont de <strong>2 + la Puissance de ton arme</strong> si tu en possèdes une. Les dégâts adverses sont indiqués sur leur fiche.</p>
         </div>
 
         <div class="hero-weapon">Au départ, tu ne portes encore aucune arme.</div>
+
         <div class="hero-characteristics" role="note">
           <div class="hero-info-title">Avant de commencer</div>
           <p>En bas de l’écran, tu peux consulter à tout moment tes caractéristiques, ton inventaire et ton journal de bord. Tu y retrouveras ton équipement ainsi que les objets découverts pendant l’aventure.</p>
@@ -972,8 +983,9 @@ const STORY = {
         </div>
       </div>
     `,
-    choices: [{ label: 'Commencer l’aventure', to: 'c0', effect: s => setHeroIdentity(s, heroGender(s)) }]
+    choices: [{ label: 'Commencer l’aventure', to: 'c0' }]
   },
+
   c0: {
     number: 'PAGE 0',
     title: 'Valombre',
