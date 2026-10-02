@@ -23,12 +23,31 @@ function finishCombatPowder(s,key){
     delete s.flags.combatPowderActiveKey;
     s.flags.combatPowderUsed=true;
   }
+  clearCombatPowderPrompt(s,key);
 }
 function useCombatPowder(s){
   if(!s.inventory?.poudre_combat||s.flags.combatPowderReady||s.flags.combatPowderActiveKey)return false;
   delete s.inventory.poudre_combat;
   s.flags.combatPowderReady=true;
   return true;
+}
+function combatPowderPromptNeeded(s,key){
+  return !!(s.inventory?.poudre_combat&&!s.flags.combatPowderReady&&!s.flags.combatPowderActiveKey&&s.flags.combatPowderDeclinedKey!==key);
+}
+function combatPowderPromptChoices(s,key,normalChoices){
+  if(!combatPowderPromptNeeded(s,key))return normalChoices;
+  return[
+    {label:'Prendre la poudre de combat — +2 Dextérité et +2 Force',stay:true,effect:x=>{useCombatPowder(x);x.flags.combatPowderAcceptedKey=key;}},
+    {label:'La garder pour un prochain combat',stay:true,effect:x=>{x.flags.combatPowderDeclinedKey=key;}}
+  ];
+}
+function clearCombatPowderPrompt(s,key){
+  if(s.flags.combatPowderDeclinedKey===key)delete s.flags.combatPowderDeclinedKey;
+  if(s.flags.combatPowderAcceptedKey===key)delete s.flags.combatPowderAcceptedKey;
+}
+function combatPowderReminderHtml(s,key){
+  if(!combatPowderPromptNeeded(s,key))return '';
+  return '<div class="combat-roll-result"><div class="combat-roll-title">Poudre de combat</div><p>Tu as encore la poudre trouvée dans la forêt.</p><p><strong>Veux-tu la prendre avant ce combat ?</strong></p><p>Effet : <strong>+2 Dextérité et +2 Force pendant tout ce combat</strong>. Usage unique.</p></div>';
 }
 function combatPower(s){return s.weapon==='naval_sword'?4:0;}
 const HERO_BASE_DAMAGE=2;
@@ -578,7 +597,7 @@ function nightVillageFightRound(s){
 function nightVillageFightHtml(s){
   const b=initNightVillageFight(s);
   const r=b.nightFightLast;
-  let h='<p>Tu n’as plus personne pour tenir la ligne avec toi. Cette fois, tu affrontes toi-même les hommes pâles encore présents dans le village.</p>';
+  let h=combatPowderReminderHtml(s,'nightVillageFight')+'<p>Tu n’as plus personne pour tenir la ligne avec toi. Cette fois, tu affrontes toi-même les hommes pâles encore présents dans le village.</p>';
   h+='<div class="combat-roll-result"><div class="combat-roll-title">Combat de nuit</div>';
   h+='<p>Il reste <strong>'+String(b.enemy)+'</strong> homme'+(b.enemy>1?'s pâles':' pâle')+'.</p>';
   if(!r){
@@ -616,9 +635,10 @@ function nightVillageFightHtml(s){
 
 function nightVillageFightChoices(s){
   const b=initNightVillageFight(s);
-  if(s.hp<=0)return[{label:'La fin du voyage',to:'death'}];
-  if(b.enemy<=0)return[{label:'Continuer',to:'villageNightAftermath'}];
-  return[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>nightVillageFightRound(x)}];
+  if(s.hp<=0){clearCombatPowderPrompt(s,'nightVillageFight');return[{label:'La fin du voyage',to:'death'}];}
+  if(b.enemy<=0){clearCombatPowderPrompt(s,'nightVillageFight');return[{label:'Continuer',to:'villageNightAftermath'}];}
+  const normal=[{label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>nightVillageFightRound(x)}];
+  return combatPowderPromptChoices(s,'nightVillageFight',normal);
 }
 
 function villageAssaultRulesHtml(){
@@ -641,7 +661,7 @@ function villageAssaultHtml(s){
   if(haleWithParty(s))soldierDetails.push('Hale');
   if(b.marines>0)soldierDetails.push(String(b.marines)+' marin'+(b.marines>1?'s':'')+' du Providence');
   const soldierDetail=soldierDetails.length?' · dont '+soldierDetails.join(' et '):'';
-  let h='<p>Le village éclate en mouvement. Les hommes pâles saisissent leurs armes pendant que tes hommes prennent position.</p>';
+  let h=combatPowderReminderHtml(s,'villageAssault')+'<p>Le village éclate en mouvement. Les hommes pâles saisissent leurs armes pendant que tes hommes prennent position.</p>';
   if(b.initialEnemy<9)h+='<p>Grâce à leur hésitation devant la bague, <strong>trois hommes pâles sont déjà tombés</strong>. Il en reste <strong>'+String(b.enemy)+'</strong> au début de l’assaut.</p>';
   else h+='<p>Tu comptes <strong>'+String(b.enemy)+'</strong> hommes pâles capables de se battre.</p>';
   if(!b.flankUsed&&(s.flags.flankingSoldiers||0)>0)h+='<p>Tes <strong>'+String(s.flags.flankingSoldiers)+' soldat'+((s.flags.flankingSoldiers||0)>1?'s sont':' est')+' en position de l’autre côté du village</strong>. Au premier échange, ils attaqueront depuis le flanc : ils ne seront pas comptés une seconde fois dans ta ligne, mais leurs jets réussiront sur <strong>1 à 5</strong> au lieu de 1 à 4.</p>';
@@ -722,10 +742,11 @@ function useCavePistolsInAssault(s){
 
 function villageAssaultChoices(s){
   const b=initVillageAssault(s);
-  if(s.hp<=0)return[{label:'La fin du voyage',to:'death'}];
-  if(b.enemyDefeated||b.enemyFled)return[{label:s.flags.villageTime==='night'?'Rejoindre la prison dans le village silencieux':'Rejoindre la prison',to:s.flags.villageTime==='night'?'villageNightAftermath':'villageAssaultVictory'}];
-  if(villageHeroAlone(s))return[{label:'Fuir vers la forêt',to:'villageRetreat'}];
+  if(s.hp<=0){clearCombatPowderPrompt(s,'villageAssault');return[{label:'La fin du voyage',to:'death'}];}
+  if(b.enemyDefeated||b.enemyFled){clearCombatPowderPrompt(s,'villageAssault');return[{label:s.flags.villageTime==='night'?'Rejoindre la prison dans le village silencieux':'Rejoindre la prison',to:s.flags.villageTime==='night'?'villageNightAftermath':'villageAssaultVictory'}];}
+  if(villageHeroAlone(s)){clearCombatPowderPrompt(s,'villageAssault');return[{label:'Fuir vers la forêt',to:'villageRetreat'}];}
   const out=[];
+  if(b.round===0&&combatPowderPromptNeeded(s,'villageAssault'))return combatPowderPromptChoices(s,'villageAssault',[]);
   if(b.round===0&&pistolShotCount(s)>0){
     out.push({label:'Utiliser les pistolets — '+String(pistolShotCount(s))+' tir'+(pistolShotCount(s)>1?'s':'')+' disponible'+(pistolShotCount(s)>1?'s':''),stay:true,inlineCombat:true,effect:x=>useCavePistolsInAssault(x)});
   }
@@ -988,12 +1009,13 @@ function rangedCombatChoices(s,key,e,dexPenalty=0,consumeBalance=false){
 }
 function standardFightChoices(s,key,e,deathChoice,winChoice){
   const combat=s.combats?.[key];
-  if(s.hp<=0)return[deathChoice];
-  if(combat&&combat.hp<=0)return[winChoice];
-  return[
+  if(s.hp<=0){clearCombatPowderPrompt(s,key);return[deathChoice];}
+  if(combat&&combat.hp<=0){clearCombatPowderPrompt(s,key);return[winChoice];}
+  const normal=[
     {label:'Jeter les dés — combattre',stay:true,inlineCombat:true,effect:x=>fightRound(x,key,e)},
     ...rangedCombatChoices(s,key,e)
   ];
+  return combatPowderPromptChoices(s,key,normal);
 }
 
 function fightRound(s,key,e){
@@ -1065,7 +1087,7 @@ function fightHtml(s,key,e){
   if(c.lastRanged)return rangedCombatResultHtml(s,key,e);
 
   if(!r){
-    return `<div class="combat-roll-result">
+    return combatPowderReminderHtml(s,key)+`<div class="combat-roll-result">
       <div class="combat-roll-title">${e.name}</div>
       <p>Ta Vie : <strong>${s.hp}/${s.maxHp}</strong> · Vie adverse : <strong>${c.hp}/${e.hp}</strong></p>
       <p>Lance les dés pour résoudre le prochain échange.</p>
@@ -1205,7 +1227,7 @@ function cliffGuardianRound(s,key){
 function cliffGuardianHtml(s,key){
   const c=prepareCliffGuardian(s,key);
   const r=c.last;
-  let h='<div class="combat-roll-result"><div class="combat-roll-title">Le gardien de la falaise</div>';
+  let h=combatPowderReminderHtml(s,key)+'<div class="combat-roll-result"><div class="combat-roll-title">Le gardien de la falaise</div>';
   h+='<p>Ta Vie : <strong>'+String(s.hp)+'/'+String(s.maxHp)+'</strong> · Vie adverse : <strong>'+String(c.hp)+'/'+String(CLIFF_GUARDIAN.hp)+'</strong></p>';
 
   if(c.lastRanged){
@@ -1246,8 +1268,8 @@ function cliffGuardianHtml(s,key){
 }
 function cliffGuardianChoices(s,key,winNode){
   const c=prepareCliffGuardian(s,key);
-  if(s.hp<=0)return[{label:'La fin du voyage',to:'death'}];
-  if(c.hp<=0)return[{label:'Approcher du bord de la falaise',to:winNode}];
+  if(s.hp<=0){clearCombatPowderPrompt(s,key);return[{label:'La fin du voyage',to:'death'}];}
+  if(c.hp<=0){clearCombatPowderPrompt(s,key);return[{label:'Approcher du bord de la falaise',to:winNode}];}
   if(c.ready){
     const penalty=c.balance?.penalty||0;
     return[
@@ -1255,7 +1277,8 @@ function cliffGuardianChoices(s,key,winNode){
       ...rangedCombatChoices(s,key,CLIFF_GUARDIAN,penalty,true)
     ];
   }
-  return[{label:'Tester ton équilibre — Dextérité',stay:true,diceTest:true,effect:x=>cliffGuardianBalanceCheck(x,key)}];
+  const normal=[{label:'Tester ton équilibre — Dextérité',stay:true,diceTest:true,effect:x=>cliffGuardianBalanceCheck(x,key)}];
+  return combatPowderPromptChoices(s,key,normal);
 }
 
 
@@ -1700,11 +1723,11 @@ islandRetreat:{title:'Le retour forcé',text:'<p>Tu donnes l’ordre de virer et
 
 islandBeach:{title:'La plage',text:'<p>Vous choisissez la plage principale.</p><p>La chaloupe glisse jusqu’au sable sans qu’aucun homme ne se montre.</p><p>Tu poses un pied à terre.</p><p>Puis des silhouettes apparaissent entre les arbres.</p><p>D’abord trois.</p><p>Puis six autres.</p><p><strong>Neuf hommes pâles</strong> ferment maintenant la plage derrière vous.</p><p>Ils ont le teint livide. Certains portent encore des vestes de marins anglais, espagnols ou hollandais. Tous sont armés.</p><p>Quelque chose te trouble immédiatement dans leur regard.</p><p>Dans l’ombre des arbres, leurs yeux accrochent parfois la lumière d’un reflet bleu très faible, presque animal.</p><p>L’un d’eux reste parfaitement immobile, trop longtemps, sans que tu voies sa poitrine se soulever.</p><p>La chaloupe est déjà hors d’atteinte.</p><p>Vous êtes encerclés.</p>',choices:[{label:'Se battre',to:'islandBeachFight'},{label:'Avancer vers eux sans attaquer',to:'islandBeachYield'}]},
 
-islandBeachFight:{title:'Trop nombreux',text:'<p>Tu tires ton sabre et cries l’ordre d’attaquer.</p><p>Les premiers hommes pâles reculent sous le choc.</p><p>Puis la masse se referme.</p><p>Un coup part à ta gauche. Un autre derrière toi.</p><p>Les soldats tombent les uns après les autres sur le sable.</p><p>Hale essaie de rester près de toi, mais une crosse le frappe au visage et il disparaît sous plusieurs silhouettes.</p><p>Tu frappes encore.</p><p>Puis quelque chose de lourd s’abat sur ton crâne.</p><p>Le ciel bascule.</p><p>Tout devient noir.</p>',onEnter:s=>{if(!s.flags.beachFightResolved){s.flags.beachFightResolved=true;s.flags.beachCaptured=true;s.flags.capturedSoldiers=Math.max(0,Math.floor(Number(s.soldiers)||0));s.flags.beachSoldiersLost=s.soldiers;s.soldiers=0;s.expeditionSoldiers=0;}},choices:[{label:'Reprendre connaissance',to:'islandCaptured'}]},
+islandBeachFight:{title:'Trop nombreux',text:s=>{const tracked=(s.flags.beachSoldiersLost||0)>0;return '<p>Tu tires ton sabre et cries l’ordre d’attaquer.</p><p>Les premiers hommes pâles reculent sous le choc.</p><p>Puis la masse se referme.</p><p>Un de tes hommes se jette sur un homme pâle qui s’approchait de Hale.</p><p>Il n’a pas le temps de porter son coup. Une lame le frappe violemment et il s’effondre sur le sable.</p><p><strong>'+(tracked?'Un de tes soldats vient de mourir.':'Un des hommes de l’expédition vient de mourir.')+'</strong></p><p>La résistance se brise presque aussitôt. Plusieurs armes se tournent vers vous à bout portant.</p><p>Hale est frappé au visage par une crosse et tombe à genoux.</p><p>Tu essaies encore de lever ton sabre.</p><p>Puis quelque chose de lourd s’abat sur ton crâne.</p><p>Le ciel bascule.</p><p>Tout devient noir.</p>';},onEnter:s=>{if(!s.flags.beachFightResolved){s.flags.beachFightResolved=true;s.flags.beachCaptured=true;const before=Math.max(0,Math.floor(Number(s.soldiers)||0));const lost=before>0?1:0;s.flags.beachSoldiersLost=lost;s.flags.beachFightCrewmanKilled=true;s.flags.capturedSoldiers=Math.max(0,before-lost);s.soldiers=0;s.expeditionSoldiers=0;}},choices:[{label:'Reprendre connaissance',to:'islandCaptured'}]},
 
-islandBeachYield:{title:'Ne pas provoquer le massacre',text:'<p>Tu lèves lentement les mains et ordonnes à tout le monde de garder ses armes basses.</p><p>Les hommes pâles avancent sans courir.</p><p>Aucun ne parle.</p><p>Ils viennent assez près pour que tu distingues les cicatrices, le sel incrusté dans leurs vêtements et les restes d’anciens uniformes.</p><p>Tu essaies de leur parler.</p><p>Un choc brutal derrière la tête coupe ta phrase.</p><p>Autour de toi, les autres s’effondrent presque au même instant.</p><p>Noir.</p>',onEnter:s=>{s.flags.beachCaptured=true;s.flags.beachYielded=true;if(!Number.isFinite(s.flags.capturedSoldiers))s.flags.capturedSoldiers=Math.max(0,Math.floor(Number(s.soldiers)||0));s.soldiers=0;s.expeditionSoldiers=0;},choices:[{label:'Reprendre connaissance',to:'islandCaptured'}]},
+islandBeachYield:{title:'Ne pas provoquer le massacre',text:'<p>Tu lèves lentement les mains et ordonnes à tout le monde de garder ses armes basses.</p><p>Les hommes pâles avancent sans courir.</p><p>Aucun ne parle.</p><p>Ils viennent assez près pour que tu distingues les cicatrices, le sel incrusté dans leurs vêtements et les restes d’anciens uniformes.</p><p>Tu essaies de leur parler.</p><p>Un choc brutal derrière la tête coupe ta phrase.</p><p>Autour de toi, les autres s’effondrent presque au même instant.</p><p>Noir.</p>',onEnter:s=>{s.flags.beachCaptured=true;s.flags.beachYielded=true;s.flags.beachSoldiersLost=0;if(!Number.isFinite(s.flags.capturedSoldiers))s.flags.capturedSoldiers=Math.max(0,Math.floor(Number(s.soldiers)||0));s.soldiers=0;s.expeditionSoldiers=0;},choices:[{label:'Reprendre connaissance',to:'islandCaptured'}]},
 
-islandCaptured:{title:'Prisonniers',text:s=>'<p>Tu reprends connaissance avec un goût de sang dans la bouche et les poignets liés.</p><p>Ton sabre a disparu. Tes poches ont été vidées et tout ton équipement a été retiré.</p><p>Hale est étendu non loin de toi. Il respire.</p>'+((s.flags.capturedSoldiers||0)>0?'<p>Plusieurs de tes soldats sont eux aussi ligotés. Les hommes pâles les relèvent un à un.</p>':'')+'<p>On vous pousse ensuite vers l’intérieur de l’île.</p><p>À travers les arbres apparaissent les premières huttes du village.</p><p>À mesure que vous approchez, tu remarques de nouveau cette étrangeté dans les regards : lorsqu’un homme pâle traverse la lumière d’une torche, ses yeux renvoient parfois un éclat bleu qui disparaît aussitôt.</p>',onEnter:s=>stripCapturedEquipment(s),choices:[{label:'Voir où ils vous emmènent',to:'c68'}]},
+islandCaptured:{title:'Prisonniers',text:s=>'<p>Tu reprends connaissance avec un goût de sang dans la bouche et les poignets liés.</p><p>Ton sabre a disparu. Tes poches ont été vidées et tout ton équipement a été retiré.</p><p>Hale est étendu non loin de toi. Il respire.</p>'+(s.flags.beachFightCrewmanKilled?'<p>Le souvenir de l’homme tombé sur la plage te revient immédiatement. Lui ne se relèvera pas.</p>':'')+((s.flags.capturedSoldiers||0)>0?'<p>Les autres soldats sont eux aussi ligotés. Les hommes pâles les relèvent un à un.</p>':'')+'<p>On vous pousse ensuite vers l’intérieur de l’île.</p><p>À travers les arbres apparaissent les premières huttes du village.</p><p>À mesure que vous approchez, tu remarques de nouveau cette étrangeté dans les regards : lorsqu’un homme pâle traverse la lumière d’une torche, ses yeux renvoient parfois un éclat bleu qui disparaît aussitôt.</p>',onEnter:s=>stripCapturedEquipment(s),choices:[{label:'Voir où ils vous emmènent',to:'c68'}]},
 
 islandForestLanding:{title:'La côte boisée',text:s=>{const n=secondIslandLocalSoldiers(s);return '<p>Vous longez l’île jusqu’à une portion de côte où la forêt descend presque dans l’eau.</p><p>La chaloupe trouve un passage entre les racines et les rochers.</p><p>Devant vous, aucun chemin. Seulement une végétation épaisse.</p><p>Tu es avec Hale et <strong>'+String(n)+' soldat'+(n>1?'s':'')+'</strong>.</p><p>Vous pouvez débarquer tous ensemble.</p>'+(canSplitSecondIslandParty(s)?'<p>Vous êtes assez nombreux pour vous séparer. Hale et toi pouvez débarquer ici pendant que les soldats restent dans la chaloupe et poursuivent le tour de l’île pour chercher un autre point d’accès.</p>':'');},choices:s=>{const out=[{label:'Débarquer tous ensemble',to:'forestTrap',effect:x=>keepSecondIslandSoldiersTogether(x)}];if(canSplitSecondIslandParty(s))out.push({label:'Hale et toi débarquez — envoyer les soldats plus loin avec la chaloupe',to:'forestTrap',effect:x=>sendSecondIslandSoldiersAround(x)});return out;}},
 
@@ -2176,7 +2199,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:139,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:140,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
