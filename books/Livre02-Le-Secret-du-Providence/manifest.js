@@ -6,8 +6,7 @@ BookManifestRegistry.register({
   kicker:'APHANES · Livre 02',
   title:'Le Secret du Providence',
   pitch:'Un navire marchand a disparu. Sa trace conduit vers une île que personne n’aurait dû chercher.',
-  status:'planned',
-  statusLabel:'Bientôt disponible',
+  status:'available',
   actionLabel:'Découvrir',
   access:{mode:'free'},
   cover:'assets/presentation.jpg',
@@ -23,7 +22,7 @@ BookManifestRegistry.register({
   journalScript:'journal.js',
   extraScripts:['map.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:138,
+  contentVersion:139,
   assetVersion:7,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
