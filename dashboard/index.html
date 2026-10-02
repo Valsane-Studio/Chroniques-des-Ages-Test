@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="APHANES Tests">
   <title>APHANES — Suivi des tests</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./styles.css?v=1">
+  <link rel="stylesheet" href="./styles.css?v=2">
 </head>
 <body>
   <div class="app-shell">
@@ -17,7 +17,7 @@
       <div>
         <div class="eyebrow">Valsane Studio · APHANES</div>
         <h1>Suivi des tests</h1>
-        <p class="subtitle">La Grotte de Valombre</p>
+        <p class="subtitle">Livres 01 & 02 · données séparées par aventure</p>
       </div>
       <div class="header-actions">
         <span id="lastRefresh" class="last-refresh"></span>
@@ -48,42 +48,17 @@
       </section>
 
       <section id="dashboardView" class="hidden">
-        <section class="summary-grid" aria-label="Résumé">
-          <article class="metric-card">
-            <span>Parties terminées</span>
-            <strong id="metricRuns">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Fins de l’histoire</span>
-            <strong id="metricEnds">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Morts</span>
-            <strong id="metricDeaths">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Transformations</span>
-            <strong id="metricTransforms">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Durée moyenne</span>
-            <strong id="metricDuration">—</strong>
-          </article>
-          <article class="metric-card">
-            <span>Difficulté moyenne</span>
-            <strong id="metricDifficulty">—</strong>
-          </article>
-          <article class="metric-card">
-            <span>Compréhension</span>
-            <strong id="metricComprehension">—</strong>
-          </article>
-          <article class="metric-card">
-            <span>Envie de rejouer</span>
-            <strong id="metricReplay">—</strong>
-          </article>
-        </section>
+        <div id="bookSummaries" class="book-summaries" aria-label="Résumés par livre"></div>
 
         <section class="panel filters-panel">
+          <div class="filter-group">
+            <label for="bookFilter">Livre</label>
+            <select id="bookFilter">
+              <option value="all">Tous les livres</option>
+              <option value="livre01">Livre 01 · La Grotte de Valombre</option>
+              <option value="livre02">Livre 02 · Le Secret du Providence</option>
+            </select>
+          </div>
           <div class="filter-group">
             <label for="resultFilter">Résultat</label>
             <select id="resultFilter">
@@ -119,6 +94,7 @@
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Livre</th>
                   <th>Résultat</th>
                   <th>Fin / mort</th>
                   <th>Durée</th>
@@ -147,6 +123,6 @@
     </article>
   </div>
 
-  <script src="./app.js?v=6"></script>
+  <script src="./app.js?v=7"></script>
 </body>
 </html>
