@@ -17,6 +17,12 @@
     'c231','c232','c237'
   ]);
 
+  const PROVIDENCE_COMBAT_DEATH_SOURCES = new Set([
+    'c13','c15','north2','north3','east5','c32','ravineFight','forestAlligator',
+    'cavePistolGuardian','villageAssault','villageNightFight','deepCaveRevenant',
+    'deepCliffGuardianFight','victoryRescueRevenantFight','victoryCliffGuardianFight'
+  ]);
+
   let getState = null;
   let persistState = null;
   let lastCompletionContext = null;
@@ -185,7 +191,32 @@
     });
   }
 
+  function activeBookId() {
+    return window.GameRuntime?.activeBook?.id || '';
+  }
+
+  function previousNode(state, nodeId) {
+    const history = Array.isArray(state?.history) ? state.history : [];
+    if (!history.length) return null;
+    let index = history.length - 1;
+    if (history[index] === nodeId) index -= 1;
+    return index >= 0 ? history[index] : null;
+  }
+
+  function classifyProvidenceResult(state, nodeId) {
+    if (nodeId === 'collectiveCliffEvacuation' || nodeId === 'deepCaveEscapeEnding') return 'fin_histoire';
+    if (nodeId === 'directIsland' || nodeId === 'villageRingReturn' || nodeId === 'villageNightSwim') return 'mort_subite';
+    if (nodeId === 'villageWalkIn' && Number(state?.hp) <= 0) return 'mort_subite';
+    if (nodeId === 'captiveSecondEscape' && state?.flags?.captiveSecondEscapeRolled && !state?.flags?.captiveSecondEscapeSuccess) return 'mort_subite';
+    if (nodeId === 'death' || Number(state?.hp) <= 0) {
+      const source = previousNode(state, nodeId);
+      return PROVIDENCE_COMBAT_DEATH_SOURCES.has(source) ? 'mort_combat' : 'mort_subite';
+    }
+    return null;
+  }
+
   function classifyResult(state, nodeId) {
+    if (activeBookId() === 'providence-02') return classifyProvidenceResult(state, nodeId);
     if (state?.flags?.blackEarthTransformed || nodeId === 'c219') return 'transformation_terre_noire';
     if (SUCCESS_NODES.has(nodeId)) return 'fin_histoire';
     if (NARRATIVE_DEATH_NODES.has(nodeId)) return 'mort_subite';
@@ -195,7 +226,7 @@
     return null;
   }
 
-  function combatSummary(state) {
+  function combatSummary(state, book) {
     let total = 0;
     let won = 0;
     const combats = state?.combats && typeof state.combats === 'object' ? state.combats : {};
@@ -222,6 +253,21 @@
     if (state?.flags?.cavernCombat) {
       total += 1;
       if (Number(state.hp) > 0) won += 1;
+    }
+
+    if (book?.id === 'providence-02') {
+      const crewBattles = state?.crewBattles && typeof state.crewBattles === 'object' ? state.crewBattles : {};
+      for (const battle of Object.values(crewBattles)) {
+        if (!battle || typeof battle !== 'object' || Number(battle.round) <= 0) continue;
+        total += 1;
+        if (Number(battle.enemy) <= 0) won += 1;
+      }
+
+      const village = state?.flags?.villageAssaultBattle;
+      if (village && (Number(village.round) > 0 || Number(village.nightFightRound) > 0 || state?.flags?.nightRaidRolled)) {
+        total += 1;
+        if (Number(village.enemy) <= 0 || village.enemyDefeated || village.enemyFled) won += 1;
+      }
     }
 
     return { total, won };
@@ -262,9 +308,7 @@
   function loadedContentVersion(book) {
     try {
       const entries = performance.getEntriesByType('resource');
-      const hit = [...entries].reverse().find(entry =>
-        entry?.name?.includes('/books/Livre01-La-Grotte-de-Valombre/book.js')
-      );
+      const hit = [...entries].reverse().find(entry => entry?.name?.includes('/books/') && entry?.name?.includes('/book.js'));
       if (hit?.name) {
         const value = new URL(hit.name).searchParams.get('v');
         if (value) return value;
@@ -285,7 +329,7 @@
       .map(node => Number.isInteger(pageByNode?.[node]) ? pageByNode[node] : null)
       .filter(page => page !== null);
     const uniquePages = new Set(pages);
-    const combats = combatSummary(state);
+    const combats = combatSummary(state, book);
     const protection = currentStat(book, state, 'currentProtection', 0);
 
     return {
@@ -625,7 +669,7 @@
     storyText.classList.add('test-feedback-page');
     storyText.innerHTML = `
       <section id="testFeedback" class="test-feedback">
-        <h3>Merci d’avoir joué à La Grotte de Valombre.</h3>
+        <h3>Merci d’avoir joué à ${context?.book?.title || 'APHANES'}.</h3>
         <p class="test-feedback-intro">Pour nous aider à améliorer le jeu, peux-tu nous donner ton ressenti ?</p>
         <div class="test-feedback-questions"></div>
         <label class="test-feedback-comment">
