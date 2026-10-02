@@ -8,11 +8,37 @@ function heroRank(){return 'Lieutenant de la Royal Navy';}
 function setHeroIdentity(s,g){s.heroGender=g==='male'?'male':'female';s.heroName=heroName(s);}
 function currentForce(s){return Math.max(3,(s.baseForce||8)+(s.forceBonus||0));}
 function currentDexterity(s){return Math.max(3,(s.baseDexterity||13)+(s.dexBonus||0)-(s.dexPenalty||0));}
+function beginCombatPowder(s,key){
+  if(s.flags.combatPowderActiveKey)return s.flags.combatPowderActiveKey===key;
+  if(!s.flags.combatPowderReady)return false;
+  s.flags.combatPowderReady=false;
+  s.flags.combatPowderActiveKey=key;
+  return true;
+}
+function combatPowderActive(s,key){return s.flags.combatPowderActiveKey===key;}
+function combatForce(s,key){return currentForce(s)+(combatPowderActive(s,key)?2:0);}
+function combatDexterity(s,key){return currentDexterity(s)+(combatPowderActive(s,key)?2:0);}
+function finishCombatPowder(s,key){
+  if(s.flags.combatPowderActiveKey===key){
+    delete s.flags.combatPowderActiveKey;
+    s.flags.combatPowderUsed=true;
+  }
+}
+function useCombatPowder(s){
+  if(!s.inventory?.poudre_combat||s.flags.combatPowderReady||s.flags.combatPowderActiveKey)return false;
+  delete s.inventory.poudre_combat;
+  s.flags.combatPowderReady=true;
+  return true;
+}
 function combatPower(s){return s.weapon==='naval_sword'?4:0;}
 const HERO_BASE_DAMAGE=2;
 function heroCombatDamage(s){return HERO_BASE_DAMAGE+(s.weapon==='none'?0:combatPower(s));}
 function enemyCombatDamage(e){return e.damage+(Number.isFinite(e.weaponPower)?e.weaponPower:0);}
 function weaponLabel(s){return s.weapon==='naval_sword'?'Sabre court de marine':'Aucune';}
+const PROTECTION_ITEMS={
+  brassard_avant_bras:{max:3,name:'Brassard d’avant-bras renforcé'},
+  gantelets:{max:4,name:'Gantelets renforcés'}
+};
 function normalizeProtectionItems(s){
   if(!s.inventory)s.inventory={};
   if(s.inventory.gantelets_marchands&&!s.inventory.brassard_avant_bras){
@@ -24,33 +50,72 @@ function normalizeProtectionItems(s){
     delete s.inventory.gantelets_marchands;
   }
 }
-function equipmentProtection(s){
+function ensureProtectionState(s){
   normalizeProtectionItems(s);
-  let total=0;
-  if(s.inventory?.brassard_avant_bras)total+=3;
-  if(s.inventory?.gantelets)total+=4;
-  return total;
+  if(!s.protectionItems||typeof s.protectionItems!=='object')s.protectionItems={};
+  for(const [id,def] of Object.entries(PROTECTION_ITEMS)){
+    if(s.inventory?.[id]&&!s.protectionItems[id])s.protectionItems[id]={max:def.max,remaining:def.max};
+    if(s.protectionItems[id]){
+      s.protectionItems[id].max=def.max;
+      s.protectionItems[id].remaining=Math.max(0,Math.min(def.max,Number(s.protectionItems[id].remaining)||0));
+    }
+  }
+}
+function addProtectiveItem(s,id,name,description,protection){
+  addItem(s,id,name,description,{protection});
+  ensureProtectionState(s);
+  s.protectionItems[id]={max:protection,remaining:protection};
+  s.protection=currentProtection(s);
+}
+function removeProtectiveItem(s,id){
+  if(s.inventory?.[id])delete s.inventory[id];
+  ensureProtectionState(s);
+  delete s.protectionItems[id];
+  s.protection=currentProtection(s);
 }
 function currentProtection(s){
-  const equipped=equipmentProtection(s);
-  if(equipped>0){
-    s.protection=equipped;
-    return equipped;
+  ensureProtectionState(s);
+  let total=0;
+  for(const [id] of Object.entries(PROTECTION_ITEMS)){
+    if(!s.inventory?.[id])continue;
+    total+=Math.max(0,Number(s.protectionItems[id]?.remaining)||0);
   }
-  return Math.max(0,Number(s.protection||0));
+  s.protection=total;
+  return total;
+}
+function maxProtection(s){
+  return Object.entries(PROTECTION_ITEMS).reduce((total,[id,def])=>total+(s.inventory?.[id]?def.max:0),0);
 }
 function syncProtection(s){
-  const equipped=equipmentProtection(s);
-  s.protection=equipped;
-  return equipped;
+  s.protection=currentProtection(s);
+  return s.protection;
 }
 function applyDamage(s,a){
+  ensureProtectionState(s);
   const incoming=Math.max(0,Math.floor(Number(a)||0));
-  const absorbed=Math.min(currentProtection(s),incoming);
-  const hpLost=incoming-absorbed;
+  let remaining=incoming;
+  let absorbed=0;
+  const before=currentProtection(s);
+  const destroyedProtection=[];
+  for(const [id,def] of Object.entries(PROTECTION_ITEMS)){
+    if(!s.inventory?.[id]||remaining<=0)continue;
+    const source=s.protectionItems[id];
+    const available=Math.max(0,Number(source?.remaining)||0);
+    const used=Math.min(available,remaining);
+    if(used>0){
+      source.remaining-=used;
+      remaining-=used;
+      absorbed+=used;
+      if(available>0&&source.remaining<=0)destroyedProtection.push(def.name);
+    }
+  }
+  const hpLost=remaining;
   s.hp=Math.max(0,s.hp-hpLost);
-  return {incoming,absorbed,hpLost,heroHp:s.hp};
+  const result={incoming,absorbed,hpLost,destroyedProtection,protectionBefore:before,protectionAfter:currentProtection(s),heroHp:s.hp};
+  s.lastDamageResolution=result;
+  return result;
 }
+
 function addGold(s,n){s.goldCoins=(s.goldCoins||0)+n;}
 function pirateCrewSize(s){
   const n=Math.max(0,Math.floor(Number(s.soldiers)||0));
@@ -297,13 +362,14 @@ const enemyBefore=b.enemy;
   const progressBefore=b.progress;
   const moraleBefore=b.moraleTurns;
 
-  const soldierDice=Array.from({length:soldiersBefore},()=>cryptoDie6());
+  const flankCount=!b.flankUsed?Math.min(soldiersBefore,Math.max(0,Math.floor(Number(s.flags.flankingSoldiers)||0))):0;
+  const localSoldiers=Math.max(0,soldiersBefore-flankCount);
+  const soldierDice=Array.from({length:localSoldiers},()=>cryptoDie6());
   const haleDice=haleBefore?[cryptoDie6()]:[];
   const marineDice=Array.from({length:marinesBefore},()=>cryptoDie6());
-
-  const flankCount=!b.flankUsed?Math.min(soldiersBefore,Math.max(0,Math.floor(Number(s.flags.flankingSoldiers)||0))):0;
   const flankDice=Array.from({length:flankCount},()=>cryptoDie6());
   if(flankCount>0)b.flankUsed=true;
+  beginCombatPowder(s,'villageAssault');
 
   let actionSuccess=null;
   let actionDice=[];
@@ -314,7 +380,7 @@ const enemyBefore=b.enemy;
   const enemyCombat=1;
 
   if(action==='charge'){
-    actionSuccess=roll3D6(s,'Force',currentForce(s));
+    actionSuccess=roll3D6(s,'Force',combatForce(s,'villageAssault'));
     actionDice=Array.isArray(s.lastDice)?[...s.lastDice]:[];
     actionTotal=s.lastTotal;
     if(actionSuccess)extraEnemyLoss=1;
@@ -324,7 +390,7 @@ const enemyBefore=b.enemy;
       chargeDamage={raw,absorbed:resolution.absorbed,hpLost:resolution.hpLost};
     }
   }else if(action==='cover'){
-    actionSuccess=roll3D6(s,'Dextérité',currentDexterity(s));
+    actionSuccess=roll3D6(s,'Dextérité',combatDexterity(s,'villageAssault'));
     actionDice=Array.isArray(s.lastDice)?[...s.lastDice]:[];
     actionTotal=s.lastTotal;
     if(actionSuccess)coverCancel=1;
@@ -333,7 +399,7 @@ const enemyBefore=b.enemy;
   const soldierHits=soldierDice.filter(v=>v<=4).length;
   const haleHits=haleDice.filter(v=>v<=4).length;
   const marineHits=marineDice.filter(v=>v<=3).length;
-  const flankHits=flankDice.filter(v=>v<=4).length;
+  const flankHits=flankDice.filter(v=>v<=5).length;
   const alliedHits=soldierHits+haleHits+marineHits+flankHits+extraEnemyLoss;
 
   const enemyDice=Array.from({length:enemyBefore},()=>cryptoDie6());
@@ -365,6 +431,10 @@ const enemyBefore=b.enemy;
   if(b.enemy<=0){
     b.enemy=0;
     b.enemyDefeated=true;
+  }
+  if(flankCount>0){
+    s.flags.flankingSoldiers=0;
+    s.expeditionSoldiers=Math.max(0,Math.floor(Number(s.soldiers)||0));
   }
 
   b.round++;
@@ -399,6 +469,7 @@ const enemyBefore=b.enemy;
     progressBefore,
     progressAfter:b.progress
   };
+  if(b.enemy<=0||villageHeroAlone(s)||s.hp<=0)finishCombatPowder(s,'villageAssault');
 }
 function markVillageEnemyLoss(s,n=1){
   const b=initVillageAssault(s);
@@ -458,11 +529,12 @@ function initNightVillageFight(s){
 function nightVillageFightRound(s){
   const b=initNightVillageFight(s);
   if(s.hp<=0||b.enemy<=0)return;
+  beginCombatPowder(s,'nightVillageFight');
 
   const heroDice=[cryptoDie6(),cryptoDie6()];
   const enemyDice=[cryptoDie6(),cryptoDie6()];
-  const heroDexterity=currentDexterity(s);
-  const heroForce=currentForce(s);
+  const heroDexterity=combatDexterity(s,'nightVillageFight');
+  const heroForce=combatForce(s,'nightVillageFight');
   const enemyDexterity=NIGHT_PALE.dex;
   const enemyForce=NIGHT_PALE.force;
   const heroAttack=heroDexterity+heroForce+heroDice[0]+heroDice[1];
@@ -500,6 +572,7 @@ function nightVillageFightRound(s){
     enemyHpBefore,enemyHpAfter,enemyKilled,outcome,damage,protectionAbsorbed,hpLost,
     heroHp:s.hp,enemyRemaining:b.enemy
   };
+  if(b.enemy<=0||s.hp<=0)finishCombatPowder(s,'nightVillageFight');
 }
 
 function nightVillageFightHtml(s){
@@ -571,7 +644,7 @@ function villageAssaultHtml(s){
   let h='<p>Le village éclate en mouvement. Les hommes pâles saisissent leurs armes pendant que tes hommes prennent position.</p>';
   if(b.initialEnemy<9)h+='<p>Grâce à leur hésitation devant la bague, <strong>trois hommes pâles sont déjà tombés</strong>. Il en reste <strong>'+String(b.enemy)+'</strong> au début de l’assaut.</p>';
   else h+='<p>Tu comptes <strong>'+String(b.enemy)+'</strong> hommes pâles capables de se battre.</p>';
-  if(!b.flankUsed&&(s.flags.flankingSoldiers||0)>0)h+='<p>Tes <strong>'+String(s.flags.flankingSoldiers)+' soldat'+((s.flags.flankingSoldiers||0)>1?'s sont':' est')+' en position de l’autre côté du village</strong>. Au premier échange, chacun lancera un dé supplémentaire grâce au feu croisé.</p>';
+  if(!b.flankUsed&&(s.flags.flankingSoldiers||0)>0)h+='<p>Tes <strong>'+String(s.flags.flankingSoldiers)+' soldat'+((s.flags.flankingSoldiers||0)>1?'s sont':' est')+' en position de l’autre côté du village</strong>. Au premier échange, ils attaqueront depuis le flanc : ils ne seront pas comptés une seconde fois dans ta ligne, mais leurs jets réussiront sur <strong>1 à 5</strong> au lieu de 1 à 4.</p>';
 
   if(b.round===0&&b.pistolOpeningLoss>0)h+='<p><strong>Tu dégaines les deux pistolets trouvés dans la grotte.</strong> Deux détonations éclatent presque en même temps. <strong>'+String(b.pistolOpeningLoss)+' homme'+(b.pistolOpeningLoss>1?'s pâles tombent':' pâle tombe')+'</strong> avant que la bataille ne commence vraiment.</p>';
 
@@ -611,7 +684,7 @@ function villageAssaultHtml(s){
       h+='<div class="crew-training-side"><div class="crew-training-heading"><strong>Ton groupe</strong><span>Garnison, Hale compris : réussite sur 1–4 · marins libérés : 1–3</span></div>';
       const regularDice=[...l.soldierDice,...l.haleDice];
       if(regularDice.length)h+='<p>Soldats'+(l.haleDice.length?' — Hale compris':'')+'</p><div class="crew-training-dice">'+villageBattleDiceRow(regularDice,4)+'</div>';
-      if(l.flankDice.length)h+='<p>Feu croisé</p><div class="crew-training-dice">'+villageBattleDiceRow(l.flankDice,4)+'</div>';
+      if(l.flankDice.length)h+='<p>Feu croisé — réussite sur 1–5</p><div class="crew-training-dice">'+villageBattleDiceRow(l.flankDice,5)+'</div>';
       if(l.marineDice.length)h+='<p>Marins du Providence</p><div class="crew-training-dice">'+villageBattleDiceRow(l.marineDice,3)+'</div>';
       h+='<p><strong>'+String(l.enemyLoss)+' homme'+(l.enemyLoss>1?'s pâles tombent':' pâle tombe')+'.</strong></p></div>';
 
@@ -674,8 +747,7 @@ function addThrowingBlades(s,n=1){
 function grantSouthProtection(s){
   if(s.flags.southProtectionGift)return;
   s.flags.southProtectionGift=true;
-  addItem(s,'brassard_avant_bras','Brassard d’avant-bras renforcé','Un large brassard de cuir épais renforcé de fines plaques métalliques rivetées. Protection +3.');
-  syncProtection(s);
+  addProtectiveItem(s,'brassard_avant_bras','Brassard d’avant-bras renforcé','Un large brassard de cuir épais renforcé de fines plaques métalliques rivetées. Protection +3.',3);
 }
 function rollDex(s,bonus=0,label='Dextérité'){
   const target=currentDexterity(s)-Math.max(0,bonus);
@@ -846,6 +918,7 @@ function useRangedCombatItem(s,key,e,type,dexPenalty=0,consumeBalance=false){
   if(!s.combats)s.combats={};
   const combat=s.combats[key]||(s.combats[key]={hp:e.hp,round:0,last:null});
   if(s.hp<=0||combat.hp<=0)return;
+  beginCombatPowder(s,key);
 
   const isPistol=type==='pistol';
   if(isPistol){
@@ -854,7 +927,7 @@ function useRangedCombatItem(s,key,e,type,dexPenalty=0,consumeBalance=false){
     if(!consumeThrowingBlade(s))return;
   }
 
-  const dexterity=Math.max(3,currentDexterity(s)-Math.max(0,dexPenalty||0));
+  const dexterity=Math.max(3,combatDexterity(s,key)-Math.max(0,dexPenalty||0));
   const success=roll3D6(s,isPistol?'Dextérité — pistolet':'Dextérité — lame de lancer',dexterity);
   const damage=isPistol?4:2;
   const before=combat.hp;
@@ -876,6 +949,7 @@ function useRangedCombatItem(s,key,e,type,dexPenalty=0,consumeBalance=false){
     combat.balance=null;
     combat.ready=false;
   }
+  if(combat.hp<=0||s.hp<=0)finishCombatPowder(s,key);
 }
 function rangedCombatResultHtml(s,key,e){
   const combat=s.combats?.[key];
@@ -927,12 +1001,13 @@ function fightRound(s,key,e){
   const c=s.combats[key]||(s.combats[key]={hp:e.hp,round:0,last:null});
   if(s.hp<=0||c.hp<=0)return c.last;
   c.lastRanged=null;
+  beginCombatPowder(s,key);
 
   const heroDice=[cryptoDie6(),cryptoDie6()];
   const enemyDice=[cryptoDie6(),cryptoDie6()];
-  const heroDexterity=currentDexterity(s);
+  const heroDexterity=combatDexterity(s,key);
   const enemyDexterity=e.dex;
-  const heroForce=currentForce(s);
+  const heroForce=combatForce(s,key);
   const enemyForce=e.force;
   const heroAttack=heroDexterity+heroForce+heroDice[0]+heroDice[1];
   const enemyAttack=enemyDexterity+enemyForce+enemyDice[0]+enemyDice[1];
@@ -978,6 +1053,7 @@ function fightRound(s,key,e){
     enemyHp:c.hp,
     ruleVersion:'book01-duel-v1'
   };
+  if(c.hp<=0||s.hp<=0)finishCombatPowder(s,key);
   return c.last;
 }
 
@@ -1059,6 +1135,7 @@ const NORTH_CAPTAIN={name:'CAPITAINE PIRATE',hp:10,dex:9,force:8,damage:2};
 const BANDIT_CHIEF={name:'CHEF DES FAUX MARCHANDS',hp:9,dex:9,force:8,damage:2};
 const ALLIGATOR={name:'ALLIGATOR',hp:8,dex:7,force:8,damage:3};
 const DROWNED_SAILOR={name:'LE NOYÉ',hp:9,dex:8,force:10,damage:3};
+const CAVE_DUAL_GUARD={name:'GARDIEN AUX DEUX SABRES',hp:8,dex:13,force:6,damage:2,weaponPower:1};
 const CLIFF_GUARDIAN={name:'GARDIEN DE LA FALAISE',hp:16,dex:10,force:11,damage:3};
 
 function prepareCliffGuardian(s,key){
@@ -1069,7 +1146,8 @@ function prepareCliffGuardian(s,key){
 function cliffGuardianBalanceCheck(s,key){
   const c=prepareCliffGuardian(s,key);
   if(s.hp<=0||c.hp<=0||c.ready)return;
-  const success=roll3D6(s,'Dextérité',currentDexterity(s));
+  beginCombatPowder(s,key);
+  const success=roll3D6(s,'Dextérité',combatDexterity(s,key));
   c.balance={
     success,
     dice:Array.isArray(s.lastDice)?[...s.lastDice]:[],
@@ -1086,9 +1164,9 @@ function cliffGuardianRound(s,key){
   const balance=c.balance||{success:true,dice:[],total:null,penalty:0};
   const heroDice=[cryptoDie6(),cryptoDie6()];
   const enemyDice=[cryptoDie6(),cryptoDie6()];
-  const heroDexterity=Math.max(3,currentDexterity(s)-(balance.penalty||0));
+  const heroDexterity=Math.max(3,combatDexterity(s,key)-(balance.penalty||0));
   const enemyDexterity=CLIFF_GUARDIAN.dex;
-  const heroForce=currentForce(s);
+  const heroForce=combatForce(s,key);
   const enemyForce=CLIFF_GUARDIAN.force;
   const heroAttack=heroDexterity+heroForce+heroDice[0]+heroDice[1];
   const enemyAttack=enemyDexterity+enemyForce+enemyDice[0]+enemyDice[1];
@@ -1122,6 +1200,7 @@ function cliffGuardianRound(s,key){
   };
   c.balance=null;
   c.ready=false;
+  if(c.hp<=0||s.hp<=0)finishCombatPowder(s,key);
 }
 function cliffGuardianHtml(s,key){
   const c=prepareCliffGuardian(s,key);
@@ -1187,7 +1266,10 @@ function stripCapturedEquipment(s){
   s.goldCoins=0;
   s.weapon='none';
   s.protection=0;
+  s.protectionItems={};
   s.forceBonus=0;
+  delete s.flags.combatPowderReady;
+  delete s.flags.combatPowderActiveKey;
   s.flags.skullRing=false;
   s.flags.gauntlets=false;
   s.flags.southProtectionGift=false;
@@ -1220,7 +1302,7 @@ function resolveCaptiveAmbush(s){
 function resolveCaptiveCompanionRescue(s){
   if(s.flags.captiveCompanionRescueRolled)return;
   s.flags.captiveCompanionRescueRolled=true;
-  s.flags.captiveCompanionRescueSuccess=rollDex(s);
+  s.flags.captiveCompanionRescueSuccess=rollDex(s,2,'Dextérité — évasion difficile');
   if(s.flags.captiveCompanionRescueSuccess){
     s.flags.captiveCompanionsFreed=true;
     s.flags.secondIslandPartyReady=true;
@@ -1336,7 +1418,7 @@ function createInitialState(){
     node:'start',pageMapVersion:23,heroGender:'female',heroName:'Eleanor',
     inventory:{},flags:{},visited:{},history:[],journal:'',
     hp:18,maxHp:18,baseForce:8,baseDexterity:13,forceBonus:0,dexBonus:0,dexPenalty:0,
-    weapon:'naval_sword',protection:0,goldCoins:0,
+    weapon:'naval_sword',protection:0,protectionItems:{},goldCoins:0,
     soldiers:10,maxSoldiers:10,expeditionSoldiers:0,shipSoldiers:10,
     crewBattles:{},combats:{},damageRolls:{},damageRollResults:{},
     lastDice:null,lastTotal:null,lastStat:null,lastStatName:'',rollCount:0,currentCheckpoint:null
@@ -1444,7 +1526,7 @@ const STORY={
   </div>
   ${crewBattleHtml(s,'pirates1',pirateCountForBattle(s,'pirates1'))}`,choices:s=>{const b=ensureCrewBattle(s,'pirates1',pirateCountForBattle(s,'pirates1'),4,1,0);if(s.soldiers<=0)return[{label:'Tes soldats sont anéantis',to:'death'}];if(b.enemy<=0)return[{label:'Sauter sur le pont adverse — affronter le capitaine',to:'c15'}];return[{label:b.round?'Assaut suivant':'Lancer les dés — premier assaut',stay:true,inlineCombat:true,effect:x=>crewBattleRound(x,'pirates1',pirateCountForBattle(x,'pirates1'))}];}},
  c15:{title:'Le capitaine pirate',text:s=>`<p>Tu prends appui sur la rambarde et sautes sur le pont adverse.</p><p>Autour de toi, la mêlée se disperse entre les cordages et les canons. Des hommes reculent, d’autres se jettent les uns sur les autres dans le vacarme des lames et du bois frappé.</p><p>Puis tu le vois.</p><p>Le capitaine pirate ne ressemble pas aux hommes qui se battent autour de lui. Grand, massif, le visage mangé par une barbe noire, il porte un long manteau usé dont les manches sont tachées de sel. Une cicatrice épaisse part de sa pommette et disparaît sous sa barbe.</p><p>Il regarde ses hommes tomber sans bouger.</p><p>Quand ses yeux se posent sur toi, il sourit.</p><p>Il tire lentement son sabre d’abordage. La lame est large, ébréchée près de la pointe.</p><p>Du bout de l’arme, il te fait signe d’approcher.</p>${fightHtml(s,'captain',CAPTAIN)}`,choices:s=>{const c=s.combats?.captain;if(s.hp<=0)return[{label:'Tu t’effondres',to:'death'}];if(c&&c.hp<=0)return[{label:'Fouiller le capitaine',to:'c16'}];return standardFightChoices(s,'captain',CAPTAIN,{label:'Tu t’effondres',to:'death'},{label:'Fouiller le capitaine',to:'c16'});}},
- c16:{title:'Les gantelets',text:`<p>Le capitaine pirate est étendu sur le pont, inanimé.</p><p>En te penchant sur lui, tu remarques les gantelets qu’il porte encore aux avant-bras. Ils sont faits d’un cuir épais, renforcé de petites plaques de métal rivetées à la main.</p><p>Le travail est artisanal. Rien d’élégant, mais l’ensemble est solide et étonnamment bien conçu. Les plaques couvrent les zones les plus exposées sans gêner les mouvements.</p><p><strong>Protection +4.</strong></p><p>Avant de regagner le Resolute, tu ordonnes à quelques hommes de fouiller la cale du navire pirate.</p><p>Ils reviennent quelques minutes plus tard avec un petit coffre, plusieurs sacs et trois tonneaux marqués au fer.</p><p>Le coffre contient environ <strong>100 pièces d’or</strong>, probablement accumulées au fil de plusieurs prises.</p><p>Les tonneaux sont remplis de <strong>rhum</strong>. Une cargaison facile à transporter et surtout très utile dans les Caraïbes : elle pourra être offerte, troquée ou servir de monnaie d’échange si la situation l’exige.</p><p><strong>Tu récupères 100 pièces d’or et 3 tonneaux de rhum.</strong></p><p>Avant de quitter la cabine du capitaine, tu trouves aussi un petit carnet de prises. Une entrée récente retient ton attention :</p><blockquote>« Marchand anglais — PROVIDENCE. Aperçu trois nuits plus tôt. Cap au sud-est. Aucun feu. Aucun signal. Plusieurs hommes visibles sur le pont. »</blockquote><p>Quelques lignes plus bas, l’écriture devient plus serrée.</p><blockquote>« Avons tenté de l’approcher. À moins d’un mille, la mer a changé. Pas de vent contraire. Pas de courant visible. Pourtant le bateau avançait comme dans de l’huile. L’eau semblait retenir la coque. »</blockquote><p>La dernière partie a été écrite d’une main beaucoup moins assurée.</p><blockquote>« Une ombre est passée sous nous. Immense. Elle a frappé la coque par dessous. Deux membrures fendues. Avons viré de bord. Le Providence, lui, n’a pas bougé. »</blockquote><p>Tu relis l’entrée.</p><p>Le Providence était encore à flot après sa disparition officielle. Il suivait volontairement un cap qui n’avait aucun sens.</p><p>Mais surtout, quelque chose semblait empêcher les autres navires de l’approcher.</p>`,choices:[{label:'Récupérer le butin et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;addItem(s,'gantelets','Gantelets renforcés','Gantelets artisanaux de cuir épais renforcés de plaques métalliques. Protection +4.');syncProtection(s);}if(!s.flags.firstPirateLoot){s.flags.firstPirateLoot=true;addGold(s,100);addRumCrate(s,3);}}}]},
+ c16:{title:'Les gantelets',text:`<p>Le capitaine pirate est étendu sur le pont, inanimé.</p><p>En te penchant sur lui, tu remarques les gantelets qu’il porte encore aux avant-bras. Ils sont faits d’un cuir épais, renforcé de petites plaques de métal rivetées à la main.</p><p>Le travail est artisanal. Rien d’élégant, mais l’ensemble est solide et étonnamment bien conçu. Les plaques couvrent les zones les plus exposées sans gêner les mouvements.</p><p><strong>Protection +4.</strong></p><p>Avant de regagner le Resolute, tu ordonnes à quelques hommes de fouiller la cale du navire pirate.</p><p>Ils reviennent quelques minutes plus tard avec un petit coffre, plusieurs sacs et trois tonneaux marqués au fer.</p><p>Le coffre contient environ <strong>100 pièces d’or</strong>, probablement accumulées au fil de plusieurs prises.</p><p>Les tonneaux sont remplis de <strong>rhum</strong>. Une cargaison facile à transporter et surtout très utile dans les Caraïbes : elle pourra être offerte, troquée ou servir de monnaie d’échange si la situation l’exige.</p><p><strong>Tu récupères 100 pièces d’or et 3 tonneaux de rhum.</strong></p><p>Avant de quitter la cabine du capitaine, tu trouves aussi un petit carnet de prises. Une entrée récente retient ton attention :</p><blockquote>« Marchand anglais — PROVIDENCE. Aperçu trois nuits plus tôt. Cap au sud-est. Aucun feu. Aucun signal. Plusieurs hommes visibles sur le pont. »</blockquote><p>Quelques lignes plus bas, l’écriture devient plus serrée.</p><blockquote>« Avons tenté de l’approcher. À moins d’un mille, la mer a changé. Pas de vent contraire. Pas de courant visible. Pourtant le bateau avançait comme dans de l’huile. L’eau semblait retenir la coque. »</blockquote><p>La dernière partie a été écrite d’une main beaucoup moins assurée.</p><blockquote>« Une ombre est passée sous nous. Immense. Elle a frappé la coque par dessous. Deux membrures fendues. Avons viré de bord. Le Providence, lui, n’a pas bougé. »</blockquote><p>Tu relis l’entrée.</p><p>Le Providence était encore à flot après sa disparition officielle. Il suivait volontairement un cap qui n’avait aucun sens.</p><p>Mais surtout, quelque chose semblait empêcher les autres navires de l’approcher.</p>`,choices:[{label:'Récupérer le butin et repartir',to:'c20',effect:s=>{if(!s.flags.gauntlets){s.flags.gauntlets=true;addProtectiveItem(s,'gantelets','Gantelets renforcés','Gantelets artisanaux de cuir épais renforcés de plaques métalliques. Protection +4.',4);}if(!s.flags.firstPirateLoot){s.flags.firstPirateLoot=true;addGold(s,100);addRumCrate(s,3);}}}]},
  c20:{title:'',text:`<p>Le Resolute atteint enfin la zone où le Providence aurait dû être aperçu pour la dernière fois.</p><p>Tu fais réduire la voilure et ordonnes une recherche méthodique.</p><p>Deux hommes montent dans la mâture avec des longues-vues. D’autres scrutent l’eau à la recherche d’un débris, d’un tonneau, d’une voile déchirée.</p><p>Une heure passe.</p><p>Puis une autre.</p><p>Enfin, un marin repêche une planche qui dérive parmi les algues.</p><p>Elle porte encore un fragment de peinture blanche et deux lettres noires : ...VI...</p><p>Sur l’autre face, une marque au fer est encore lisible : E. HARCOURT — PORT ROYAL.</p><p>Le bois provient presque certainement du Providence.</p><p>Tu fais appeler le navigateur. Il observe le courant, consulte la carte puis secoue la tête.</p><blockquote>« Si cette planche s’est détachée récemment, elle vient du sud ou du sud-est. Pas de la route que le Providence devait suivre pour rentrer. »</blockquote><p>Ce n’est plus une simple disparition.</p><p>Le Providence a quitté sa route.</p><p>Un des matelots qui tient la gaffe regarde la planche dériver derrière vous.</p><blockquote>« Mon grand-père disait toujours la même chose à propos de ces eaux : l’île mange les marins et recrache les bateaux. »</blockquote><p>Personne ne rit.</p><p>Reste à comprendre pourquoi le Providence a choisi de s’en approcher.</p>`,choices:[{label:'Reporter l’indice sur la carte',to:'search2'}]},
 
  search2:{title:'',text:`<p>Le lendemain matin, tu étales de nouveau les cartes sur une caisse du pont.</p><p>Vous avez parcouru la dernière route connue du Providence, vérifié les récifs, interrogé les rares navires rencontrés et observé les courants.</p><p>La recherche au hasard ne peut pas continuer indéfiniment.</p><p>Trois zones restent plausibles.</p><p>Au nord, les routes se rapprochent d’un secteur notoirement fréquenté par les pirates. Si le Providence a été attaqué, c’est probablement là que vous avez le plus de chances de retrouver une trace. Mais y entrer revient presque à provoquer ceux qui y chassent.</p><p>À l’est, les voies marchandes sont plus fréquentées. Le Providence a moins de raisons de s’y être écarté de sa route, mais les navires qui y circulent pourraient avoir vu quelque chose.</p><p>Au sud, les cartes montrent une zone peu empruntée. Plusieurs courants et régimes de vents s’y rencontrent. Les marins la disent imprévisible, parfois dangereuse, mais une avarie ou une dérive aurait pu entraîner le Providence dans cette direction.</p><p>Tu replies la carte.</p><p>Il faut choisir où chercher maintenant.</p>`,choices:[
@@ -1551,9 +1633,9 @@ ravineCorpse:{title:'Le corps dans la boue',text:`<p>Lorsque l’alligator cesse
 
 ravineExit:{title:'L’autre versant',text:`<p>L’alligator cesse enfin de bouger.</p><p>Vous traversez les derniers mètres de boue puis grimpez le versant opposé en vous aidant des racines.</p><p>Lorsque tu retrouves le sentier, le vieux pont est derrière toi.</p><p>L’homme aperçu de l’autre côté est toujours adossé contre son arbre.</p>`,choices:[{label:'Rejoindre l’homme',to:'c50'}]},
 
-c41:{title:'Le détour par la forêt',text:s=>`<p>Vous renoncez au pont et longez le ravin sous les arbres.</p><p>Très vite, le sentier disparaît complètement.</p><p>La végétation devient si dense qu’il faut écarter les branches à chaque pas.</p><p>Puis un craquement retentit derrière vous.</p><p>Un second, beaucoup plus proche.</p>${s.flags.villageForestSoldierLost?`<p>Tu te retournes juste à temps pour voir l’un de tes hommes disparaître brutalement dans les fougères.</p><p>Un claquement de mâchoires coupe son cri.</p><p><strong>Tu perds 1 soldat.</strong></p><p>Vous courez sans chercher à comprendre ce qui vous suit.</p>`:`<p>Tu es seul. Quelque chose avance parallèlement à toi dans la végétation.</p><p>Tu accélères. Le bruit aussi.</p>`}`,onEnter:s=>{if(!s.flags.villageForestEntered){s.flags.villageForestEntered=true;if(s.expeditionSoldiers>0){s.flags.villageForestSoldierLost=true;loseSoldier(s,1);}}},choices:s=>s.flags.villageForestSoldierLost?[{label:'Continuer à courir',to:'c50'}]:[{label:'Courir — Dextérité',to:'c50',diceTest:true,effect:x=>{x.flags.villageForestDex=rollDex(x);if(!x.flags.villageForestDex)rollDamage(x,'villageForest',3);}}]},
+c41:{title:'Le détour par la forêt',text:s=>`<p>Vous renoncez au pont et longez le ravin sous les arbres.</p><p>Très vite, le sentier disparaît complètement.</p><p>La végétation devient si dense qu’il faut écarter les branches à chaque pas.</p><p>Puis un craquement retentit derrière vous.</p><p>Un second, beaucoup plus proche.</p>${s.flags.villageForestSoldierLost?`<p>Tu te retournes juste à temps pour voir l’un de tes hommes disparaître brutalement dans les fougères.</p><p>Un claquement de mâchoires coupe son cri.</p><p><strong>Tu perds 1 soldat.</strong></p><p>Vous courez sans chercher à comprendre ce qui vous suit.</p>`:`<p>Tu es seul. Quelque chose avance parallèlement à toi dans la végétation.</p><p>Tu accélères. Le bruit aussi.</p>`}`,onEnter:s=>{if(!s.flags.villageForestEntered){s.flags.villageForestEntered=true;if(s.expeditionSoldiers>0){s.flags.villageForestSoldierLost=true;loseSoldier(s,1);}}},choices:s=>s.flags.villageForestSoldierLost?[{label:'Continuer à courir',to:'forestCombatPowder'}]:[{label:'Courir — Dextérité',to:'forestCombatPowder',diceTest:true,effect:x=>{x.flags.villageForestDex=rollDex(x);if(!x.flags.villageForestDex)rollDamage(x,'villageForest',3);}}]},
 
-c50:{title:'L’homme de l’autre côté',text:s=>(s.flags.villageForestEntered&&!s.flags.villageForestSoldierLost?diceResultHtml(s)+(s.flags.villageForestDex?'':''):'')+`<p>Vous finissez par rejoindre l’autre côté du ravin.</p><p>L’homme aperçu depuis le pont est toujours adossé au même arbre.</p><p>Il porte les vêtements simples d’un pêcheur. Sa chemise est déchirée et du sang a séché sur son épaule.</p><p>Lorsque tu t’approches, il ouvre les yeux.</p><blockquote>« Ils sont venus de la mer... »</blockquote><p>Sa voix est à peine audible.</p><blockquote>« Les hommes blancs. Trop nombreux. »</blockquote><p>Tu lui demandes ce qu’ils ont fait aux habitants.</p><p>Il secoue lentement la tête.</p><blockquote>« Ils ne les tuaient pas... Ils les attachaient. Ils les emmenaient vers les barques. »</blockquote><p>Il ouvre difficilement la main. Dans sa paume repose une petite bague de métal ornée d’une tête de mort.</p><blockquote>« Je l’ai arrachée à l’un d’eux pendant l’attaque. Quand un autre l’a vue dans ma main, il s’est arrêté une seconde... juste assez pour que je m’échappe. »</blockquote><p>Il te tend la bague.</p><blockquote>« Prenez-la. Elle signifie quelque chose pour eux. »</blockquote><p>Son regard se tourne vers les toits du village, visibles entre les arbres.</p><blockquote>« Le guetteur les observait depuis des semaines... Tout est dans ses cahiers. »</blockquote><p>Il essaie de se relever, puis retombe contre le tronc.</p><p>Il respire encore, mais il n’est pas en état de vous suivre.</p>`,onEnter:s=>{if(!s.flags.skullRing){s.flags.skullRing=true;addItem(s,'bague_crane','Bague au crâne','Une bague arrachée à un homme pâle. Les membres de leur groupe semblent reconnaître ce symbole.');}},choices:[{label:'Continuer vers le village',to:'c38'}]},
+c50:{title:'L’homme de l’autre côté',text:s=>{const prefix=(s.flags.villageForestEntered&&!s.flags.villageForestSoldierLost?diceResultHtml(s)+(s.flags.villageForestDex?'':''):'')+'<p>Vous finissez par rejoindre l’autre côté du ravin.</p>';if(s.flags.islandDelay)return prefix+'<p>L’homme aperçu depuis le pont est toujours adossé au même arbre.</p><p>Mais cette fois, il ne réagit pas lorsque tu t’approches.</p><p>Sa chemise est déchirée et le sang sur son épaule a eu le temps de sécher entièrement.</p><p>Tu t’accroupis près de lui.</p><p>Il est mort.</p><p>Sa main droite est refermée sur du sable et quelques fibres arrachées. Rien d’autre.</p><p>Vous avez perdu plusieurs heures en contournant les pirates. Elles ont suffi.</p><p>Tu regardes les toits du village visibles entre les arbres. Si tu veux comprendre ce qui s’est passé ici, il faudra chercher les réponses toi-même.</p>';return prefix+`<p>L’homme aperçu depuis le pont est toujours adossé au même arbre.</p><p>Il porte les vêtements simples d’un pêcheur. Sa chemise est déchirée et du sang a séché sur son épaule.</p><p>Lorsque tu t’approches, il ouvre les yeux.</p><blockquote>« Ils sont venus de la mer... »</blockquote><p>Sa voix est à peine audible.</p><blockquote>« Les hommes blancs. Trop nombreux. »</blockquote><p>Tu lui demandes ce qu’ils ont fait aux habitants.</p><p>Il secoue lentement la tête.</p><blockquote>« Ils ne les tuaient pas... Ils les attachaient. Ils les emmenaient vers les barques. »</blockquote><p>Il ouvre difficilement la main. Dans sa paume repose une petite bague de métal ornée d’une tête de mort.</p><blockquote>« Je l’ai arrachée à l’un d’eux pendant l’attaque. Quand un autre l’a vue dans ma main, il s’est arrêté une seconde... juste assez pour que je m’échappe. »</blockquote><p>Il te tend la bague.</p><blockquote>« Prenez-la. Elle signifie quelque chose pour eux. »</blockquote><p>Son regard se tourne vers les toits du village, visibles entre les arbres.</p><blockquote>« Le guetteur les observait depuis des semaines... Tout est dans ses cahiers. »</blockquote><p>Il essaie de se relever, puis retombe contre le tronc.</p><p>Il respire encore, mais il n’est pas en état de vous suivre.</p>`;},onEnter:s=>{if(!s.flags.islandDelay&&!s.flags.skullRing){s.flags.skullRing=true;addItem(s,'bague_crane','Bague au crâne','Une bague arrachée à un homme pâle. Les membres de leur groupe semblent reconnaître ce symbole.');}},choices:[{label:'Continuer vers le village',to:'c38'}]},
 
 c38:{title:'Le village désert',text:s=>{const n=(s.flags.villageHomes?1:0)+(s.flags.villageWatch?1:0)+(s.flags.villageArchives?1:0)+(s.flags.villageShore?1:0);if(n===0)return `<p>La rue principale traverse une trentaine de maisons. Des affaires sont encore posées devant les portes. Un linge claque au vent. Une marmite noire repose sur un foyer froid.</p><p>Aucun corps.</p><p>Aucun habitant.</p><p>Tu ne pourras pas retourner chaque maison et chaque registre avant la nuit. Il faut choisir où chercher en priorité.</p><p>Quatre pistes se détachent : les maisons ravagées, le poste de guet, la maison commune où sont conservés les anciens registres, et la jetée à l’autre extrémité de la plage.</p>`;if(n===1)return `<p>Tu reviens au centre du village avec un premier élément.</p><p>Le soleil descend déjà derrière les arbres. Tu as encore le temps d’examiner une autre piste avant de rassembler ce que vous avez trouvé.</p><p>Il faut choisir laquelle.</p>`;return `<p>Vous vous retrouvez sur la place avec les indices recueillis.</p><p>Tu pourrais continuer à fouiller au hasard, mais personne ne sait si les assaillants reviendront.</p><p>Un de tes hommes appelle depuis une petite maison adossée au poste de guet. Il vient de trouver un carnet récent sous une table renversée.</p><p>Ce sont peut-être les dernières notes écrites avant l’attaque.</p>`;},choices:s=>{const n=(s.flags.villageHomes?1:0)+(s.flags.villageWatch?1:0)+(s.flags.villageArchives?1:0)+(s.flags.villageShore?1:0);if(n>=2)return[{label:'Lire le carnet retrouvé',to:'c51'}];const out=[];if(!s.flags.villageHomes)out.push({label:'Fouiller les maisons ravagées',to:'c39'});if(!s.flags.villageWatch)out.push({label:'Monter au poste de guet',to:'c42'});if(!s.flags.villageArchives)out.push({label:'Examiner les anciens registres',to:'c44'});if(!s.flags.villageShore)out.push({label:'Inspecter la jetée et la plage',to:'c48'});return out;}},
 
@@ -1634,7 +1716,7 @@ islandRecon:{title:'Faire le tour de l’île',text:s=>{const n=secondIslandLoca
 
 coveClearing:{title:'La crique cachée',text:s=>((s.flags.flankingSoldiers||0)>0?'<p>La chaloupe glisse dans la crique et vient toucher la roche.</p><p>Hale et toi descendez à terre. Les soldats reprennent aussitôt les rames et poursuivent le tour de l’île, comme prévu.</p><p>Vous vous enfoncez à pied sous les branches.</p>':'<p>Vous tirez la chaloupe sous les branches et avancez à pied.</p>')+'<p>Un passage naturel débouche bientôt sur une petite clairière encerclée de roche.</p><p>Dans la paroi, une ouverture sombre forme l’entrée d’une grotte.</p><p>Rien ne signale l’endroit depuis la mer. Sans la crique, vous seriez probablement passés devant sans le voir.</p>',choices:[{label:'Entrer dans la grotte',to:'caveTunnel'},{label:'Laisser la grotte et chercher le village',to:'villageRear'}]},
 
-caveTunnel:{title:'Sous la roche',text:'<p>La lumière disparaît rapidement derrière vous.</p><p>Au bout de quelques mètres, la grotte cesse de ressembler à une cavité naturelle.</p><p>Les parois ont été égalisées. Des marches grossières ont été taillées dans le sol. De petits renfoncements réguliers longent les murs comme s’ils avaient autrefois accueilli des lampes.</p><p>Plus loin, une lumière verticale tombe depuis une ouverture très haute dans la roche.</p>',choices:[{label:'Avancer vers la lumière',to:'caveShrine'}]},
+caveTunnel:{title:'Sous la roche',text:'<p>La lumière disparaît rapidement derrière vous.</p><p>Au bout de quelques mètres, la grotte cesse de ressembler à une cavité naturelle.</p><p>Les parois ont été égalisées. Des marches grossières ont été taillées dans le sol. De petits renfoncements réguliers longent les murs comme s’ils avaient autrefois accueilli des lampes.</p><p>Plus loin, une lumière verticale tombe depuis une ouverture très haute dans la roche.</p>',choices:[{label:'Avancer vers la lumière',to:'cavePistolGuardian'}]},
 
 caveShrine:{title:'Le sanctuaire',text:s=>'<p>Le passage débouche dans une salle ronde.</p><p>Un rayon de lumière traverse une fissure du plafond et tombe sur les fresques qui couvrent les murs.</p><p>La première montre un navire en pleine mer, son pont rempli de marins. Sous la coque, un immense kraken suit le navire comme une ombre.</p><p>La deuxième représente plusieurs petites embarcations. Sur leurs voiles ou sur le bras des hommes qui les dirigent apparaît toujours le même symbole : un cercle noir fermé.</p><p>Ces marins laissent des pierres bleues et des cartes à bord d’autres navires. Sur la scène suivante, trois feux bleutés sont allumés autour d’une crique, toujours aux mêmes emplacements. Un navire étranger met le cap vers eux.</p><p>La scène suivante montre le navire étranger immobilisé près de la côte. Des hommes sont conduits vers la mer.</p><p>Plus loin, les tentacules emportent les prisonniers dans l’eau.</p><p>Mais les petites embarcations marquées du cercle noir repartent intactes.</p><p>Sur la dernière partie de la fresque, l’une d’elles traverse une mer agitée tandis que la silhouette du kraken passe sous sa coque sans la toucher.</p>'+((s.flags.blackCirclePalm||s.flags.assassinCircle||s.flags.blackCircleMerchant)?'<p>Tu reconnais le symbole. Le vieux marin. L’homme venu te tuer. Le faux marchand.</p>':'')+'<p>Le sens de la fresque devient difficile à ignorer : des marins de l’extérieur entretiennent le piège. Ils conduisent d’autres navires vers l’île et, en échange, la créature semble épargner les leurs.</p><p>Ce que montrent les fresques ne ressemble pas à une légende. C’est un système organisé.</p><p>Au pied des fresques, le sol est encombré d’affaires abandonnées : bottes, ceinturons, vestes de marin, sacs éventrés, sabres, mousquets et pièces d’équipement provenant de plusieurs équipages.</p><p>Certains objets portent les marques de la Royal Navy. D’autres appartenaient manifestement à des marchands ou à des flibustiers.</p><p>Tu comprends que les hommes pâles retirent à leurs prisonniers tout ce qui pourrait les encombrer avant de les emmener plus loin.</p><p>Sous une veste de cuir durcie par le sel, tu découvres <strong>deux pistolets à silex</strong> enveloppés dans un morceau de toile huilée.</p><p>Les mécanismes semblent encore fonctionner.</p><p>Et les deux armes sont chargées.</p>',onEnter:s=>{s.flags.caveTruth=true;s.flags.caveVisitedDay=true;s.flags.blackCircleBrotherhood=true;if(!s.inventory?.pistolets_silex&&!s.flags.cavePistolsUsed)addItem(s,'pistolets_silex','Deux pistolets à silex','Deux pistolets trouvés parmi les affaires abandonnées dans le sanctuaire. Les deux armes sont chargées.',{quantity:2});},choices:[{label:'Emporter les pistolets et quitter la grotte',to:'caveExit'}]},
 
@@ -1718,7 +1800,7 @@ deepCliffGuardianFight:{title:'Le gardien de la falaise',noImage:true,text:s=>'<
 
 deepCaveBoat:{title:'Sous la falaise',noImage:true,text:'<p>Le gardien ne bouge plus.</p><p>Tu reprends ton souffle et avances jusqu’au bord.</p><p>En te penchant au-dessus du vide, tu aperçois enfin ce que la paroi cachait jusque-là.</p><p>Une étroite anse s’enfonce sous la falaise.</p><p>Un vieux bateau y est amarré, presque invisible depuis le large.</p><p>Sa coque est usée, mais elle flotte encore.</p><p>Plus bas, un courant extrêmement puissant longe la paroi avant de partir droit vers la pleine mer.</p><p>Des anneaux de fer et une vieille échelle permettent de rejoindre l’eau.</p><p>Tu comprends alors comment les navires vides pouvaient réapparaître loin de l’île : ils étaient amenés jusqu’ici, puis abandonnés au courant.</p><p>La mer les entraînait au large.</p><p><strong>L’île mange les marins et recrache les bateaux.</strong></p><p>Le bateau devant toi offre un moyen de quitter l’île.</p><p>Mais au-dessus de l’anse, un étroit sentier longe aussi la crête. De là, les premières huttes du village sont visibles entre les arbres.</p>',onEnter:s=>{s.flags.secretCliffFound=true;},choices:[{label:'Prendre le vieux bateau et quitter l’île maintenant',to:'deepCaveEscapeEnding'},{label:'Suivre la crête pour revenir vers la prison',to:'deepCaveReturnPrison',effect:x=>{x.flags.returnFromCliff=true;x.flags.villageTime='night';}}]},
 
-deepCaveReturnPrison:{title:'Au-dessus du village',noImage:true,text:s=>{const group=haleWithParty(s)||providenceMarinesWithParty(s)>0;let h='<p>Tu renonces au bateau et suis le sentier qui grimpe au-dessus de la falaise.</p><p>Le passage contourne les rochers et rejoint une crête étroite dominant le village.</p><p>Pour la première fois, tu vois clairement la prison depuis l’arrière des huttes.</p><p>Tu n’as pas besoin de repasser par la grotte ni de traverser l’entrée principale du village.</p>';if(group)h+='<p>Ceux qui se sont échappés avec toi restent dans ton sillage, silencieux.</p>';h+='<p>Mais le chemin n’est pas libre pour autant.</p><p>Des gardes circulent encore entre les bâtiments. Pour atteindre la cage, il faudra franchir leurs lignes et les neutraliser.</p>';return h;},choices:[{label:'Descendre derrière les huttes et approcher de la prison',to:'villageNightGuard1'}]},
+deepCaveReturnPrison:{title:'Au-dessus du village',noImage:true,text:s=>{const marines=providenceMarinesWithParty(s);let h='<p>Tu renonces au bateau et suis le sentier qui grimpe au-dessus de la falaise.</p><p>Le passage contourne les rochers et rejoint une crête étroite dominant le village.</p><p>Pour la première fois, tu vois clairement la prison depuis l’arrière des huttes.</p><p>Tu n’as pas besoin de repasser par la grotte ni de traverser l’entrée principale du village.</p>';if(haleWithParty(s))h+='<p>Hale reste à quelques pas derrière toi, sabre en main.</p>';if(marines>0)h+='<p>Le marin du Providence qui s’est échappé avec vous vous suit également.</p>';h+='<p>Mais le chemin n’est pas libre pour autant.</p><p>Des gardes circulent encore entre les bâtiments. Si vous parvenez jusqu’à la cage avant de donner l’alerte, vous pourrez libérer les prisonniers avant le combat.</p>';return h;},choices:[{label:'Descendre derrière les huttes et approcher de la prison',to:'cliffReturnGuard1'}]},
 
 deepCaveEscapeEnding:{title:'Quitter l’île',noImage:true,text:s=>{const marines=providenceMarinesWithParty(s);const group=haleWithParty(s)||marines>0;let h=group?'<p>Vous descendez jusqu’au bateau et larguez les amarres.</p>':'<p>Tu descends jusqu’au bateau et largues les amarres.</p>';h+='<p>Le courant saisit immédiatement la coque.</p><p>La falaise glisse derrière '+(group?'vous':'toi')+', puis l’île commence à s’éloigner.</p><p>Pendant quelques minutes, personne ne parle.</p><p>Tu es vivant. Tu as trouvé le moyen de quitter cet endroit.</p><p>Mais les lueurs du village sont encore visibles entre les arbres.</p>';if(group)h+='<p>Ceux qui ont réussi à s’échapper avec toi sont sauvés.</p>';h+='<p>Les autres prisonniers, eux, sont toujours sur l’île.</p><p>Tu le sais au moment même où la côte disparaît dans la nuit : tu as survécu, mais tu as abandonné une partie de ta mission derrière toi.</p><div class="ending">FIN DE L’AVENTURE</div>';return h;},choices:[{label:'Recommencer',action:'restart'}]},
 
@@ -1747,6 +1829,19 @@ victoryCliffBoat:{title:'Sous la falaise',noImage:true,text:'<p>Le gardien s’e
 victoryRescueReturn:{title:'Retour au village',text:'<p>Tu retrouves le marin vivant dans le renfoncement où tu l’avais laissé.</p><p>Il parvient à se relever avec de l’aide.</p><p>Vous remontez lentement vers le village.</p><p>Personne ne demande où sont les deux autres lorsqu’il apparaît à l’entrée de la grotte.</p><p>Les rescapés comprennent à vos visages.</p><p>Tu leur racontes alors ce que vous avez découvert au-delà du sanctuaire : la falaise, le courant et le vieux bateau encore amarré sous la roche.</p><p>Pour la première fois depuis votre arrivée sur l’île, vous avez un moyen de ramener tout le monde en mer.</p><p>Les hommes encore valides commencent immédiatement à préparer l’évacuation des blessés.</p>',onEnter:s=>{s.flags.victoryRescueCompleted=true;s.flags.victoryRescuedSailor=true;},choices:[{label:'Évacuer les survivants par la grotte',to:'collectiveCliffEvacuation'}]},
 
 collectiveCliffEvacuation:{title:'Quitter l’île',noImage:true,text:'<p>Le trajet est lent.</p><p>Les hommes valides font plusieurs allers-retours entre le village et la grotte. Les plus faibles sont soutenus à deux. Les blessés incapables de marcher sont transportés sur des civières improvisées.</p><p>Un à un, les rescapés traversent les galeries et atteignent la falaise.</p><p>Le vieux bateau tient toujours contre la roche.</p><p>Lorsque le dernier homme est à bord, vous détachez les amarres.</p><p>Le courant saisit immédiatement la coque et l’arrache à l’anse.</p><p>La falaise recule.</p><p>Puis l’île entière commence à disparaître derrière vous.</p><p>Tu regardes longtemps la côte sombre.</p><p>Le bateau gagne le large avec les hommes du Providence à son bord.</p><p>Vous avez quitté l’île.</p><p>Mais ce que tu as découvert ne s’arrête pas à cette côte.</p><p>Le vieux marin, l’homme venu te tuer, les faux marchands, les cartes, les pierres bleues… le cercle noir apparaît trop souvent pour n’être qu’un signe isolé.</p><p>Quelque part dans cette région, d’autres hommes participent encore au même réseau. Ils attirent des navires, déplacent des prisonniers et entretiennent un piège qui dépasse largement cette île.</p><p>Lorsque les survivants seront en sécurité, tu mèneras une expédition pour mettre fin à ce réseau. Tu ne sais pas combien ils sont, ni quelle est leur force de frappe, mais tu es prêt à aller jusqu’au bout.</p><p>La côte disparaît derrière vous.</p><p><strong>L’aventure ne fait que commencer.</strong></p>',choices:[{label:'Recommencer',action:'restart'}]},
+
+
+forestCombatPowder:{title:'Le mort sous les racines',noImage:true,text:s=>(s.flags.villageForestEntered&&!s.flags.villageForestSoldierLost?diceResultHtml(s)+(s.flags.villageForestDex?'':''):'')+'<p>Vous ralentissez enfin lorsque les bruits dans les fourrés cessent.</p><p>Sous les racines d’un arbre renversé, tu aperçois le corps d’un homme du village. Il porte encore des vêtements de pêcheur et semble avoir tenté de fuir l’attaque.</p><p>À sa ceinture est noué un petit sachet de toile cirée, fermé par une ficelle rouge.</p><p>À l’intérieur se trouve une poudre sombre à l’odeur âcre.</p><p>Tu en as déjà entendu parler dans les ports : certains pirates en avalent juste avant un abordage. Sa composition est jalousement gardée.</p><p><strong>Si tu la consommes, elle te donnera +2 Dextérité et +2 Force pendant ton prochain combat, puis son effet disparaîtra.</strong></p>',choices:[{label:'Prendre la poudre de combat',to:'c50',effect:s=>{if(!s.inventory?.poudre_combat&&!s.flags.combatPowderUsed&&!s.flags.combatPowderReady)addItem(s,'poudre_combat','Poudre de combat','Poudre utilisée par certains pirates avant un affrontement. Usage unique : +2 Dextérité et +2 Force pendant le prochain combat.');}},{label:'La laisser et continuer',to:'c50'}]},
+
+cavePistolGuardian:{title:'Le gardien du sanctuaire',noImage:true,text:s=>'<p>Une silhouette se détache dans le rayon de lumière.</p><p>Un homme pâle, très grand et presque maigre au point de paraître fragile.</p><p>Il ne porte ni mousquet ni armure.</p><p>À la place, il tire deux sabres courts, un dans chaque main.</p><p>Ses épaules sont étroites et ses bras peu puissants, mais ses appuis changent sans cesse. Une lame couvre l’autre. Il est manifestement beaucoup plus rapide que fort.</p><p>Derrière lui, tu aperçois les fresques et les affaires abandonnées des prisonniers.</p><p>Il ne te laissera pas passer.</p>'+fightHtml(s,'caveDualGuard',CAVE_DUAL_GUARD),choices:s=>standardFightChoices(s,'caveDualGuard',CAVE_DUAL_GUARD,{label:'Tu t’effondres',to:'death'},{label:'Entrer dans le sanctuaire',to:'caveShrine'})},
+
+cliffReturnGuard1:{title:'Derrière les huttes',noImage:true,text:s=>'<p>Tu descends de la crête avec Hale'+(providenceMarinesWithParty(s)>0?' et le marin du Providence':'')+'.</p><p>La prison est proche. Entre vous et les premières huttes, un homme pâle monte la garde.</p><p>Hale se décale légèrement sur ta droite. Si tu neutralises le garde avant qu’il crie, vous pourrez continuer sans révéler votre position.</p>'+nightGuardResultHtml(s,1),choices:s=>{const r=s.flags.nightGuard1;if(!r?.resolved)return[{label:'Neutraliser le garde — Dextérité',stay:true,diceTest:true,effect:x=>nightGuardAttempt(x,1)}];return r.success?[{label:'Continuer vers la prison',to:'cliffReturnGuard2'}]:[{label:'Le village est alerté',to:'cliffReturnAlarm'}];}},
+
+cliffReturnGuard2:{title:'À quelques mètres de la prison',noImage:true,text:s=>'<p>Vous progressez entre deux huttes.</p><p>Les barreaux de la prison sont maintenant visibles.</p><p>Un deuxième garde apparaît au bout du passage. Il ne vous a pas encore vus.</p><p>Hale attend ton signal.</p>'+nightGuardResultHtml(s,2),choices:s=>{const r=s.flags.nightGuard2;if(!r?.resolved)return[{label:'Neutraliser le second garde — Dextérité',stay:true,diceTest:true,effect:x=>nightGuardAttempt(x,2)}];return r.success?[{label:'Atteindre la cage avant l’alerte',to:'cliffReturnPrisonGate'}]:[{label:'Le village se réveille',to:'cliffReturnAlarm'}];}},
+
+cliffReturnPrisonGate:{title:'La cage ouverte',noImage:true,text:s=>{let h='<p>Le second garde s’effondre sans avoir eu le temps de crier.</p><p>Vous atteignez enfin la cage.</p><p>Hale récupère les clés à sa ceinture et ouvre la lourde serrure.</p><p>Les captifs comprennent immédiatement qu’ils doivent partir sans bruit.</p><p>Les plus faibles disparaissent entre les huttes et gagnent la forêt.</p><p>Trois marins du Providence sont encore capables de se battre. Ils ramassent les armes des gardes et restent avec vous.</p>';if(providenceMarinesWithParty(s)>0)h+='<p>Le marin qui s’était échappé de la grotte retrouve les siens.</p>';h+='<p>Mais il est trop tard pour repartir discrètement. Une porte s’ouvre plus loin. Puis une autre.</p><p>Les hommes pâles ont compris.</p>';return h;},onEnter:s=>{if(!s.flags.cliffPrisonFreed){s.flags.cliffPrisonFreed=true;s.flags.providenceSailorsFreed=true;s.flags.captivePrisonersEscaped=true;ensureProvidenceMarinesWithParty(s,3);s.flags.villageTime='night';}},choices:[{label:'Tenir la ligne avec Hale et les marins libérés',to:'villageAssault'}]},
+
+cliffReturnAlarm:{title:'L’alarme',noImage:true,text:s=>{let h='<p>Le cri du garde traverse le village.</p><p>Des portes s’ouvrent presque aussitôt et des silhouettes surgissent entre les huttes.</p>';if(haleWithParty(s))h+='<p>Hale vient se placer à ton côté et tire son sabre.</p>';if(providenceMarinesWithParty(s)>0)h+='<p>Le marin du Providence reste avec vous. Vous n’êtes pas seuls.</p>';h+='<p>La prison est encore devant vous, mais il faudra désormais franchir les hommes pâles pour l’atteindre.</p>';return h;},onEnter:s=>{s.flags.villageTime='night';},choices:[{label:'Combattre ensemble',to:'villageAssault'}]},
 
 death:{title:'La fin du voyage',text:`<p>La douleur, la fatigue et les blessures finissent par avoir raison de toi.</p><p>Ton voyage s’arrête ici.</p><div class="ending">FIN DE L’AVENTURE</div>`,choices:[{label:'Recommencer',action:'restart'}]}
 };
@@ -1891,9 +1986,15 @@ const PAGE_NAV_TITLES = {
   "victoryCliffBoat": "Sous la falaise",
   "victoryRescueReturn": "Retour au village",
   "collectiveCliffEvacuation": "Quitter l’île",
+  "forestCombatPowder": "Le mort sous les racines",
+  "cavePistolGuardian": "Le gardien du sanctuaire",
+  "cliffReturnGuard1": "Derrière les huttes",
+  "cliffReturnGuard2": "À quelques mètres de la prison",
+  "cliffReturnPrisonGate": "La cage ouverte",
+  "cliffReturnAlarm": "L’alarme",
   "death": "La fin du voyage"
 };
-const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c27','c28','c22','c29','c30','directIsland','c31','pirateApproach','pirateParley','pirateOfferRejected','pirateDealAccepted','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c48','c49','c51','c52','c53','c54','c55','c56','c57','islandRetreat','islandBeach','islandBeachFight','islandBeachYield','islandCaptured','islandForestLanding','forestTrap','forestAlligator','islandRecon','coveClearing','caveTunnel','caveShrine','caveExit','villageRear','villageWalkIn','villageRingReturn','villageRingDominance','ringPrisonApproach','ringPrisonRevolt','ringKillThree','villageAssault','villageRetreat','villageRetreatNight','villageNightSwim','villageNightGuard1','villageNightGuard2','villageNightFight','villageNightSearch','villageNightCave','villageNightAftermath','villageAssaultVictory','villageDawnRegroup','villageNight','villageNightResult','c68','c69','captiveAmbush','captiveTransfer','captiveRitual','captiveFreeCompanions','captiveSecondEscape','deepCaveFork','deepCaveRevenant','deepCaveFlooded','deepCaveSanctum','deepCaveCliffPassage','deepCaveCliff','deepCliffGuardianFight','deepCaveBoat','deepCaveReturnPrison','deepCaveEscapeEnding','victoryMissingSailors','victoryRescueCave','victoryRescueSurvivor','victoryRescueRevenant','victoryRescueRevenantFight','victoryRescueLastSailor','victoryRescueSanctum','victoryCliffPassage','victoryCliff','victoryCliffGuardianFight','victoryCliffBoat','victoryRescueReturn','collectiveCliffEvacuation','death'];
+const PAGE_ORDER=['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c12','c13','c15','c16','c20','search2','north1','north2','north3','north4','east1','east2','east3','eastRefuse','east4','east5','east6','south1','south2','c21','c27','c28','c22','c29','c30','directIsland','c31','pirateApproach','pirateParley','pirateOfferRejected','pirateDealAccepted','c32','c34','c35','c36','c37','ravineDown','ravineMouth','ravineFight','ravineCorpse','ravineExit','c41','c50','c38','c39','c40','c42','c43','c44','c45','c46','c48','c49','c51','c52','c53','c54','c55','c56','c57','islandRetreat','islandBeach','islandBeachFight','islandBeachYield','islandCaptured','islandForestLanding','forestTrap','forestAlligator','islandRecon','coveClearing','caveTunnel','caveShrine','caveExit','villageRear','villageWalkIn','villageRingReturn','villageRingDominance','ringPrisonApproach','ringPrisonRevolt','ringKillThree','villageAssault','villageRetreat','villageRetreatNight','villageNightSwim','villageNightGuard1','villageNightGuard2','villageNightFight','villageNightSearch','villageNightCave','villageNightAftermath','villageAssaultVictory','villageDawnRegroup','villageNight','villageNightResult','c68','c69','captiveAmbush','captiveTransfer','captiveRitual','captiveFreeCompanions','captiveSecondEscape','deepCaveFork','deepCaveRevenant','deepCaveFlooded','deepCaveSanctum','deepCaveCliffPassage','deepCaveCliff','deepCliffGuardianFight','deepCaveBoat','deepCaveReturnPrison','deepCaveEscapeEnding','victoryMissingSailors','victoryRescueCave','victoryRescueSurvivor','victoryRescueRevenant','victoryRescueRevenantFight','victoryRescueLastSailor','victoryRescueSanctum','victoryCliffPassage','victoryCliff','victoryCliffGuardianFight','victoryCliffBoat','victoryRescueReturn','collectiveCliffEvacuation','forestCombatPowder','cavePistolGuardian','cliffReturnGuard1','cliffReturnGuard2','cliffReturnPrisonGate','cliffReturnAlarm','death'];
 const PAGE_BY_NODE=Object.fromEntries(PAGE_ORDER.map((id,i)=>[id,i]));
 const padPage=n=>String(n).padStart(3,'0');
 
@@ -1907,6 +2008,7 @@ const DEV_TEST_ITEM_CATALOG=[
  {id:'bracelet_force',name:'Bracelet de force · Force +2',description:'Bracelet obtenu au début de l’enquête.',force:2,flag:'forceBracelet'},
  {id:'bracelet_force_ravin',name:'Bracelet du ravin · Force +2',description:'Bracelet trouvé sur le corps au fond du ravin.',force:2,flag:'ravineForceBracelet'},
  {id:'bague_crane',name:'Bague au crâne',description:'La bague reconnue par les hommes pâles.',flag:'skullRing'},
+ {id:'poudre_combat',name:'Poudre de combat',description:'Usage unique : +2 Dextérité et +2 Force pendant le prochain combat.'},
  {id:'pistolets_silex',name:'Deux pistolets à silex',description:'Deux pistolets chargés trouvés dans le sanctuaire.'}
 ];
 
@@ -1917,11 +2019,8 @@ function devTestItemOwned(s,e){
  return !!s.inventory?.[e.id];
 }
 function recalcDevProtection(s){
- normalizeProtectionItems(s);
- let p=0;
- if(s.inventory?.brassard_avant_bras)p+=3;
- if(s.inventory?.gantelets)p+=4;
- s.protection=p;
+ ensureProtectionState(s);
+ s.protection=currentProtection(s);
 }
 function setDevTestItem(s,e,enabled){
  if(e.special==='gold'){
@@ -1940,10 +2039,12 @@ function setDevTestItem(s,e,enabled){
  }
  const owned=!!s.inventory?.[e.id];
  if(enabled&&!owned){
-   addItem(s,e.id,e.name.replace(/ ·.*$/,''),e.description,e.id==='pistolets_silex'?{quantity:2}:undefined);
+   if(e.protection)addProtectiveItem(s,e.id,e.name.replace(/ ·.*$/,''),e.description,e.protection);
+   else addItem(s,e.id,e.name.replace(/ ·.*$/,''),e.description,e.id==='pistolets_silex'?{quantity:2}:undefined);
    if(e.force)s.forceBonus=(s.forceBonus||0)+e.force;
  }else if(!enabled&&owned){
-   delete s.inventory[e.id];
+   if(e.protection)removeProtectiveItem(s,e.id);
+   else delete s.inventory[e.id];
    if(e.force)s.forceBonus=Math.max(0,(s.forceBonus||0)-e.force);
  }
  if(e.flag)s.flags[e.flag]=enabled;
@@ -1999,10 +2100,17 @@ function showInventoryEffectResult(api,title,html,terminal=false){
 
 const inventory={
  topLine:s=>`Or : ${s.goldCoins||0} · Arme : ${weaponLabel(s)} · Soldats : ${displayedSoldierCount(s)}`,
- extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${displayedSoldierCount(s)}</strong></div><div class="inventory-equipment-row"><span>Protection</span><strong>${currentProtection(s)}</strong></div></div>`+devSoldierCountHtml(s)+devTestInventoryHtml(s),
- actionHtml:()=>'',handleAction(action,s,api){
+ extraHtml:s=>`<div class="inventory-equipment-card"><div class="inventory-equipment-title">État de l’expédition</div><div class="inventory-equipment-row"><span>Soldats survivants</span><strong>${s.soldiers}/${s.maxSoldiers}</strong></div><div class="inventory-equipment-row"><span>Avec toi sur l’île</span><strong>${displayedSoldierCount(s)}</strong></div><div class="inventory-equipment-row"><span>Protection restante</span><strong>${currentProtection(s)} / ${maxProtection(s)}</strong></div>${s.flags.combatPowderReady?'<div class="inventory-equipment-row"><span>Poudre de combat</span><strong>Prête pour le prochain combat</strong></div>':''}</div>`+devSoldierCountHtml(s)+devTestInventoryHtml(s),
+ actionHtml:(id,item,s)=>{if(id==='poudre_combat')return '<div class="inventory-actions"><button class="inventory-action-btn" data-action="use-combat-powder">Consommer : +2 Dextérité et +2 Force au prochain combat</button></div>';if(PROTECTION_ITEMS[id]){ensureProtectionState(s);const source=s.protectionItems[id]||{remaining:0,max:PROTECTION_ITEMS[id].max};return '<div class="inventory-protection-state">Protection restante : <strong>'+String(source.remaining)+' / '+String(source.max)+'</strong>'+(source.remaining<=0?'<br><strong>État : endommagé — désormais inutilisable.</strong>':'')+'</div>';}return '';},handleAction(action,s,api){
    if(action==='close-effect-result'){
      api.closeModal();
+     return true;
+   }
+   if(action==='use-combat-powder'){
+     if(useCombatPowder(s)){
+       api.saveState();api.render();
+       api.showModal('Poudre de combat utilisée','<p>Tu avales la poudre au goût âcre. Ton rythme cardiaque s’accélère et tes gestes deviennent plus vifs.</p><p><strong>Au prochain combat : +2 Dextérité et +2 Force pendant toute la durée du combat.</strong></p>');
+     }
      return true;
    }
    if(action.startsWith('dev-set-soldiers:')){
@@ -2051,6 +2159,11 @@ function normalizeProvidenceLoadedState(s){
  }
  if(s.node==='villageNightStatue'){s.node='villageNightGuard1';changed=true;}
  if(s.visited?.villageNightStatue){delete s.visited.villageNightStatue;changed=true;}
+ if(s.flags?.returnFromCliff&&s.node==='villageNightGuard1'){s.node='cliffReturnGuard1';changed=true;}
+ if(s.flags?.returnFromCliff&&s.node==='villageNightGuard2'){s.node='cliffReturnGuard2';changed=true;}
+ if(s.flags?.returnFromCliff&&s.node==='villageNightFight'){s.node='cliffReturnAlarm';changed=true;}
+ ensureProtectionState(s);
+ s.protection=currentProtection(s);
  return changed;
 }
 
@@ -2063,7 +2176,7 @@ function characterSheetHtml(s){
 BookRegistry.register({
  id:'providence-02',initialMaxHp:18,seriesId:'providence',seriesLabel:'PROVIDENCE',episode:1,orderInSeries:1,
  slug:'le-secret-du-providence',title:'Le Secret du Providence',description:'Une mission maritime de la Royal Navy en 1719.',access:'free',
- contentVersion:138,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
+ contentVersion:139,pageMapVersion:17,saveVersion:1,libraryNumber:2,libraryLabel:'Livre 02',sheetLabel:'FICHE DU PERSONNAGE',
  readerEyebrow:'Chroniques d’un autre temps - Livre 02',
  assetBase:'./books/Livre02-Le-Secret-du-Providence/images',assetBases:['./books/Livre02-Le-Secret-du-Providence/images'],uiAssetBase:'./books/Livre02-Le-Secret-du-Providence/assets',
  seriesProfileDefaults:{heroGender:'female',heroName:'Eleanor',baseStats:{maxHp:18,force:8,dexterity:13}},
