@@ -6944,6 +6944,16 @@ const STORY = {
       </div>`;
   }
 
+  function showInventoryEffectResult(api, title, html, terminal = false) {
+    api.showModal(title, `
+      <div class="inventory-effect-result">${html}</div>
+      <div class="inventory-actions">
+        <button class="inventory-action-btn" data-action="${terminal ? 'close-effect-result' : 'back-inventory'}">
+          ${terminal ? 'Continuer' : 'Retour à l’inventaire'}
+        </button>
+      </div>`);
+  }
+
   const inventory = {
     displayEntries(state) {
       const ids=FINAL_WHITE_AMPOULES.filter(id=>id!=='fiole_rouge'||state.flags.physicianNotesRead);
@@ -6970,11 +6980,8 @@ const STORY = {
           <div class="inventory-equipment-row"><span>Protection restante</span><strong>${currentProtection(state)} / ${maxProtection(state)}</strong></div>
           ${shieldIsActive(state) ? '<div class="inventory-equipment-row"><span>Bouclier du chevalier</span><strong>Dextérité −1</strong></div>' : ''}
         </div>`;
-      const healing = Number.isInteger(state.lastHealingDie)
-        ? `<div class="dice-result"><p class="roll-number">Dernière potion</p><div class="dice-faces">${renderDie(state.lastHealingDie)}</div><p><strong>+${state.lastHealingDie} point${state.lastHealingDie > 1 ? 's' : ''} de Vie</strong></p><p>Vie : <strong>${state.hp} / ${state.maxHp}</strong></p></div>`
-        : '';
       const earth = contaminationLevel(state)>0 ? `<div class="inventory-equipment-card"><strong>Terre noire : ${contaminationLevel(state)}/13</strong><p>${state.flags.physicianNotesRead ? "0–3 : appel puissant · 4–8 : équilibre précaire · 9–12 : transformation imminente · 13 : transformation." : "Effets inconnus."}</p></div>` : "";
-      return equipment + earth + healing + testInventoryHtml(state);
+      return equipment + earth + testInventoryHtml(state);
     },
 
     actionHtml(id, item, state) {
@@ -7026,13 +7033,21 @@ const STORY = {
     },
 
     handleAction(action, state, api) {
+      if (action === 'close-effect-result') {
+        api.closeModal();
+        return true;
+      }
       if (action === 'use-white-stack') {
-        if (contaminationLevel(state) <= 0) return true;
+        const before = contaminationLevel(state);
+        if (before <= 0) return true;
         const id=FINAL_WHITE_AMPOULES.find(key=>hasItem(state,key)&&(key!=='fiole_rouge'||state.flags.physicianNotesRead));
         if (!id) return true;
         if (id==='ampoule_blanche') blackEarthTreatment(state);
         else useWhiteAmpouleForContamination(state,id);
-        api.saveState();api.render();api.openInventory();return true;
+        const after = contaminationLevel(state);
+        api.saveState(); api.render();
+        showInventoryEffectResult(api, 'Ampoule utilisée', `<p>La contamination recule.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+        return true;
       }
       if (action.startsWith('test-toggle-item:')) {
         const id = action.slice('test-toggle-item:'.length);
@@ -7089,16 +7104,29 @@ const STORY = {
 
       if (action.startsWith('use-labyrinth-heal:')) {
         const id = action.slice('use-labyrinth-heal:'.length);
-        if (['potion_corniche','potion_femme'].includes(id) && labyrinthHeal(state,id)) {api.saveState();api.render();}
-        api.openInventory();return true;
+        const before = state.hp;
+        if (['potion_corniche','potion_femme'].includes(id) && labyrinthHeal(state,id)) {
+          const die = state.lastHealingDie;
+          const gained = state.hp - before;
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Potion utilisée', `<div class="dice-result"><p class="roll-number">Potion de guérison</p><div class="dice-faces">${renderDie(die)}</div><p>Dé : <strong>${die}</strong></p><p><strong>+${gained} Vie</strong>${gained<die?' · maximum atteint':''}</p><p>Vie : <strong>${state.hp}/${state.maxHp}</strong></p></div>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'equip-sorcerer-sword') {
         if (hasItem(state,'epee_sorciere')) {state.weapon='sorcerer_sword';api.saveState();api.render();}
         api.openInventory();return true;
       }
       if (action === 'use-labyrinth-white') {
-        if(labyrinthUseWhite(state)){api.saveState();api.render();}
-        api.openInventory();return true;
+        const before = contaminationLevel(state);
+        if(labyrinthUseWhite(state)){
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'use-labyrinth-earth') {
         if(hasItem(state,'terre_femme')) {
@@ -7106,21 +7134,29 @@ const STORY = {
         }api.openInventory();return true;
       }
       if(action==='confirm-labyrinth-earth') {
-        if(labyrinthUseEarth(state)){api.saveState();api.render();}
-        api.openInventory();return true;
+        const before = contaminationLevel(state);
+        if(labyrinthUseEarth(state)){
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, after>=13 ? 'Transformation' : 'Terre noire absorbée', `<p>La terre noire gagne ton organisme.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p>${after>=13?'<p><strong>Le seuil critique est atteint.</strong></p>':''}`, after>=13);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'use-potion') {
         if (!hasItem(state, 'potion_guerison') || state.hp >= state.maxHp) {
           api.openInventory();
           return true;
         }
+        const before = state.hp;
         const healing = cryptoDie6();
         state.lastHealingDie = healing;
         state.hp = Math.min(state.maxHp, state.hp + healing);
+        const gained = state.hp - before;
         removeItem(state, 'potion_guerison');
         api.saveState();
         api.render();
-        api.openInventory();
+        showInventoryEffectResult(api, 'Potion utilisée', `<div class="dice-result"><p class="roll-number">Potion de guérison</p><div class="dice-faces">${renderDie(healing)}</div><p>Dé : <strong>${healing}</strong></p><p><strong>+${gained} Vie</strong>${gained<healing?' · maximum atteint':''}</p><p>Vie : <strong>${state.hp}/${state.maxHp}</strong></p></div>`);
         return true;
       }
 
@@ -7134,42 +7170,91 @@ const STORY = {
       }
 
       if (action === 'use-aldren-white') {
+        const before = contaminationLevel(state);
         if (state.flags.physicianNotesRead && useWhiteAmpouleForContamination(state,'fiole_rouge')) {
+          const after = contaminationLevel(state);
           api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+          return true;
         }
         api.openInventory(); return true;
       }
       if (action === 'use-dark-potion') {
-        if (state.flags.physicianNotesRead && hasItem(state, 'potion_sombre') && state.hp < state.maxHp) { state.hp=Math.min(state.maxHp,state.hp+3); removeItem(state,'potion_sombre'); raiseContamination(state,2); api.saveState(); api.render(); }
+        if (state.flags.physicianNotesRead && hasItem(state, 'potion_sombre') && state.hp < state.maxHp) {
+          const hpBefore = state.hp;
+          const earthBefore = contaminationLevel(state);
+          state.hp=Math.min(state.maxHp,state.hp+3);
+          removeItem(state,'potion_sombre');
+          raiseContamination(state,2);
+          const earthAfter = contaminationLevel(state);
+          const transformed = earthAfter>=13;
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, transformed ? 'Transformation' : 'Potion utilisée', `<p><strong>Vie : ${hpBefore} → ${state.hp}/${state.maxHp}</strong> (+${state.hp-hpBefore})</p><p><strong>Terre noire : ${earthBefore} → ${earthAfter}/13</strong> (+${earthAfter-earthBefore})</p>${transformed?'<p><strong>Le seuil critique est atteint.</strong></p>':''}`, transformed);
+          return true;
+        }
         api.openInventory(); return true;
       }
       if (action === 'use-black-earth') {
         if (hasItem(state,'sacoche_terre_noire')) {
-          if (!state.flags.blackEarthUseConfirmed) { state.flags.blackEarthUseConfirmed=true; api.showModal('Absorber la terre noire ?', `<p>Ton niveau passerait de ${contaminationLevel(state)} à ${Math.min(13,contaminationLevel(state)+3)}/13. ${contaminationLevel(state)+3>=13 ? 'Tu te transformerais immédiatement : fin de partie.' : 'Cette décision est irréversible sans traitement.'}</p><button class="inventory-action-btn" data-action="confirm-black-earth">Confirmer</button>`); return true; }
-          removeItem(state,'sacoche_terre_noire'); raiseContamination(state,3); state.flags.blackEarthUseConfirmed=false; api.saveState(); api.render();
-        } api.openInventory(); return true;
+          state.flags.blackEarthUseConfirmed=false;
+          api.showModal('Absorber la terre noire ?', `<p>Ton niveau passerait de ${contaminationLevel(state)} à ${Math.min(13,contaminationLevel(state)+3)}/13. ${contaminationLevel(state)+3>=13 ? 'Tu te transformerais immédiatement : fin de partie.' : 'Cette décision est irréversible sans traitement.'}</p><div class="inventory-actions"><button class="inventory-action-btn" data-action="confirm-black-earth">Confirmer</button><button class="inventory-action-btn" data-action="back-inventory">Renoncer</button></div>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'confirm-black-earth') {
-        if (hasItem(state,'sacoche_terre_noire') && state.flags.blackEarthUseConfirmed) { removeItem(state,'sacoche_terre_noire'); raiseContamination(state,3); state.flags.blackEarthUseConfirmed=false; api.saveState(); api.render(); } return true;
+        if (hasItem(state,'sacoche_terre_noire')) {
+          const before = contaminationLevel(state);
+          removeItem(state,'sacoche_terre_noire');
+          raiseContamination(state,3);
+          state.flags.blackEarthUseConfirmed=false;
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, after>=13 ? 'Transformation' : 'Terre noire absorbée', `<p>La terre noire gagne ton organisme.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p>${after>=13?'<p><strong>Le seuil critique est atteint.</strong></p>':''}`, after>=13);
+        }
+        return true;
       }
       if (action === 'use-white-ampoule-cache') {
-        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_cache')) {api.saveState();api.render();} api.openInventory();return true;
+        const before = contaminationLevel(state);
+        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_cache')) {
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'use-white-ampoule-common') {
-        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_commune')) {api.saveState();api.render();} api.openInventory();return true;
+        const before = contaminationLevel(state);
+        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_commune')) {
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'use-white-ampoule-test') {
-        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_test')) {api.saveState();api.render();} api.openInventory();return true;
+        const before = contaminationLevel(state);
+        if (useWhiteAmpouleForContamination(state,'ampoule_blanche_test')) {
+          const after = contaminationLevel(state);
+          api.saveState(); api.render();
+          showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
+          return true;
+        }
+        api.openInventory(); return true;
       }
       if (action === 'use-white-ampoule') {
         if (!hasItem(state, 'ampoule_blanche') || !(contaminationLevel(state) > 0)) {
           api.openInventory();
           return true;
         }
+        const before = contaminationLevel(state);
         blackEarthTreatment(state);
+        const after = contaminationLevel(state);
         api.saveState();
         api.render();
-        api.openInventory();
+        showInventoryEffectResult(api, 'Ampoule utilisée', `<p>Le liquide blanc fait reculer la contamination.</p><p><strong>Terre noire : ${before} → ${after}/13</strong></p><p>−${before-after} point${before-after>1?'s':''} de terre noire.</p>`);
         return true;
       }
 
