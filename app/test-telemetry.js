@@ -8,7 +8,6 @@
   const SESSION_META_KEY = 'aphanes.test.telemetry.session.v1';
 
   const SUCCESS_NODES = new Set(['c218','c23','c215','c217']);
-  const TRUE_END_NODES = new Set(['c215','c217']);
   const NARRATIVE_DEATH_NODES = new Set(['c21','c216','c221','c225','c236']);
   const COMBAT_DEATH_NODES = new Set([
     'c25','c26','c27','c29','c33','c36','c38','c47',
@@ -423,10 +422,12 @@
     },
     {
       key: 'envie_rejouer',
-      title: 'Envie de faire une deuxième partie',
+      title: 'Envie de rejouer',
       low: 'Pas du tout',
-      mid: 'Pourquoi pas si j’ai le temps',
-      high: 'Je relance tout de suite'
+      mid: 'Pourquoi pas un de ces quatre',
+      high: 'Oui, dès que le temps me le permet',
+      min: 0,
+      max: 9
     }
   ];
 
@@ -461,20 +462,30 @@
       }
       .test-feedback-labels, .test-feedback-dots {
         display: grid;
-        grid-template-columns: repeat(10, minmax(0, 1fr));
+        grid-template-columns: repeat(9, minmax(0, 1fr));
         gap: 5px;
         align-items: end;
       }
-      .test-feedback-labels { margin-bottom: 7px; min-height: 2.8em; }
+      .test-feedback-labels { margin-bottom: 9px; min-height: 3em; }
       .test-feedback-label {
-        font-size: .7rem;
-        line-height: 1.15;
+        font-size: .84rem;
+        line-height: 1.18;
         text-align: center;
         opacity: .86;
       }
       .test-feedback-label.low { grid-column: 1 / span 2; text-align: left; }
-      .test-feedback-label.mid { grid-column: 4 / span 4; }
-      .test-feedback-label.high { grid-column: 9 / span 2; text-align: right; }
+      .test-feedback-label.mid { grid-column: 4 / span 3; }
+      .test-feedback-label.high { grid-column: 8 / span 2; text-align: right; }
+      .test-feedback-question[data-question-key="envie_rejouer"] .test-feedback-labels,
+      .test-feedback-question[data-question-key="envie_rejouer"] .test-feedback-dots {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+      }
+      .test-feedback-question[data-question-key="envie_rejouer"] .test-feedback-label.mid {
+        grid-column: 5 / span 3;
+      }
+      .test-feedback-question[data-question-key="envie_rejouer"] .test-feedback-label.high {
+        grid-column: 9 / span 2;
+      }
       .test-feedback-dot {
         appearance: none;
         width: 100%;
@@ -568,7 +579,7 @@
       @media (max-width: 520px) {
         .test-feedback { padding: 18px 10px; }
         .test-feedback-question { padding: 16px 10px 18px; margin: 14px 0; }
-        .test-feedback-label { font-size: .62rem; }
+        .test-feedback-label { font-size: .74rem; }
         .test-feedback-labels, .test-feedback-dots { gap: 3px; }
         .test-feedback-dot { max-width: 30px; border-width: 1.5px; }
         .test-feedback-dot::after { font-size: .58rem; }
@@ -608,6 +619,8 @@
     const run = ensureRun(state);
     if (!run.feedbackAnswers || typeof run.feedbackAnswers !== 'object') run.feedbackAnswers = {};
     const values = run.feedbackAnswers;
+    const completionResult = classifyResult(state, nodeId);
+    const canRestartCheckpoint = completionResult === 'mort_subite' || completionResult === 'mort_combat';
 
     storyText.classList.add('test-feedback-page');
     storyText.innerHTML = `
@@ -627,11 +640,11 @@
         </div>
         <p class="test-feedback-status" aria-live="polite"></p>
         <div class="test-feedback-actions">
-          ${TRUE_END_NODES.has(nodeId) ? '' : `
+          ${canRestartCheckpoint ? `
           <button class="choice-btn test-feedback-restart" type="button" data-test-restart="checkpoint">
             <span class="choice-arrow" aria-hidden="true"></span>
             <span class="choice-copy"><span>Recommencer au point de sauvegarde</span></span>
-          </button>`}
+          </button>` : ''}
           <button class="choice-btn test-feedback-restart" type="button" data-test-restart="start">
             <span class="choice-arrow" aria-hidden="true"></span>
             <span class="choice-copy"><span>Recommencer au début</span></span>
@@ -648,8 +661,12 @@
     if (commentInput) commentInput.value = typeof values.commentaire === 'string' ? values.commentaire : '';
 
     for (const spec of QUESTIONNAIRE) {
+      const min = Number.isInteger(spec.min) ? spec.min : 1;
+      const max = Number.isInteger(spec.max) ? spec.max : 9;
+      const scaleValues = Array.from({length: max - min + 1}, (_, i) => min + i);
       const block = document.createElement('div');
       block.className = 'test-feedback-question';
+      block.dataset.questionKey = spec.key;
       block.innerHTML = `
         <p class="test-feedback-question-title">${spec.title}</p>
         <div class="test-feedback-labels" aria-hidden="true">
@@ -658,24 +675,31 @@
           <span class="test-feedback-label high">${spec.high}</span>
         </div>
         <div class="test-feedback-dots" role="radiogroup" aria-label="${spec.title}">
-          ${Array.from({length:10}, (_, i) => `<button type="button" class="test-feedback-dot" data-question="${spec.key}" data-value="${i+1}" role="radio" aria-checked="false" aria-label="${i+1} sur 10"></button>`).join('')}
+          ${scaleValues.map(value => `<button type="button" class="test-feedback-dot" data-question="${spec.key}" data-value="${value}" role="radio" aria-checked="false" aria-label="${value} sur ${max}"></button>`).join('')}
         </div>
       `;
       questions.appendChild(block);
     }
 
     function refreshQuestion(key) {
-      const value = Number(values[key] || 0);
+      const rawValue = values[key];
+      const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
+      const value = hasValue ? Number(rawValue) : NaN;
       section.querySelectorAll(`.test-feedback-dot[data-question="${key}"]`).forEach(dot => {
         const dotValue = Number(dot.dataset.value);
-        dot.classList.toggle('filled', dotValue <= value);
-        dot.setAttribute('aria-checked', dotValue === value ? 'true' : 'false');
+        dot.classList.toggle('filled', Number.isFinite(value) && dotValue <= value);
+        dot.setAttribute('aria-checked', Number.isFinite(value) && dotValue === value ? 'true' : 'false');
       });
     }
 
     QUESTIONNAIRE.forEach(spec => refreshQuestion(spec.key));
 
-    const allAnswered = () => QUESTIONNAIRE.every(q => Number.isInteger(Number(values[q.key])) && Number(values[q.key]) >= 1 && Number(values[q.key]) <= 10);
+    const allAnswered = () => QUESTIONNAIRE.every(q => {
+      const value = Number(values[q.key]);
+      const min = Number.isInteger(q.min) ? q.min : 1;
+      const max = Number.isInteger(q.max) ? q.max : 9;
+      return Number.isInteger(value) && value >= min && value <= max;
+    });
 
     if (run.questionnaireSent) {
       submit.disabled = true;
