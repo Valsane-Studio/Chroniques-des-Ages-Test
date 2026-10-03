@@ -23,6 +23,43 @@ function showBook(id,rem=true){
   document.body.classList.add('library-book-open');
   if(rem){rememberView('book');if(id)rememberBook(id);} window.scrollTo(0,0);
 }
+function neutralizeProvidenceTitles(manifest){
+  const runtimeId=manifest?.runtimeId||manifest?.id;
+  if(runtimeId!=='providence-02')return;
+  const book=window.BookRegistry?.get?.(runtimeId);
+  if(!book?.story)return;
+  const titles={
+    c12:'Une voile à l’horizon',
+    c16:'Fouiller le capitaine',
+    pirateApproach:'Le navire sans pavillon',
+    pirateOfferRejected:'La proposition',
+    pirateDealAccepted:'La proposition',
+    c38:'Le village',
+    c40:'Les dernières traces',
+    islandRetreat:'Faire demi-tour',
+    islandBeachFight:'Sur la plage',
+    islandBeachYield:'Sans attaquer',
+    islandCaptured:'Le réveil',
+    forestTrap:'Sous les arbres',
+    cavePistolGuardian:'Dans la lumière',
+    ringPrisonRevolt:'Près de la cage',
+    villageNightCave:'Dans la grotte',
+    villageAssaultVictory:'Après le combat',
+    deepCaveRevenant:'La silhouette',
+    deepCaveFlooded:'Vers le bruit de l’eau',
+    victoryMissingSailors:'Le compte des rescapés',
+    victoryRescueSurvivor:'Dans le renfoncement',
+    victoryRescueRevenant:'Plus bas dans la galerie',
+    victoryRescueSanctum:'La salle ronde',
+    victoryCliffPassage:'Le couloir',
+    forestCombatPowder:'Sous les racines',
+    cliffReturnPrisonGate:'Devant la cage',
+    captiveSoloFlight:'Dans la faille'
+  };
+  for(const [nodeId,title] of Object.entries(titles)){
+    if(book.story[nodeId])book.story[nodeId].title=title;
+  }
+}
 async function loadBook(id){
   if(loadedBookId){
     if(loadedBookId===id){showBook(id,true);return;}
@@ -60,6 +97,7 @@ async function loadBook(id){
   for(const [k,v] of Object.entries(vars)){if(m.theme?.icons?.[k])root.style.setProperty(v,`url("${assetUrl(m.theme.icons[k])}")`,'important');}
   if(m.themeStylesheet)await new Promise((ok,ko)=>{const l=document.createElement('link');l.rel='stylesheet';l.href=`${base}${m.themeStylesheet}?v=${m.assetVersion||1}`;l.onload=ok;l.onerror=ko;document.head.appendChild(l);});
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
+  neutralizeProvidenceTitles(m);
   if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
   for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
   await LibraryApp.script('./engine/reader.js?v=multi-book-34');
