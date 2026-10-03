@@ -13,16 +13,21 @@ create table if not exists public.dashboard_admins (
 
 alter table public.dashboard_admins enable row level security;
 
+alter table public.test_parties
+add column if not exists incluse_stats boolean not null default true;
+
 grant select on public.dashboard_admins to authenticated;
 grant select on public.test_parties to authenticated;
 grant select on public.test_questionnaires to authenticated;
+grant delete on public.test_parties to authenticated;
+grant update (incluse_stats) on public.test_parties to authenticated;
 
 drop policy if exists "dashboard_admin_read_self" on public.dashboard_admins;
 create policy "dashboard_admin_read_self"
 on public.dashboard_admins
 for select
 to authenticated
-using (user_id = auth.uid());
+using (user_id = (select auth.uid()));
 
 drop policy if exists "dashboard_admin_read_parties" on public.test_parties;
 create policy "dashboard_admin_read_parties"
@@ -33,7 +38,40 @@ using (
   exists (
     select 1
     from public.dashboard_admins a
-    where a.user_id = auth.uid()
+    where a.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "dashboard_admin_delete_parties" on public.test_parties;
+create policy "dashboard_admin_delete_parties"
+on public.test_parties
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.dashboard_admins a
+    where a.user_id = (select auth.uid())
+  )
+);
+
+drop policy if exists "dashboard_admin_update_stats_flag" on public.test_parties;
+create policy "dashboard_admin_update_stats_flag"
+on public.test_parties
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.dashboard_admins a
+    where a.user_id = (select auth.uid())
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.dashboard_admins a
+    where a.user_id = (select auth.uid())
   )
 );
 
@@ -46,7 +84,7 @@ using (
   exists (
     select 1
     from public.dashboard_admins a
-    where a.user_id = auth.uid()
+    where a.user_id = (select auth.uid())
   )
 );
 
