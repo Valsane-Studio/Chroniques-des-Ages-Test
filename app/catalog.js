@@ -28,6 +28,47 @@ window.LIBRARY_CONFIG={
   document.head.appendChild(style);
 })();
 
+/* Inventaire commun à toute la collection : fermeture toujours accessible. */
+(function(){
+  const install=()=>{
+    if(document.documentElement.dataset.inventoryUxInstalled==='1')return;
+    const modal=document.getElementById('modal');
+    const closeBtn=document.getElementById('closeModalBtn');
+    if(!modal||!closeBtn)return;
+    document.documentElement.dataset.inventoryUxInstalled='1';
+
+    const style=document.createElement('style');
+    style.id='inventory-modal-ux';
+    style.textContent=`
+      #modal[data-panel="inventory"] > .modal-card > .drawer-head{
+        position:sticky !important;
+        top:-18px !important;
+        z-index:25 !important;
+        margin:-18px -18px 12px !important;
+        padding:18px 18px 12px !important;
+        background:#eadfbe !important;
+        border-bottom:1px solid rgba(97,73,42,.22) !important;
+      }
+      #modal[data-panel="inventory"] #closeModalBtn{
+        position:relative !important;
+        z-index:26 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    modal.addEventListener('click',event=>{
+      if(modal.dataset.panel==='inventory'&&event.target===modal)closeBtn.click();
+    });
+
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&modal.dataset.panel==='inventory'&&!modal.classList.contains('hidden'))closeBtn.click();
+    });
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
+
 /* Livre 03 : en TEST, afficher la même vignette que la DEV sans rendre le livre ouvrable. */
 (function(){
   const imageUrl='https://raw.githubusercontent.com/Valsane-Studio/Chroniques-des-Ages-Dev/main/books/Livre03-Le-Royaume-des-Disparus/Assets/bibliotheque.jpeg';
