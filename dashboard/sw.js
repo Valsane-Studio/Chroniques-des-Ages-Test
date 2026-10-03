@@ -1,5 +1,5 @@
-const CACHE='aphanes-test-dashboard-v8';
-const CORE=['./','./index.html','./styles.css?v=2','./app.js?v=7','./delete-run.js?v=1','./manifest.webmanifest'];
+const CACHE='aphanes-test-dashboard-v9';
+const CORE=['./','./index.html','./styles.css?v=2','./app.js?v=7','./stats-toggle.js?v=1','./delete-run.js?v=1','./manifest.webmanifest'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).catch(()=>{}));
