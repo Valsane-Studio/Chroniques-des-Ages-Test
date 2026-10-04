@@ -20,9 +20,9 @@ BookManifestRegistry.register({
   bookScript:'book.js',
   journalScript:'journal.js',
   extraScripts:['map.js','feedback-ui.js'],
-  themeStylesheet:'assets/theme.css',
+  themeStylesheet:'assets/theme-v188.css',
   contentVersion:163,
-  assetVersion:187,
+  assetVersion:188,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
 
