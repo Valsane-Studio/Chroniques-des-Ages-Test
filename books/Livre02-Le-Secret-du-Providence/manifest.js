@@ -20,9 +20,9 @@ BookManifestRegistry.register({
   coverCandidates:['assets/presentation.jpg'],
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js','combat-controls-prototype.js','combat-dice-system.js'],
+  extraScripts:['map.js','feedback-ui.js','combat-controls-prototype.js','combat-dice-system.js','combat-visual-parity.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:144,
+  contentVersion:145,
   assetVersion:7,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
