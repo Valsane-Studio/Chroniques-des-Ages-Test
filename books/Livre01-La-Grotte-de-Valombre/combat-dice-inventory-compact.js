@@ -30,19 +30,41 @@
   const style = document.createElement('style');
   style.textContent = `
     #modal[data-panel="inventory"] .combat-die-options{
-      gap:7px!important;
+      gap:6px!important;
     }
     #modal[data-panel="inventory"] .combat-die-select{
-      min-height:58px!important;
-      padding:6px 12px!important;
-      grid-template-columns:48px 1fr!important;
-      gap:10px!important;
+      min-height:48px!important;
+      padding:4px 10px!important;
+      grid-template-columns:42px 1fr!important;
+      gap:8px!important;
+    }
+
+    /* Même dé que dans les règles, mais affiché plus petit uniquement dans le sélecteur. */
+    #modal[data-panel="inventory"] .combat-die-select-visual .die-visual{
+      width:38px!important;
+      height:38px!important;
+      min-width:38px!important;
+      min-height:38px!important;
+      padding:4px!important;
+      box-sizing:border-box!important;
+    }
+    #modal[data-panel="inventory"] .combat-die-select-visual .die-cell i{
+      width:5px!important;
+      height:5px!important;
+    }
+    #modal[data-panel="inventory"] .combat-die-select-visual .combat-die-skull b{
+      font-size:1.35rem!important;
+    }
+
+    #modal[data-panel="inventory"] .combat-die-select-copy strong{
+      line-height:1.05!important;
     }
     #modal[data-panel="inventory"] .combat-die-select-copy small{
-      margin-top:2px!important;
+      margin-top:1px!important;
+      line-height:1.1!important;
     }
     #modal[data-panel="inventory"] .combat-die-current{
-      margin-top:8px!important;
+      margin-top:7px!important;
     }
   `;
   document.head.appendChild(style);
