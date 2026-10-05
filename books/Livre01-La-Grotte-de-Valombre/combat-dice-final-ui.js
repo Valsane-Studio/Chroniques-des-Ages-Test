@@ -41,6 +41,7 @@
     t.innerHTML = String(html || '');
     const root = t.content;
 
+    /* Résultats de combat : on remplace le composant custom par le vrai composant standard. */
     root.querySelectorAll('.combat-dice-custom .combat-choice-die').forEach(el => {
       const isBlue = el.classList.contains('blue');
       const isOffensive = el.classList.contains('reaper');
@@ -65,10 +66,12 @@
       } else if (isOffensive) {
         el.replaceWith(nodeFromHtml(standardDie(value, 'combat-die-offensive', `Dé offensif : ${value}`)));
       } else {
+        /* Aucun style ajouté : c'est exactement le même .die-visual que les dés adverses. */
         el.replaceWith(nodeFromHtml(standardDie(value, '', `Dé classique : ${value}`)));
       }
     });
 
+    /* Inventaire + prologue : mêmes vrais dés standards, pas une imitation. */
     root.querySelectorAll('.combat-die-icon-white').forEach(el => {
       el.replaceWith(nodeFromHtml(standardDie(4, '', 'Dé classique')));
     });
@@ -79,7 +82,9 @@
       el.replaceWith(nodeFromHtml(offensiveSkull('Dé offensif')));
     });
 
+    /* Le classique ne mérite aucun panneau d'effet après un échange. */
     root.querySelectorAll('.combat-die-effect.white').forEach(el => el.remove());
+
     return t.innerHTML;
   }
 
@@ -116,6 +121,7 @@
     document.body.appendChild(overlay);
   }
 
+  /* Inventaire : bouton de rappel juste avant le choix du deuxième dé. */
   const previousExtraHtml = typeof inventory.extraHtml === 'function' ? inventory.extraHtml.bind(inventory) : null;
   if (previousExtraHtml) {
     inventory.extraHtml = state => {
@@ -143,6 +149,7 @@
     return previousHandleAction ? previousHandleAction(action, state, api) : false;
   };
 
+  /* Toutes les scènes passent une dernière fois par le rendu final des dés. */
   for (const scene of Object.values(STORY)) {
     if (!scene) continue;
     if (typeof scene.text === 'function') {
@@ -159,6 +166,7 @@
 
   const style = document.createElement('style');
   style.textContent = `
+    /* Le classique n'a AUCUNE règle visuelle propre : il hérite intégralement de .die-visual. */
     .combat-die-defense{background:#627480!important;color:#f5f1e7!important;border-color:#33261b!important}
     .combat-die-defense .die-cell i{background:#f5f1e7!important}
     .combat-die-offensive{background:#404346!important;color:#f7f1e7!important;border-color:#33261b!important}
@@ -168,6 +176,7 @@
     .combat-die-with-bonus{position:relative;display:inline-flex}
     .combat-standard-defense-bonus{position:absolute;right:-5px;bottom:-5px;min-width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:#26343b;color:#fff;font-size:10px;font-weight:700;border:1px solid #efe4c7}
 
+    /* Les boutons de l'inventaire reprennent l'esprit des choix narratifs : parchemin, trait fin, aucune texture. */
     .combat-rules-button,
     .combat-die-select{
       width:100%!important;
