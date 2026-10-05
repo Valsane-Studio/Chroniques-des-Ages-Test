@@ -1,0 +1,74 @@
+name: Audit Book 01 DEV TEST parity once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/audit-book01-parity-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-book01:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TEST
+        uses: actions/checkout@v4
+
+      - name: Clone DEV
+        run: git clone --depth 1 https://github.com/Valsane-Studio/Chroniques-des-Ages-Dev.git /tmp/dev
+
+      - name: Compare all shared Livre 01 files byte for byte
+        run: |
+          diff -qr \
+            --exclude='book.js' \
+            --exclude='manifest.js' \
+            --exclude='dev-page-number.js' \
+            --exclude='test-runtime-cleanup.js' \
+            /tmp/dev/books/Livre01-La-Grotte-de-Valombre \
+            books/Livre01-La-Grotte-de-Valombre
+
+      - name: Verify intended runtime differences only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, difflib, sys
+
+          dev_dir = Path('/tmp/dev/books/Livre01-La-Grotte-de-Valombre')
+          test_dir = Path('books/Livre01-La-Grotte-de-Valombre')
+
+          assert (dev_dir / 'dev-page-number.js').exists(), 'DEV page helper missing'
+          assert not (test_dir / 'dev-page-number.js').exists(), 'DEV page helper leaked into TEST'
+          assert (test_dir / 'test-runtime-cleanup.js').exists(), 'TEST cleanup helper missing'
+
+          dev_book = (dev_dir / 'book.js').read_text()
+          test_book = (test_dir / 'book.js').read_text()
+          normalize_book = lambda s: re.sub(
+              r'^\s*showMissingIllustrationPlaceholder:.*$',
+              '  showMissingIllustrationPlaceholder: <ENV_SPECIFIC>',
+              s,
+              flags=re.M,
+          )
+          if normalize_book(dev_book) != normalize_book(test_book):
+              print('Unexpected book.js differences:')
+              print(''.join(difflib.unified_diff(
+                  normalize_book(dev_book).splitlines(True),
+                  normalize_book(test_book).splitlines(True),
+                  fromfile='DEV/book.js', tofile='TEST/book.js', n=2
+              ))[:12000])
+              sys.exit(1)
+
+          dev_manifest = (dev_dir / 'manifest.js').read_text()
+          test_manifest = (test_dir / 'manifest.js').read_text()
+          dev_manifest = dev_manifest.replace("'dev-page-number.js',", '')
+          test_manifest = test_manifest.replace(",'test-runtime-cleanup.js'", '')
+          if dev_manifest != test_manifest:
+              print('Unexpected manifest differences:')
+              print(''.join(difflib.unified_diff(
+                  dev_manifest.splitlines(True), test_manifest.splitlines(True),
+                  fromfile='DEV/manifest.js', tofile='TEST/manifest.js', n=2
+              )))
+              sys.exit(1)
+
+          print('Parity audit passed: all shared files are identical and only approved DEV/TEST differences remain.')
+          PY
