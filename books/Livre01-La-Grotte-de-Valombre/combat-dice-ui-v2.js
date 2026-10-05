@@ -1,6 +1,6 @@
 /* Livre 01 — UI consolidée des dés de combat.
    Le dé classique réutilise STRICTEMENT le composant standard .die-visual/.die-cell du lecteur.
-   Aucun style de couleur, bordure, rayon ou ombre spécifique n'est appliqué au dé classique.
+   Les aperçus de dés des règles et de l'inventaire utilisent exactement le même HTML.
 */
 (function () {
   'use strict';
@@ -33,6 +33,13 @@
     return `<span class="die-visual combat-die-offensive combat-die-skull" aria-label="${label}"><b>☠</b></span>`;
   }
 
+  /* SOURCE UNIQUE : règles + inventaire appellent exactement cette même fonction. */
+  function diePreview(type) {
+    if (type === 'blue') return standardDie(4, 'combat-die-defense', 'Dé de défense');
+    if (type === 'reaper') return offensiveSkull('Dé offensif');
+    return standardDie(4, '', 'Dé classique');
+  }
+
   function rulesHtml() {
     return `
       <div class="combat-rules-recap">
@@ -40,17 +47,17 @@
         <p>Ton <strong>premier dé est toujours le dé classique</strong>. Pour le deuxième dé, tu choisis ta position de combat. Tu peux le changer à tout moment depuis l’inventaire, même entre deux échanges.</p>
 
         <div class="combat-rules-die-row">
-          ${standardDie(4, '', 'Dé classique')}
+          ${diePreview('white')}
           <div><strong>Dé classique</strong><br>1 · 2 · 3 · 4 · 5 · 6<br>Tu adoptes une <strong>position de combat classique</strong>, régulière et équilibrée.</div>
         </div>
 
         <div class="combat-rules-die-row">
-          ${standardDie(4, 'combat-die-defense', 'Dé de défense')}
+          ${diePreview('blue')}
           <div><strong>Dé de défense</strong><br>0 · 1 · 2 · 3 · 4 · 5<br>Tu adoptes une <strong>position défensive</strong>. Ton attaque est moins puissante, mais en contrepartie tu absorbes <strong>1 point de dégâts à chaque échange perdu</strong>.</div>
         </div>
 
         <div class="combat-rules-die-row">
-          ${offensiveSkull('Dé offensif')}
+          ${diePreview('reaper')}
           <div><strong>Dé offensif</strong><br>1 · 1 · 3 · 3 · ☠ · ☠<br>Tu adoptes une <strong>attitude offensive</strong>, en prenant davantage de risques. Si ☠ apparaît, tu <strong>remportes automatiquement l’échange</strong>, quels que soient les dés adverses.</div>
         </div>
 
@@ -59,10 +66,10 @@
       </div>`;
   }
 
-  function selectorButton(state, id, title, detail, die) {
+  function selectorButton(state, id, title, detail) {
     const selected = dieType(state) === id;
     return `<button type="button" class="inventory-action-btn combat-die-select${selected ? ' combat-die-selected' : ''}" data-action="combat-second-die:${id}" aria-pressed="${selected ? 'true' : 'false'}">
-      <span class="combat-die-select-visual">${die}</span>
+      <span class="combat-die-select-visual">${diePreview(id)}</span>
       <span class="combat-die-select-copy"><strong>${title}</strong><small>${detail}</small></span>
     </button>`;
   }
@@ -76,9 +83,9 @@
         <div class="inventory-equipment-title">Deuxième dé de combat</div>
         <p>Le premier dé est toujours le dé classique. Tu peux changer le deuxième à tout moment, y compris entre deux échanges.</p>
         <div class="inventory-actions combat-die-options">
-          ${selectorButton(state, 'white', 'Classique', '1 · 2 · 3 · 4 · 5 · 6', standardDie(4, '', 'Dé classique'))}
-          ${selectorButton(state, 'blue', 'Défense', '0 · 1 · 2 · 3 · 4 · 5 · +1 défense', standardDie(4, 'combat-die-defense', 'Dé de défense'))}
-          ${selectorButton(state, 'reaper', 'Offensif', '1 · 1 · 3 · 3 · ☠ · ☠', offensiveSkull('Dé offensif'))}
+          ${selectorButton(state, 'white', 'Classique', '1 · 2 · 3 · 4 · 5 · 6')}
+          ${selectorButton(state, 'blue', 'Défense', '0 · 1 · 2 · 3 · 4 · 5 · +1 défense')}
+          ${selectorButton(state, 'reaper', 'Offensif', '1 · 1 · 3 · 3 · ☠ · ☠')}
         </div>
         <p class="combat-die-current"><strong>Actuel : ${current}</strong>${type === 'reaper' ? ' · ☠ remporte automatiquement l’échange.' : ''}${type === 'blue' ? ' · 1 dégât est absorbé à chaque échange perdu.' : ''}</p>
       </div>`;
@@ -121,7 +128,6 @@
       } else if (isOffensive) {
         el.replaceWith(nodeFromHtml(standardDie(value, 'combat-die-offensive', `Dé offensif : ${value}`)));
       } else {
-        /* Exactement le composant standard, sans aucune classe visuelle supplémentaire. */
         el.replaceWith(nodeFromHtml(standardDie(value, '', `Dé classique : ${value}`)));
       }
     });
@@ -134,7 +140,6 @@
       .replace(/Deuxième dé blanc/g, 'Deuxième dé classique');
   }
 
-  /* Remplace directement l’ancien bloc de choix du deuxième dé produit par combat-dice-choice.js. */
   const previousExtraHtml = typeof inventory.extraHtml === 'function' ? inventory.extraHtml.bind(inventory) : null;
   inventory.extraHtml = state => {
     const html = previousExtraHtml ? previousExtraHtml(state) : '';
@@ -149,7 +154,6 @@
     return t.innerHTML;
   };
 
-  /* Bouton natif dans l’inventaire : utilise le modal commun du lecteur. */
   const previousHandleAction = typeof inventory.handleAction === 'function' ? inventory.handleAction.bind(inventory) : null;
   inventory.handleAction = function(action, state, api) {
     if (action === 'combat-rules-open') {
@@ -159,7 +163,6 @@
     return previousHandleAction ? previousHandleAction(action, state, api) : false;
   };
 
-  /* Prologue : texte final unique des règles de combat. */
   for (const scene of Object.values(STORY)) {
     if (!scene) continue;
 
@@ -182,9 +185,8 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    /* CLASSIQUE : aucune surcharge. .die-visual/.die-cell viennent du lecteur commun. */
+    /* CLASSIQUE : aucune surcharge. */
 
-    /* Défense / Offensif : même géométrie et même contour que le dé standard, seule la teinte change. */
     .die-visual.combat-die-defense{background:#74828a!important;color:#f5f1e7!important}
     .die-visual.combat-die-defense .die-cell i{background:#f5f1e7!important}
     .die-visual.combat-die-offensive{background:#434649!important;color:#f7f1e7!important}
@@ -194,7 +196,6 @@
     .combat-die-with-bonus{position:relative;display:inline-flex;vertical-align:middle}
     .combat-defense-bonus-v2{position:absolute;right:-5px;bottom:-5px;min-width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:#35434b;color:#fff;font-size:10px;font-weight:700;border:1px solid #efe4c7}
 
-    /* INVENTAIRE : aucun bouton texturé. Même logique visuelle que les choix narratifs : cadre simple sur parchemin. */
     #modal[data-panel="inventory"] .inventory-action-btn,
     .combat-rules-recap .inventory-action-btn{
       background:rgba(255,255,255,.04)!important;
@@ -204,10 +205,21 @@
       border-radius:3px!important;
       box-shadow:none!important;
       text-shadow:none!important;
+      filter:none!important;
       cursor:pointer!important;
     }
     #modal[data-panel="inventory"] .inventory-action-btn:hover,
-    .combat-rules-recap .inventory-action-btn:hover{background:rgba(87,65,40,.07)!important}
+    .combat-rules-recap .inventory-action-btn:hover{
+      background:rgba(87,65,40,.07)!important;
+      filter:none!important;
+    }
+
+    /* Important : aucun filtre de bouton ne doit modifier la couleur des dés. */
+    .combat-die-select,
+    .combat-die-select:hover,
+    .combat-rules-open,
+    .combat-rules-open:hover{filter:none!important}
+    .combat-die-select .die-visual{filter:none!important}
 
     .combat-rules-open{width:100%!important;min-height:58px!important;padding:12px 16px!important;margin:4px 0 12px!important;text-align:center!important;font-weight:700!important;font-size:1.05rem!important}
     .combat-die-inventory-card{background:transparent!important;background-image:none!important}
