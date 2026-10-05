@@ -60,6 +60,16 @@ function neutralizeProvidenceTitles(manifest){
     if(book.story[nodeId])book.story[nodeId].title=title;
   }
 }
+function loadOrderedScripts(sources){
+  return Promise.all(sources.map(src=>new Promise((ok,ko)=>{
+    const s=document.createElement('script');
+    s.src=src;
+    s.async=false;
+    s.onload=ok;
+    s.onerror=ko;
+    document.head.appendChild(s);
+  })));
+}
 async function loadBook(id){
   if(loadedBookId){
     if(loadedBookId===id){showBook(id,true);return;}
@@ -98,8 +108,11 @@ async function loadBook(id){
   if(m.themeStylesheet)await new Promise((ok,ko)=>{const l=document.createElement('link');l.rel='stylesheet';l.href=`${base}${m.themeStylesheet}?v=${m.assetVersion||1}`;l.onload=ok;l.onerror=ko;document.head.appendChild(l);});
   await LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
   neutralizeProvidenceTitles(m);
-  if(m.journalScript)await LibraryApp.script(`${base}${m.journalScript}?v=${m.contentVersion||1}`);
-  for(const x of (m.extraScripts||[]))await LibraryApp.script(`${base}${x}?v=${m.contentVersion||1}`);
+  const dependencyScripts=[
+    ...(m.journalScript?[m.journalScript]:[]),
+    ...(m.extraScripts||[])
+  ].map(x=>`${base}${x}?v=${m.contentVersion||1}`);
+  await loadOrderedScripts(dependencyScripts);
   await LibraryApp.script('./engine/reader.js?v=multi-book-34');
   loadedBookId=id;rememberBook(id);showBook(id,true);
 }
