@@ -19,9 +19,9 @@ BookManifestRegistry.register({
   },
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','lab-choice-lock.js','inventory-reminder-pass.js','labyrinth-wanderer-tactics.js','labyrinth-slab-choice-pass.js','labyrinth-slab-choice-commit-fix.js','labyrinth-slab-choice-fixes-v2.js'],
+  extraScripts:['map.js','feedback-ui.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','lab-choice-lock.js','inventory-reminder-pass.js','labyrinth-wanderer-tactics.js','labyrinth-slab-choice-pass.js','labyrinth-slab-choice-commit-fix.js','labyrinth-slab-choice-fixes-v2.js','combat-dice-choice.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:172,
+  contentVersion:173,
   assetVersion:187,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
