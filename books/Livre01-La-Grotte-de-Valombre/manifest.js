@@ -19,9 +19,9 @@ BookManifestRegistry.register({
   },
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','lab-choice-lock.js'],
+  extraScripts:['map.js','feedback-ui.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','lab-choice-lock.js','inventory-reminder-pass.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:166,
+  contentVersion:167,
   assetVersion:187,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
