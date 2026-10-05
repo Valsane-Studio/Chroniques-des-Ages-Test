@@ -19,9 +19,9 @@ BookManifestRegistry.register({
   },
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js','maze-prototype.js','combat-prototype.js','combat-controls-prototype.js','narrative-flow-cleanup.js','short-page-merges.js','camp-crisis-pass.js','camp-crisis-dice-flow.js','camp-crisis-choice-wording.js','dice-consistency-audit.js','lab-choice-lock.js','care-crossroads-lock.js','siege-thread-pass.js','camp-page28-entry.js','early-encounter-dynamics.js','city-sentinel-tactics.js','sentinel-balance-pass.js','weapon-balance-pass.js','powder-wording-pass.js','sentinel-icon-fix.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','inventory-reminder-pass.js','labyrinth-wanderer-tactics.js','labyrinth-slab-choice-pass.js','labyrinth-slab-choice-commit-fix.js','labyrinth-slab-choice-fixes-v2.js','combat-dice-choice.js','combat-dice-visuals-v2.js','combat-dice-standard-color.js','test-runtime-cleanup.js','combat-dice-offensive-name.js'],
+  extraScripts:['map.js','feedback-ui.js','maze-prototype.js','combat-prototype.js','combat-controls-prototype.js','narrative-flow-cleanup.js','short-page-merges.js','camp-crisis-pass.js','camp-crisis-dice-flow.js','camp-crisis-choice-wording.js','dice-consistency-audit.js','lab-choice-lock.js','care-crossroads-lock.js','siege-thread-pass.js','camp-page28-entry.js','early-encounter-dynamics.js','city-sentinel-tactics.js','sentinel-balance-pass.js','weapon-balance-pass.js','powder-wording-pass.js','sentinel-icon-fix.js','sentinel-power-flow-v2.js','labyrinth-woman-payoff.js','inventory-reminder-pass.js','labyrinth-wanderer-tactics.js','labyrinth-slab-choice-pass.js','labyrinth-slab-choice-commit-fix.js','labyrinth-slab-choice-fixes-v2.js','combat-dice-choice.js','combat-dice-visuals-v2.js','combat-dice-standard-color.js','test-runtime-cleanup.js','combat-dice-offensive-name.js','combat-dice-ui-cleanup.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:249,
+  contentVersion:250,
   assetVersion:188,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
