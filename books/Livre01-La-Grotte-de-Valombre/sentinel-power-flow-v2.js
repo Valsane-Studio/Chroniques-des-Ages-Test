@@ -1,4 +1,4 @@
-/* Sentinelles noires : flux tactique V2.
+/* DEV — Sentinelles noires : flux tactique V2.
    - L'introduction n'apparait qu'avant le premier choix tactique.
    - Coup puissant rate : texte d'echec, puis choix renfoncement / combat normal.
    - Coup puissant reussi : sentinelle 1 projetee hors de portee pendant 2 echanges.

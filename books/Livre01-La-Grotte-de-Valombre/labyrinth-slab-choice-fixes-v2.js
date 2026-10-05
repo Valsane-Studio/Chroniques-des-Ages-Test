@@ -82,8 +82,12 @@
     return Number(state.contamination || 0) >= 13 || !!state.flags?.blackEarthTransformed;
   }
 
+  // La femme est rencontrée obligatoirement AVANT l'entrée du dédale :
+  // après les pages 185–188, on poursuit toujours vers la porte du dédale (196).
   function nextNode() { return 'c179'; }
 
+  // Un seul équipement encombrant est retenu à l'entrée du passage :
+  // bouclier en priorité ; sinon casque cabossé ; sinon rien.
   function archBlocker(state) {
     const f = flow(state);
     if (f.archBlocker) return f.archBlocker;

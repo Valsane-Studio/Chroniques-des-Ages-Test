@@ -74,6 +74,7 @@
     </div>`;
   }
 
+  // Inventaire : choix sauvegardé dans l'état de la partie.
   const previousExtraHtml = typeof inventory.extraHtml === 'function' ? inventory.extraHtml.bind(inventory) : null;
   inventory.extraHtml = state => selectionCard(state) + (previousExtraHtml ? previousExtraHtml(state) : '');
 
@@ -90,6 +91,7 @@
     return previousHandleAction ? previousHandleAction(action, state, api) : false;
   };
 
+  // Prologue : ajouter la règle sans modifier le book.js historique.
   for (const scene of Object.values(STORY)) {
     if (!scene || scene.number !== 'RÈGLES DU JEU') continue;
     const originalText = scene.text;
@@ -115,11 +117,14 @@
   }
 
   function applySelectedCombatRoll(state, originalEffect) {
+    // On simule d'abord l'effet historique sur une copie afin de conserver les dés et statistiques adverses.
     const simulated = clone(state);
     originalEffect(simulated);
     const key = simulated.lastCombatKey;
     const simCombat = key && simulated.combats?.[key];
     const simLast = simCombat?.last;
+
+    // Les combats scénarisés qui n'utilisent pas la structure standard restent inchangés pour ce prototype.
     if (!key || !simCombat || !simLast || !Array.isArray(simLast.enemyDice) || !Number.isFinite(simLast.enemyAttack)) {
       originalEffect(state);
       return;
@@ -130,6 +135,8 @@
     const current = state.combats[key] || {};
     const hpBefore = priorEnemyHp(state, key, simCombat, simLast);
     const contaminatedBefore = !!current.contaminated;
+
+    // Partir de l'objet simulé conserve les états tactiques des overlays, puis recalculer l'échange réel.
     const combat = clone(simCombat);
     combat.hp = hpBefore;
     combat.contaminated = contaminatedBefore;
@@ -241,12 +248,15 @@
     return result + note;
   }
 
+  // Le script est chargé en dernier : envelopper les choix issus du moteur de combat et des overlays déjà installés.
   for (const scene of Object.values(STORY)) {
     if (!scene || scene.__combatDiceChoiceV1) continue;
+
     if (typeof scene.text === 'function') {
       const previousText = scene.text;
       scene.text = state => decorateCombatHtml(previousText(state), state);
     }
+
     const previousChoices = scene.choices;
     if (typeof previousChoices === 'function') {
       scene.choices = state => {

@@ -1,4 +1,4 @@
-/* PAGE 102 : une seule exploration dans la salle des injections.
+/* DEV — PAGE 102 : une seule exploration dans la salle des injections.
    Le joueur choisit la machine, l'armoire, ou quitte immédiatement la pièce.
    Dès qu'une branche est choisie, l'autre devient inaccessible et la vieille
    installation finit par céder, forçant la sortie vers le couloir. */
@@ -38,6 +38,7 @@
     };
   }
 
+  /* PAGE 102 — le choix engage désormais réellement le joueur. */
   {
     const scene = STORY.c102;
     const originalChoices = scene.choices;
@@ -47,14 +48,22 @@
 
       return choicesOf(originalChoices, state).map(choice => {
         if (!choice) return choice;
-        if (choice.to === 'c103') return wrapEffect(choice, s => markChoice(s, 'mechanism'));
-        if (choice.to === 'c138') return wrapEffect(choice, s => markChoice(s, 'cabinet'));
-        if (choice.to === 'c197') return wrapEffect(choice, s => markChoice(s, 'corridor'));
+        if (choice.to === 'c103') {
+          return wrapEffect(choice, s => markChoice(s, 'mechanism'));
+        }
+        if (choice.to === 'c138') {
+          return wrapEffect(choice, s => markChoice(s, 'cabinet'));
+        }
+        if (choice.to === 'c197') {
+          return wrapEffect(choice, s => markChoice(s, 'corridor'));
+        }
         return choice;
       });
     };
   }
 
+  /* MACHINE — l'armoire disparaît. Le début de fuite rend l'urgence visible,
+     tout en laissant encore le temps de tenter le levier. */
   if (STORY.c103) {
     const scene = STORY.c103;
     const originalText = scene.text;
@@ -68,11 +77,16 @@
 
     scene.choices = state => choicesOf(originalChoices, state)
       .filter(choice => choice?.to !== 'c138')
-      .map(choice => choice?.to === 'c197'
-        ? {...choice, label:'Quitter la salle et poursuivre dans le couloir'}
-        : choice);
+      .map(choice => {
+        if (choice?.to === 'c197') {
+          return {...choice, label:'Quitter la salle et poursuivre dans le couloir'};
+        }
+        return choice;
+      });
   }
 
+  /* Résultat du levier — la rupture devient complète. La bague reste accessible,
+     mais il n'est plus possible de traverser la pièce pour fouiller l'armoire. */
   if (STORY.c151) {
     const scene = STORY.c151;
     const originalText = scene.text;
@@ -84,11 +98,13 @@
       return `${html || ''}${LEAK_FULL}`;
     };
 
-    scene.choices = state => choicesOf(originalChoices, state).map(choice =>
-      choice?.to === 'c197' ? {...choice, label:'Quitter la salle et poursuivre dans le couloir'} : choice
-    );
+    scene.choices = state => choicesOf(originalChoices, state).map(choice => {
+      if (choice?.to === 'c197') return {...choice, label:'Quitter la salle et poursuivre dans le couloir'};
+      return choice;
+    });
   }
 
+  /* Bague — après l'avoir examinée ou récupérée, seule la sortie reste possible. */
   if (STORY.c196) {
     const scene = STORY.c196;
     const originalChoices = scene.choices;
@@ -99,6 +115,8 @@
         : choice);
   }
 
+  /* ARMOIRE — la fouille reste telle qu'elle est aujourd'hui, puis la conduite
+     cède. La machine n'est plus proposée : cette exploration a consommé le temps. */
   if (STORY.c138) {
     const scene = STORY.c138;
     const originalText = scene.text;

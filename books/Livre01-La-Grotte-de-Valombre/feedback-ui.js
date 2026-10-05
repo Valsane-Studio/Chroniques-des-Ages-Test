@@ -6,6 +6,10 @@
   const book = window.BookRegistry?.get?.(BOOK_ID);
   if (!book) return;
 
+  /* ---------------------------------------------------------
+     1) Toutes les potions de guérison identiques sont affichées
+        comme une seule pile, sans modifier les sauvegardes.
+     --------------------------------------------------------- */
   const HEALING_POTION_IDS = ['potion_guerison', 'potion_corniche', 'potion_femme'];
   const inventory = book.inventory;
 
@@ -76,15 +80,44 @@
     };
   }
 
+  /* ---------------------------------------------------------
+     2) Règle des tests de Dextérité : rappel au début du livre
+        et avant chaque lancer de DEX, sans polluer les tests de Force.
+     --------------------------------------------------------- */
+  const DEX_RULE_HTML = 'Lance les <strong>trois dés</strong> et additionne-les. Si le total est <strong>inférieur ou égal à ta Dextérité</strong>, le test est réussi.';
+
+  const startRules = book.story?.startRules;
+  if (startRules && !startRules.__dexterityRuleAdded) {
+    const originalRulesText = startRules.text;
+    startRules.text = state => {
+      const html = typeof originalRulesText === 'function' ? originalRulesText(state) : originalRulesText;
+      if (!html || html.includes('combat-rules-title">Tests de Dextérité')) return html;
+      const block = `
+        <div class="combat-rules-card dexterity-rules-card">
+          <div class="combat-rules-title">Tests de Dextérité</div>
+          <p>${DEX_RULE_HTML}</p>
+        </div>
+
+        `;
+      return html.replace('<div class="hero-weapon">', `${block}<div class="hero-weapon">`);
+    };
+    startRules.__dexterityRuleAdded = true;
+  }
+
   const storyText = document.getElementById('storyText');
 
   function addDexterityHelp() {
     const panel = storyText?.querySelector('.dice-test-waiting');
     if (!panel || panel.querySelector('.dice-test-help')) return;
 
+    // Un test de Force utilise le même composant visuel : ne rappeler la règle
+    // de Dextérité que lorsque le panneau concerne effectivement la Dextérité.
+    const panelText = panel.textContent || '';
+    if (!/Dext[ée]rit[ée]/i.test(panelText)) return;
+
     const help = document.createElement('p');
     help.className = 'dice-test-help';
-    help.innerHTML = 'Lance les <strong>trois dés</strong> et additionne-les. Si le total est <strong>inférieur ou égal à ta Dextérité</strong>, le test est réussi.';
+    help.innerHTML = DEX_RULE_HTML;
 
     const diceFaces = panel.querySelector('.dice-faces');
     if (diceFaces) panel.insertBefore(help, diceFaces);
@@ -92,10 +125,14 @@
   }
 
   if (storyText) {
-    new MutationObserver(addDexterityHelp).observe(storyText, { childList: true, subtree: true });
+    new MutationObserver(addDexterityHelp).observe(storyText, { childList: true, subtree: true, characterData: true });
     addDexterityHelp();
   }
 
+  /* ---------------------------------------------------------
+     3) Inventaire : croix toujours accessible + fermeture en
+        cliquant/tapant hors de la carte (et touche Échap).
+     --------------------------------------------------------- */
   const modal = document.getElementById('modal');
   const closeModalBtn = document.getElementById('closeModalBtn');
 
@@ -133,6 +170,10 @@
       max-width: 520px;
       margin: 8px auto 14px;
       line-height: 1.45;
+    }
+
+    .dexterity-rules-card {
+      margin-top: 14px;
     }
   `;
   document.head.appendChild(style);

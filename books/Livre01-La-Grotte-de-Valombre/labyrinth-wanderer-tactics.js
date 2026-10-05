@@ -37,6 +37,8 @@
     if (!Number.isFinite(c.hp)) c.hp = MAX_HP;
     if (!Number.isInteger(c.round)) c.round = 0;
 
+    // Migration douce des sauvegardes créées quand l'Errant avait 11 PV :
+    // on conserve exactement les dégâts déjà subis en ajoutant les 4 PV de différence.
     if (c.wandererHpVersion !== VERSION) {
       if (c.hp > 0) c.hp = Math.min(MAX_HP, c.hp + (MAX_HP - OLD_MAX_HP));
       c.wandererHpVersion = VERSION;
@@ -249,6 +251,8 @@
     const c = combat(state);
     const hpBefore = c.hp;
     const html = typeof originalText === 'function' ? originalText(state) : originalText;
+    // Le book.js historique connaît encore l'ancien maximum de 11 PV et tente
+    // de borner silencieusement la Vie. On restaure la vraie valeur juste après.
     c.hp = hpBefore;
     return html;
   }
