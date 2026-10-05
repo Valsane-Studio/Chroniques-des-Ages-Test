@@ -8,11 +8,12 @@
   if (!STORY || !rules) return;
 
   const KEY = 'labyrinthWanderer';
-  const MAX_HP = 11;
+  const OLD_MAX_HP = 11;
+  const MAX_HP = 15;
   const BASE_FORCE = 10;
   const BASE_DEX = 8;
   const ENEMY_DAMAGE = 2;
-  const VERSION = 1;
+  const VERSION = 2;
   const SCENES = ['c153', 'c154', 'c156'];
 
   function d6() {
@@ -24,27 +25,39 @@
   function combat(state) {
     state.combats = state.combats || {};
     if (!state.combats[KEY]) {
-      state.combats[KEY] = { hp: MAX_HP, round: 0, last: null, lastBlade: null };
+      state.combats[KEY] = {
+        hp: MAX_HP,
+        round: 0,
+        last: null,
+        lastBlade: null,
+        wandererHpVersion: VERSION
+      };
     }
     const c = state.combats[KEY];
     if (!Number.isFinite(c.hp)) c.hp = MAX_HP;
     if (!Number.isInteger(c.round)) c.round = 0;
+
+    if (c.wandererHpVersion !== VERSION) {
+      if (c.hp > 0) c.hp = Math.min(MAX_HP, c.hp + (MAX_HP - OLD_MAX_HP));
+      c.wandererHpVersion = VERSION;
+    }
     return c;
   }
 
   function tactic(state) {
     const c = combat(state);
-    if (!c.wandererTactic || c.wandererTactic.version !== VERSION) {
+    const old = c.wandererTactic;
+    if (!old || old.version !== VERSION) {
       c.wandererTactic = {
         version: VERSION,
-        resolved: false,
-        choice: null,
-        resultVisible: false,
-        forceModifier: 0,
-        dexterityModifier: 0,
-        armTest: null,
-        enemyDamage: 0,
-        heroDamage: 0
+        resolved: !!old?.resolved,
+        choice: old?.choice || null,
+        resultVisible: !!old?.resultVisible,
+        forceModifier: Number(old?.forceModifier || 0),
+        dexterityModifier: Number(old?.dexterityModifier || 0),
+        armTest: old?.armTest || null,
+        enemyDamage: Number(old?.enemyDamage || 0),
+        heroDamage: Number(old?.heroDamage || 0)
       };
     }
     return c.wandererTactic;
@@ -232,36 +245,71 @@
     return `${cardHtml(state)}<section class="wanderer-tactic-result">${html}${end}</section>`;
   }
 
-  function patchCard(html, state) {
-    if (!html || !tactic(state).resolved) return html;
-    return String(html)
-      .replace(/(<span>Dextérité<\/span><strong>)8(<\/strong>)/, `$1${enemyDex(state)}$2`)
-      .replace(/(<span>Force<\/span><strong>)10(<\/strong>)/, `$1${enemyForce(state)}$2`);
+  function renderOriginalText(state, originalText) {
+    const c = combat(state);
+    const hpBefore = c.hp;
+    const html = typeof originalText === 'function' ? originalText(state) : originalText;
+    c.hp = hpBefore;
+    return html;
   }
 
-  function normalChoices(state, originalChoices) {
+  function patchCard(html, state) {
+    if (!html) return html;
     const c = combat(state);
-    const base = typeof originalChoices === 'function' ? (originalChoices(state) || []) : (originalChoices || []);
-    if (state.hp <= 0 || c.hp <= 0) return base;
+    return String(html)
+      .replace(/(<span>Vie<\/span><strong>)[^<]*(<\/strong>)/, `$1${c.hp} / ${MAX_HP}$2`)
+      .replace(/(Vie adverse\s*:\s*<strong>)[^<]*(<\/strong>)/g, `$1${c.hp} / ${MAX_HP}$2`)
+      .replace(/(<span>Dextérité<\/span><strong>)[^<]*(<\/strong>)/, `$1${enemyDex(state)}$2`)
+      .replace(/(<span>Force<\/span><strong>)[^<]*(<\/strong>)/, `$1${enemyForce(state)}$2`);
+  }
 
-    const bladeChoices = base
+  function originalChoicesPreservingHp(state, originalChoices) {
+    const c = combat(state);
+    const hpBefore = c.hp;
+    const base = typeof originalChoices === 'function' ? (originalChoices(state) || []) : (originalChoices || []);
+    c.hp = hpBefore;
+    return base;
+  }
+
+  function bladeChoices(state, originalChoices) {
+    const base = originalChoicesPreservingHp(state, originalChoices);
+    return base
       .filter(ch => ch && /lame de jet/i.test(ch.label || '') && typeof ch.effect === 'function')
       .map(ch => {
         const oldEffect = ch.effect;
-        return {...ch, effect: s => { tactic(s).resultVisible = false; oldEffect(s); }};
+        return {
+          ...ch,
+          effect: s => {
+            const c = combat(s);
+            const before = c.hp;
+            tactic(s).resultVisible = false;
+            oldEffect(s);
+            const blade = c.lastBlade;
+            const dealt = blade?.success ? Math.min(2, before) : 0;
+            c.hp = Math.max(0, before - dealt);
+            c.wandererHpVersion = VERSION;
+            if (blade) {
+              blade.damage = dealt;
+              blade.enemyHp = c.hp;
+            }
+          }
+        };
       });
+  }
 
+  function combatChoices(state, originalChoices) {
+    const c = combat(state);
     return [{
-      label: 'Jeter les dés — tour suivant',
+      label: c.round === 0 ? 'Jeter les dés' : 'Jeter les dés — tour suivant',
       stay: true,
       inlineCombat: true,
       effect: normalRound
-    }, ...bladeChoices];
+    }, ...bladeChoices(state, originalChoices)];
   }
 
   for (const id of SCENES) {
     const scene = STORY[id];
-    if (!scene || scene.__wandererTacticsV1) continue;
+    if (!scene || scene.__wandererTacticsV2) continue;
     const originalText = scene.text;
     const originalChoices = scene.choices;
 
@@ -271,7 +319,7 @@
 
       if (t.resolved && t.resultVisible) return resultHtml(state);
 
-      const base = typeof originalText === 'function' ? originalText(state) : originalText;
+      const base = renderOriginalText(state, originalText);
       const patched = patchCard(base, state);
       if (eventPending(state)) return `${patched || ''}${promptHtml()}`;
       return patched;
@@ -280,7 +328,7 @@
     scene.choices = state => {
       const c = combat(state);
       const t = tactic(state);
-      const base = typeof originalChoices === 'function' ? (originalChoices(state) || []) : (originalChoices || []);
+      const base = originalChoicesPreservingHp(state, originalChoices);
 
       if (state.hp <= 0 || c.hp <= 0) return base;
 
@@ -292,11 +340,10 @@
         ];
       }
 
-      if (t.resolved) return normalChoices(state, originalChoices);
-      return base;
+      return combatChoices(state, originalChoices);
     };
 
-    scene.__wandererTacticsV1 = true;
+    scene.__wandererTacticsV2 = true;
   }
 
   const style = document.createElement('style');
