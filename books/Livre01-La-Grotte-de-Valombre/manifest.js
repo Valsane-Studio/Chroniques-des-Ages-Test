@@ -19,9 +19,9 @@ BookManifestRegistry.register({
   },
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js'],
+  extraScripts:['map.js','feedback-ui.js','sentinel-power-flow-v2.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:163,
+  contentVersion:164,
   assetVersion:187,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
