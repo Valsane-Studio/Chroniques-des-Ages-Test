@@ -1,17 +1,17 @@
 /* La Grotte de Valombre — Service Worker
    IMPORTANT : augmenter APP_VERSION à chaque nouvelle mise en ligne. */
-const APP_VERSION = 'reference-68.343-book01-dice-ui-v256';
+const APP_VERSION = 'reference-68.344-book01-stable-sw';
 const CACHE_PREFIX = 'chroniques-ages-test-';
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}`;
 
 self.addEventListener('install', () => {
-  // La nouvelle version n'attend pas la fermeture de l'ancienne.
+  // La nouvelle version prend la main sans attendre la fermeture de l'ancienne.
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    // Supprime uniquement les anciens caches de Valombre.
+    // Supprime uniquement les anciens caches de cette version de Valombre.
     const names = await caches.keys();
     await Promise.all(
       names
@@ -19,19 +19,10 @@ self.addEventListener('activate', event => {
         .map(name => caches.delete(name))
     );
 
+    // Prend le contrôle des pages ouvertes, mais ne les recharge surtout pas :
+    // une navigation forcée pendant le chargement des scripts pouvait interrompre
+    // le bootstrap puis le relancer, surtout sur mobile.
     await self.clients.claim();
-
-    // Recharge les fenêtres Valombre déjà ouvertes afin qu'elles prennent
-    // immédiatement les nouveaux fichiers. La sauvegarde localStorage reste intacte.
-    const windows = await self.clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    });
-
-    await Promise.all(windows.map(client => {
-      try { return client.navigate(client.url); }
-      catch (_) { return Promise.resolve(); }
-    }));
   })());
 });
 
@@ -46,8 +37,9 @@ self.addEventListener('fetch', event => {
 
   event.respondWith((async () => {
     try {
-      // Réseau d'abord : évite qu'une ancienne page ou un ancien JS reste bloqué.
-      const response = await fetch(request, { cache: 'no-store' });
+      // Réseau d'abord. Les URLs versionnées (?v=...) restent naturellement
+      // distinctes entre deux versions, donc pas besoin de forcer no-store.
+      const response = await fetch(request);
 
       if (response && response.ok) {
         const cache = await caches.open(CACHE_NAME);
@@ -65,7 +57,6 @@ self.addEventListener('fetch', event => {
           await caches.match('./index.html') ||
           await caches.match('./');
         if (fallback) return fallback;
-
       }
 
       throw error;
