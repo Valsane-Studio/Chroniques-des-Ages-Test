@@ -280,19 +280,18 @@
   }
 }
 
-/* V190 — Parchemin extensible sans aucune compression de l'image.
-   Le fond, le haut et le bas gardent tous le ratio original (100% auto).
-   Les extrémités sont recadrées puis fondues dans le centre. */
+/* V192 — Parchemin extensible sans assombrissement haut/bas */
 .story-card{
   box-sizing:border-box !important;
   border:0 !important;
   background-color:#e8dcc4 !important;
   background-image:var(--ui-parchment-texture) !important;
-  background-position:center center !important;
+  background-position:top center !important;
   background-size:100% auto !important;
-  background-repeat:no-repeat !important;
+  background-repeat:repeat-y !important;
   isolation:isolate !important;
 }
+
 .story-card::before,
 .story-card::after{
   content:"" !important;
@@ -300,28 +299,34 @@
   position:absolute !important;
   left:0 !important;
   right:0 !important;
-  height:clamp(84px,16vw,132px) !important;
+  height:clamp(72px,14vw,108px) !important;
   z-index:0 !important;
   pointer-events:none !important;
-  background-image:var(--ui-parchment-texture) !important;
-  background-size:100% auto !important;
-  background-repeat:no-repeat !important;
 }
+
 .story-card::before{
   top:0 !important;
-  background-position:top center !important;
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
+  background:linear-gradient(
+    to bottom,
+    rgba(232,220,196,.42) 0%,
+    rgba(232,220,196,.18) 45%,
+    rgba(232,220,196,0) 100%
+  ) !important;
 }
+
 .story-card::after{
   bottom:0 !important;
-  background-position:bottom center !important;
-  -webkit-mask-image:linear-gradient(to top,#000 0%,#000 68%,transparent 100%);
-  mask-image:linear-gradient(to top,#000 0%,#000 68%,transparent 100%);
+  background:linear-gradient(
+    to top,
+    rgba(232,220,196,.42) 0%,
+    rgba(232,220,196,.18) 45%,
+    rgba(232,220,196,0) 100%
+  ) !important;
 }
+
 @media (max-width:700px){
   .story-card::before,
   .story-card::after{
-    height:clamp(76px,22vw,104px) !important;
+    height:clamp(58px,18vw,88px) !important;
   }
 }
