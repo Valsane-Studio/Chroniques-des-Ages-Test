@@ -280,21 +280,48 @@
   }
 }
 
-/* V189 — Parchemin extensible : haut et bas préservés, centre étirable. */
+/* V190 — Parchemin extensible sans aucune compression de l'image.
+   Le fond, le haut et le bas gardent tous le ratio original (100% auto).
+   Les extrémités sont recadrées puis fondues dans le centre. */
 .story-card{
   box-sizing:border-box !important;
-  border-style:solid !important;
-  border-width:36px 0 42px !important;
-  border-image-source:var(--ui-parchment-texture) !important;
-  border-image-slice:14% 0 16% 0 fill !important;
-  border-image-width:1 !important;
-  border-image-outset:0 !important;
-  border-image-repeat:stretch !important;
+  border:0 !important;
   background-color:#e8dcc4 !important;
-  background-image:none !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-position:center center !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+  isolation:isolate !important;
+}
+.story-card::before,
+.story-card::after{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  height:clamp(84px,16vw,132px) !important;
+  z-index:0 !important;
+  pointer-events:none !important;
+  background-image:var(--ui-parchment-texture) !important;
+  background-size:100% auto !important;
+  background-repeat:no-repeat !important;
+}
+.story-card::before{
+  top:0 !important;
+  background-position:top center !important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 68%,transparent 100%);
+}
+.story-card::after{
+  bottom:0 !important;
+  background-position:bottom center !important;
+  -webkit-mask-image:linear-gradient(to top,#000 0%,#000 68%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 0%,#000 68%,transparent 100%);
 }
 @media (max-width:700px){
-  .story-card{
-    border-width:28px 0 34px !important;
+  .story-card::before,
+  .story-card::after{
+    height:clamp(76px,22vw,104px) !important;
   }
 }
