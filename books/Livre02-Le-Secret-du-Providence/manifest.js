@@ -23,10 +23,9 @@ BookManifestRegistry.register({
   extraScripts:['map.js','feedback-ui.js','combat-controls-prototype.js','combat-dice-system.js','prologue-parity.js','combat-visual-parity.js','tester-feedback-pass.js','soldier-test-tracking.js'],
   themeStylesheet:'assets/theme.css',
   contentVersion:153,
-  assetVersion:12,
+  assetVersion:192,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
-
     statsTexture:'assets/textures/texture-caracteristiques.jpg',
     parchmentTexture:'assets/textures/texture-parchemin.jpg',
     icons:{
