@@ -58,12 +58,13 @@
     s=s.replace(/\b(Tu|tu)\s+l[’']([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' l’'+conjugateVous(v));
     s=s.replace(/\b(Tu|tu)\s+([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' '+conjugateVous(v));
 
-    s=s.replace(/\b[Tt]oi\b/g,m=>m[0]==='T'?'Vous':'vous');
-    s=s.replace(/\b[Tt]on\b/g,m=>m[0]==='T'?'Votre':'votre');
-    s=s.replace(/\b[Tt]a\b/g,m=>m[0]==='T'?'Votre':'votre');
-    s=s.replace(/\b[Tt]es\b/g,m=>m[0]==='T'?'Vos':'vos');
-    s=s.replace(/\b[Tt]e\b/g,m=>m[0]==='T'?'Vous':'vous');
-    s=s.replace(/\b[Tt][’'](?=[A-Za-zÀ-ÖØ-öø-ÿ])/g,m=>m[0]==='T'?'Vous ':'vous ');
+    const replaceWord=(input,re,replacer)=>input.replace(re,(m,prefix,word)=>prefix+replacer(word));
+    s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]oi)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Vous':'vous');
+    s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]on)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Votre':'votre');
+    s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]a)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Votre':'votre');
+    s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]es)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Vos':'vos');
+    s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]e)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Vous':'vous');
+    s=s.replace(/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt])[’'](?=[A-Za-zÀ-ÖØ-öø-ÿ])/g,(m,prefix,t)=>prefix+(t==='T'?'Vous ':'vous '));
     return s;
   }
 
