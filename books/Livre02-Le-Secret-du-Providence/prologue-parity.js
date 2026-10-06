@@ -57,6 +57,19 @@
       </div>`;
   }
 
+  function characteristicsHtml() {
+    return `
+      <div class="hero-characteristics">
+        <div class="hero-info-title">Tes caractéristiques</div>
+        <p><strong>Vie :</strong> indique la santé du personnage. Lorsqu’elle atteint zéro, c’est la fin de votre aventure.</p>
+        <p><strong>Protection :</strong> provient de certaines pièces d’équipement. Elle absorbe les dégâts avant la Vie et diminue lorsqu’elle encaisse un choc.</p>
+        <p><strong>Force :</strong> représente sa puissance physique. Elle s’ajoute à la Dextérité pour remporter les échanges, et permet aussi de forcer, retenir ou briser ce qui barre la route. Elle n’augmente pas directement les dégâts.</p>
+        <p><strong>Dextérité :</strong> représente son aisance et ses réflexes. Elle permet de prendre l’avantage au combat, mais aussi d’éviter pièges, chutes et autres dangers. Elle peut être affectée par ce qui est porté.</p>
+        <p><strong>Puissance de l’arme :</strong> valeur propre à l’arme équipée. Elle augmente les dégâts infligés lorsque vous remportez un échange.</p>
+        <p><strong>Soldats :</strong> indique le nombre de soldats de la garnison encore disponibles. Vos choix et les combats peuvent réduire cet effectif au cours de l’aventure.</p>
+      </div>`;
+  }
+
   const start = story.start;
   if (start && !start.__prologueParityIcons) {
     const previousText = start.text;
@@ -76,6 +89,8 @@
           `<small><span class="tag-icon icon-jpg ${iconClass}" aria-hidden="true"></span><span class="tag-label">${label}</span></small>`
         );
       }
+      const closing = html.lastIndexOf('</div>');
+      if (closing >= 0) html = html.slice(0, closing) + characteristicsHtml() + html.slice(closing);
       return html;
     };
     start.__prologueParityIcons = true;
