@@ -39,6 +39,8 @@
   function conjugateVous(word){
     const lower=word.toLowerCase();
     if(IRREGULAR[lower])return matchCase(word,IRREGULAR[lower]);
+    if(lower.endsWith('ais'))return matchCase(word,lower.slice(0,-3)+'iez');
+    if(lower.endsWith('as'))return matchCase(word,lower.slice(0,-2)+'ez');
     if(lower.endsWith('is'))return matchCase(word,lower.slice(0,-2)+'issez');
     if(lower.endsWith('es'))return matchCase(word,lower.slice(0,-2)+'ez');
     return word;
@@ -47,6 +49,11 @@
   function convertNarrativeText(text){
     let s=String(text||'');
 
+    // Interrogations inversées : « peux-tu » → « pouvez-vous ».
+    s=s.replace(/\b([A-Za-zÀ-ÖØ-öø-ÿ-]+)-tu\b/g,(m,v)=>conjugateVous(v)+'-vous');
+    s=s.replace(/\b([A-Za-zÀ-ÖØ-öø-ÿ-]+)-Tu\b/g,(m,v)=>conjugateVous(v)+'-Vous');
+
+    // Formes négatives et pronominales d'abord, avant le remplacement général de « tu ».
     s=s.replace(/\b(Tu|tu)\s+n[’']([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' n’'+conjugateVous(v));
     s=s.replace(/\b(Tu|tu)\s+ne\s+t[’']([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' ne vous '+conjugateVous(v));
     s=s.replace(/\b(Tu|tu)\s+ne\s+te\s+([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' ne vous '+conjugateVous(v));
@@ -58,6 +65,7 @@
     s=s.replace(/\b(Tu|tu)\s+l[’']([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' l’'+conjugateVous(v));
     s=s.replace(/\b(Tu|tu)\s+([A-Za-zÀ-ÖØ-öø-ÿ-]+)/g,(m,tu,v)=>matchCase(tu,'vous')+' '+conjugateVous(v));
 
+    // Pronoms et possessifs quand le sujet n'est pas « tu » (ex. « quelque chose te trouble »).
     const replaceWord=(input,re,replacer)=>input.replace(re,(m,prefix,word)=>prefix+replacer(word));
     s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]oi)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Vous':'vous');
     s=replaceWord(s,/(^|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])([Tt]on)(?=$|[^A-Za-zÀ-ÖØ-öø-ÿ0-9_])/g,m=>m[0]==='T'?'Votre':'votre');
@@ -75,14 +83,19 @@
     const nodes=[];
     while(walker.nextNode())nodes.push(walker.currentNode);
     nodes.forEach(node=>{
-      if(node.parentElement?.closest('blockquote'))return;
+      if(node.parentElement?.closest('blockquote'))return; // conserver le registre propre aux dialogues
       node.nodeValue=convertNarrativeText(node.nodeValue);
     });
     return t.innerHTML;
   }
 
-  function toVousPlain(text){return convertNarrativeText(String(text||''));}
+  function toVousPlain(text){
+    const p=document.createElement('p');
+    p.textContent=String(text||'');
+    return convertNarrativeText(p.textContent);
+  }
 
+  // 1. Pont du Providence : les petits objets ont eux aussi subi les mouvements du navire.
   if(story.c28){
     const old=story.c28.text;
     const patch=html=>String(html||'')
@@ -91,16 +104,27 @@
     story.c28.text=typeof old==='function'?(s=>patch(old(s))):patch(old);
   }
 
+  // 2. Sortie sous la falaise : « personne ne parle » uniquement s'il y a réellement des compagnons.
   if(story.deepCaveEscapeEnding){
     const old=story.deepCaveEscapeEnding.text;
     story.deepCaveEscapeEnding.text=s=>{
       let html=String(typeof old==='function'?old(s):old||'');
       const solo=html.includes('<p>Tu descends jusqu’au bateau et largues les amarres.</p>');
-      if(solo)html=html.replace('<p>Pendant quelques minutes, personne ne parle.</p>','<p>Pendant quelques minutes, vous ne quittez pas l’île des yeux.</p>');
+      if(solo){
+        html=html.replace('<p>Pendant quelques minutes, personne ne parle.</p>','<p>Pendant quelques minutes, vous ne quittez pas l’île des yeux.</p>');
+      }
       return html;
     };
   }
 
+  // 2 bis. Retour du village : formulation valable seul comme accompagné.
+  if(story.c54){
+    const old=story.c54.text;
+    const patch=html=>String(html||'').replace('<p>Personne ne parle beaucoup.</p>','<p>Le trajet jusqu’à la plage se fait dans un silence pesant.</p>');
+    story.c54.text=typeof old==='function'?(s=>patch(old(s))):patch(old);
+  }
+
+  // 4 et 6. Corrections rédactionnelles ciblées.
   for(const scene of Object.values(story)){
     if(!scene)continue;
     const patchText=html=>String(html||'')
@@ -113,15 +137,20 @@
     if(typeof scene.text==='function'){
       const previous=scene.text;
       scene.text=s=>patchText(previous(s));
-    }else if(typeof scene.text==='string')scene.text=patchText(scene.text);
+    }else if(typeof scene.text==='string'){
+      scene.text=patchText(scene.text);
+    }
   }
 
+  // 3. Le Livre 02 s'adresse désormais au joueur au « vous » partout dans la narration.
   for(const scene of Object.values(story)){
     if(!scene)continue;
     if(typeof scene.text==='function'){
       const previous=scene.text;
       scene.text=s=>toVousHtml(previous(s));
-    }else if(typeof scene.text==='string')scene.text=toVousHtml(scene.text);
+    }else if(typeof scene.text==='string'){
+      scene.text=toVousHtml(scene.text);
+    }
 
     if(Array.isArray(scene.choices)){
       scene.choices=scene.choices.map(c=>c&&typeof c==='object'?{...c,label:toVousPlain(c.label)}:c);
@@ -144,7 +173,13 @@
     def.html=s=>toVousHtml(typeof previous==='function'?previous(s):previous||'');
   }
 
-  let modalBackdrop=null,modalBox=null,modalTitle=null,modalBody=null,lastBattleSignature='',awaitingBattleResult=false;
+  // 5. Modal autonome pour les règles et les résultats : fiable sur Chrome mobile.
+  let modalBackdrop=null;
+  let modalBox=null;
+  let modalTitle=null;
+  let modalBody=null;
+  let lastBattleSignature='';
+  let awaitingBattleResult=false;
 
   function ensureFeedbackModal(){
     if(modalBackdrop)return;
@@ -178,23 +213,29 @@
   document.addEventListener('click',e=>{
     const reminder=e.target.closest?.('.combat-rules-reminder[data-story-modal="village-assault-rules"]');
     if(reminder){
-      e.preventDefault();e.stopImmediatePropagation();
+      e.preventDefault();
+      e.stopImmediatePropagation();
       const def=book.storyModals?.['village-assault-rules'];
       const html=typeof def?.html==='function'?def.html({}):def?.html;
       openFeedbackModal('Règles du combat',String(html||''));
       return;
     }
+
     const choice=e.target.closest?.('#choices .choice-btn');
-    if(choice&&document.getElementById('chapterTitle')?.textContent?.trim()==='Donner l’assaut')awaitingBattleResult=true;
+    if(choice&&document.getElementById('chapterTitle')?.textContent?.trim()==='Donner l’assaut'){
+      awaitingBattleResult=true;
+    }
   },true);
 
   function checkBattleResult(){
     if(!awaitingBattleResult)return;
-    const result=document.querySelector('#storyText .crew-battle-result');
+    const results=[...document.querySelectorAll('#storyText .crew-battle-result')];
+    const result=results[results.length-1];
     if(!result)return;
     const signature=(result.textContent||'').replace(/\s+/g,' ').trim();
     if(!signature||signature===lastBattleSignature)return;
-    lastBattleSignature=signature;awaitingBattleResult=false;
+    lastBattleSignature=signature;
+    awaitingBattleResult=false;
     openFeedbackModal('Résultat de l’assaut',result.outerHTML);
   }
 
