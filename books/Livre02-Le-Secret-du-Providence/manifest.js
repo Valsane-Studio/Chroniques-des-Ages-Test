@@ -13,17 +13,17 @@ BookManifestRegistry.register({
   libraryImage:'assets/bibliotheque.jpg',
   preview:{
     image:'assets/presentation.jpg',
-    situation:'Port Royal, 1719. Le Providence, navire marchand d’Edmund Harcourt, a disparu avec vingt-sept hommes. La Royal Navy t’envoie retrouver sa trace.',
+    situation:'Port Royal, 1719. Le Providence, navire marchand d’Edmund Harcourt, a disparu avec vingt-sept hommes. La Royal Navy vous envoie retrouver sa trace.',
     adventure:'Aventure maritime mêlant enquête, navigation, commandement et exploration, avec une montée progressive vers le surnaturel, les mythes et les légendes de marins.',
     dangers:'Récifs, pirates, combats, mer imprévisible et phénomènes que les marins préfèrent évoquer à voix basse.'
   },
   coverCandidates:['assets/presentation.jpg'],
   bookScript:'book.js',
   journalScript:'journal.js',
-  extraScripts:['map.js','feedback-ui.js','combat-controls-prototype.js','combat-dice-system.js','prologue-parity.js','combat-visual-parity.js'],
+  extraScripts:['map.js','feedback-ui.js','combat-controls-prototype.js','combat-dice-system.js','prologue-parity.js','combat-visual-parity.js','tester-feedback-pass.js'],
   themeStylesheet:'assets/theme.css',
-  contentVersion:148,
-  assetVersion:9,
+  contentVersion:149,
+  assetVersion:10,
   theme:{
     buttonTexture:'assets/textures/texture-bouton.jpg',
 
