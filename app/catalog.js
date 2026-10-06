@@ -28,6 +28,48 @@ window.LIBRARY_CONFIG={
   document.head.appendChild(style);
 })();
 
+/* Bibliothèque : boutons d'accès discrets et transparents, dans l'esprit des choix de route. */
+(function(){
+  const style=document.createElement('style');
+  style.id='library-book-action-transparent';
+  style.textContent=`
+    .library-book-action{
+      background:transparent !important;
+      background-image:none !important;
+      background-color:transparent !important;
+      border:1px solid rgba(112,78,42,.46) !important;
+      color:#5b422b !important;
+      box-shadow:none !important;
+      filter:none !important;
+      text-shadow:none !important;
+      transition:background-color .16s ease,border-color .16s ease,color .16s ease !important;
+    }
+    .library-book-action::after{
+      border-color:#8c673e !important;
+      opacity:.72 !important;
+    }
+    .library-book-action:hover:not(:disabled),
+    .library-book-action:focus-visible:not(:disabled){
+      background:rgba(116,82,45,.075) !important;
+      border-color:rgba(112,78,42,.72) !important;
+      color:#3f2d1e !important;
+      filter:none !important;
+    }
+    .library-book-action:disabled{
+      background:transparent !important;
+      color:rgba(91,66,43,.58) !important;
+      border-color:rgba(112,78,42,.25) !important;
+      box-shadow:none !important;
+      opacity:.62 !important;
+      filter:none !important;
+    }
+    .library-book-action:disabled::after{
+      opacity:.32 !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 /* Inventaire commun à toute la collection : fermeture toujours accessible. */
 (function(){
   const install=()=>{
