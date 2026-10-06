@@ -1,6 +1,6 @@
 /* La Grotte de Valombre — Service Worker
    IMPORTANT : augmenter APP_VERSION à chaque nouvelle mise en ligne. */
-const APP_VERSION = 'reference-68.346-book02-ui-parity-redeploy';
+const APP_VERSION = 'reference-68.347-book02-prologue-parity';
 const CACHE_PREFIX = 'chroniques-ages-test-';
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}`;
 
