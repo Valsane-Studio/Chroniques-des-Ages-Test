@@ -174,3 +174,16 @@ window.LIBRARY_CONFIG={
   observer.observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(()=>observer.disconnect(),5000);
 })();
+
+/* Lecture : les numéros de pages techniques ne sont plus affichés en bas. */
+(function(){
+  const style=document.createElement('style');
+  style.id='reader-hide-page-numbers';
+  style.textContent=`
+    #chapterNumber,
+    .chapter-number{
+      display:none !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
