@@ -40,9 +40,9 @@
     switch(event?.type){
       case'death':return{cls:'death',text:`−${count} soldat${count>1?'s':''}`};
       case'capture':return{cls:'capture',text:`${count} soldat${count>1?'s':''} capturé${count>1?'s':''}`};
-      case'recovery':return{cls:'recovery',text:`+${count} libéré${count>1?'s':''}`};
-      case'reinforcement':return{cls:'reinforcement',text:`+${count} rejoint${count>1?'gnent':'nt'} le groupe`};
-      case'deployment':return{cls:'deployment',text:`${count} soldat${count>1?'s':''} avec vous`};
+      case'recovery':return{cls:'recovery',text:`+${count} soldat${count>1?'s':''} libéré${count>1?'s':''}`};
+      case'reinforcement':return{cls:'reinforcement',text:count>1?`+${count} soldats rejoignent le groupe`:`+${count} soldat rejoint le groupe`};
+      case'deployment':return{cls:'deployment',text:count>1?`${count} soldats avec vous`:`${count} soldat avec vous`};
       case'command':return{cls:'command',text:'Choix de commandement'};
       case'left_behind':return{cls:'capture',text:`${count} soldat${count>1?'s':''} laissé${count>1?'s':''} prisonnier${count>1?'s':''}`};
       default:return{cls:'',text:'Événement'};
