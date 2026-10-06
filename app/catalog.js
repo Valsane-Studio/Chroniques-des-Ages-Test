@@ -70,6 +70,45 @@ window.LIBRARY_CONFIG={
   document.head.appendChild(style);
 })();
 
+/* Bibliothèque : rappeler avant le départ que la progression est sauvegardée localement. */
+(function(){
+  const install=()=>{
+    if(document.getElementById('libraryPreviewSaveNote'))return;
+    const action=document.getElementById('libraryPreviewAction');
+    if(!action||!action.parentNode)return;
+
+    const note=document.createElement('p');
+    note.id='libraryPreviewSaveNote';
+    note.className='library-preview-save-note';
+    note.innerHTML='<strong>Sauvegarde automatique</strong> — Ta progression est enregistrée dans ce navigateur. Tu peux quitter l’aventure à tout moment et la reprendre plus tard depuis ce même navigateur.';
+    action.parentNode.insertBefore(note,action);
+
+    const style=document.createElement('style');
+    style.id='library-preview-save-note-style';
+    style.textContent=`
+      .library-preview-save-note{
+        margin:4px 0 12px !important;
+        padding:9px 11px !important;
+        border-top:1px solid rgba(133,94,52,.24) !important;
+        border-bottom:1px solid rgba(133,94,52,.24) !important;
+        color:#5e432b !important;
+        background:rgba(120,84,45,.035) !important;
+        font-family:var(--body-font) !important;
+        font-size:13px !important;
+        line-height:1.35 !important;
+      }
+      .library-preview-save-note strong{
+        color:#493421 !important;
+        font-weight:700 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
+
 /* Inventaire commun à toute la collection : fermeture toujours accessible. */
 (function(){
   const install=()=>{
