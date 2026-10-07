@@ -1,6 +1,6 @@
 /* La Grotte de Valombre — Service Worker
    IMPORTANT : augmenter APP_VERSION à chaque nouvelle mise en ligne. */
-const APP_VERSION = 'reference-68.347-book02-prologue-parity';
+const APP_VERSION = 'reference-68.348-book01-sentinel-hotfix';
 const CACHE_PREFIX = 'chroniques-ages-test-';
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}`;
 
@@ -19,9 +19,7 @@ self.addEventListener('activate', event => {
         .map(name => caches.delete(name))
     );
 
-    // Prend le contrôle des pages ouvertes, mais ne les recharge surtout pas :
-    // une navigation forcée pendant le chargement des scripts pouvait interrompre
-    // le bootstrap puis le relancer, surtout sur mobile.
+    // Prend le contrôle des pages ouvertes, sans navigation forcée.
     await self.clients.claim();
   })());
 });
@@ -37,9 +35,15 @@ self.addEventListener('fetch', event => {
 
   event.respondWith((async () => {
     try {
-      // Réseau d'abord. Les URLs versionnées (?v=...) restent naturellement
-      // distinctes entre deux versions, donc pas besoin de forcer no-store.
-      const response = await fetch(request);
+      // Les fichiers qui pilotent les versions doivent toujours être réellement
+      // revalidés côté réseau. Cela évite qu'un téléphone reste bloqué sur un
+      // ancien manifest.js alors qu'un correctif critique vient d'être publié.
+      const forceReload =
+        url.pathname.endsWith('/manifest.js') ||
+        url.pathname.endsWith('/app/library.js') ||
+        url.pathname.endsWith('/app/bootstrap.js');
+
+      const response = await fetch(request, forceReload ? { cache:'reload' } : undefined);
 
       if (response && response.ok) {
         const cache = await caches.open(CACHE_NAME);
