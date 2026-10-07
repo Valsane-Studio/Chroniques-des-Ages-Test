@@ -36,4 +36,11 @@
       };
     }
   }
+
+  // Page 67 : supprimer le décompte « Un. Deux. Trois. » après les lumières bleues.
+  if(story.c54){
+    const removeCount=html=>String(html??'').replace('<p>Un.</p><p>Deux.</p><p>Trois.</p>','');
+    const previous=story.c54.text;
+    story.c54.text=typeof previous==='function'?(s=>removeCount(previous(s))):removeCount(previous);
+  }
 })();
