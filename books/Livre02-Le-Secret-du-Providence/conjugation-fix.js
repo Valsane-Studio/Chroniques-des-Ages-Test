@@ -37,10 +37,12 @@
     }
   }
 
-  // Page 67 : supprimer le décompte « Un. Deux. Trois. » après les lumières bleues.
+  // Page 67 : alléger le retour vers la plage.
   if(story.c54){
-    const removeCount=html=>String(html??'').replace('<p>Un.</p><p>Deux.</p><p>Trois.</p>','');
+    const patch=html=>String(html??'')
+      .replace('<p>Le trajet jusqu’à la plage se fait dans un silence pesant.</p>','')
+      .replace('<p>Un.</p><p>Deux.</p><p>Trois.</p>','');
     const previous=story.c54.text;
-    story.c54.text=typeof previous==='function'?(s=>removeCount(previous(s))):removeCount(previous);
+    story.c54.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
   }
 })();
