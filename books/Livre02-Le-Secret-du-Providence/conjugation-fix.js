@@ -46,6 +46,16 @@
     story.c54.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
   }
 
+  // Page 71 : formulation neutre quel que soit l'effectif présent.
+  if(story.c57){
+    const previous=story.c57.text;
+    const patch=html=>String(html??'').replace(
+      /^<p>La petite chaloupe s’éloigne de la côte avec Hale(?: et <strong>\d+ soldats?<\/strong>)?\.<\/p>/,
+      '<p>La petite chaloupe s’éloigne de la côte.</p>'
+    );
+    story.c57.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
+  }
+
   // Pages 69/70 : même scène et mêmes embranchements, mais une page dédiée
   // à chaque choix de commandant.
   if(story.c55&&story.c56&&Array.isArray(book.pageOrder)&&book.pageByNode){
