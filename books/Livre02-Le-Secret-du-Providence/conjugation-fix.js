@@ -46,19 +46,37 @@
     story.c54.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
   }
 
-  // Pages 69/70 : même scène, même texte et mêmes embranchements,
-  // mais un numéro de page distinct selon la personne désignée pour commander.
+  // Pages 69/70 : même scène et mêmes embranchements, mais une page dédiée
+  // à chaque choix de commandant. Chaque page force sa propre variante afin
+  // que le menu DEV affiche toujours la bonne branche, quel que soit l'état courant.
   if(story.c55&&story.c56&&Array.isArray(book.pageOrder)&&book.pageByNode){
     const BRIGGS_RETURN_NODE='c56Briggs';
+    const originalReturn={...story.c56};
+    const originalText=story.c56.text;
 
-    if(!story[BRIGGS_RETURN_NODE]){
-      story[BRIGGS_RETURN_NODE]={...story.c56};
-    }
+    const stateForCommander=(s,commander)=>({
+      ...s,
+      flags:{...(s?.flags||{}),commander}
+    });
+
+    story.c56={
+      ...originalReturn,
+      text:typeof originalText==='function'
+        ? (s=>originalText(stateForCommander(s,'hale')))
+        : originalText
+    };
+
+    story[BRIGGS_RETURN_NODE]={
+      ...originalReturn,
+      text:typeof originalText==='function'
+        ? (s=>originalText(stateForCommander(s,'briggs')))
+        : originalText
+    };
 
     const previousChoices=story.c55.choices;
     story.c55.choices=s=>{
       const list=typeof previousChoices==='function'?previousChoices(s):previousChoices;
-      const target=s.flags.commander==='hale'?'c56':BRIGGS_RETURN_NODE;
+      const target=s.flags.commander==='briggs'?BRIGGS_RETURN_NODE:'c56';
       return Array.isArray(list)
         ? list.map(choice=>choice&&typeof choice==='object'&&choice.to==='c56'
             ? {...choice,to:target}
