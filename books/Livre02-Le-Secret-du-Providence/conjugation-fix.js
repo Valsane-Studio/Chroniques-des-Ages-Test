@@ -6,6 +6,12 @@
   const story=book?.story;
   if(!book||!story)return;
 
+  // Corrige les libellés hérités du Livre 01 dans les bandeaux de page.
+  document.querySelectorAll('.book-page-banner-kicker').forEach(el=>{el.textContent=book.kicker||'APHANES · Livre 02';});
+  document.querySelectorAll('.book-page-banner-title').forEach(el=>{el.textContent=book.title||'Le Secret du Providence';});
+  const journalKicker=document.querySelector('.journal-kicker');
+  if(journalKicker)journalKicker.textContent=`${String(book.title||'Le Secret du Providence').toUpperCase()} · TES DÉCOUVERTES`;
+
   const fix=text=>String(text??'')
     .replace(/\baperçoissez\b/g,'apercevez')
     .replace(/\bAperçoissez\b/g,'Apercevez');
