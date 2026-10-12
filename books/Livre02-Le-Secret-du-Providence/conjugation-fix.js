@@ -62,20 +62,30 @@
     story.c57.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
   }
 
-  // Page 105 : afficher les jets du groupe comme de vrais dés et retirer
-  // la phrase sur les portes du village, incohérente s'il ne reste que peu d'ennemis.
+  // Page 105 : utiliser exactement la structure visuelle des dés de combat.
   if(story.villageNightResult){
     const previous=story.villageNightResult.text;
-    const faces={1:'⚀',2:'⚁',3:'⚂',4:'⚃',5:'⚄',6:'⚅'};
+    const PIPS={
+      1:[5],2:[1,9],3:[1,5,9],
+      4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]
+    };
+    const combatDie=value=>{
+      const n=Math.max(1,Math.min(6,Math.floor(Number(value)||1)));
+      const active=new Set(PIPS[n]||[]);
+      const cells=Array.from({length:9},(_,i)=>
+        `<span class="die-cell">${active.has(i+1)?'<i></i>':''}</span>`
+      ).join('');
+      return `<span class="die-visual" aria-label="Dé classique : ${n}" title="Résultat : ${n}">${cells}</span>`;
+    };
     const patch=(html,s)=>{
       let out=String(html??'').replace(' Des portes s’ouvrent dans tout le village.','');
       const rolls=Array.isArray(s?.flags?.nightRaidRolls)?s.flags.nightRaidRolls:[];
       if(rolls.length){
-        const dice=rolls.map(v=>{
-          const n=Math.max(1,Math.min(6,Math.floor(Number(v)||1)));
-          return `<span title="Résultat : ${n}" aria-label="Résultat ${n}" style="display:inline-block;font-size:2em;line-height:1;margin:0 .08em;vertical-align:-.08em">${faces[n]}</span>`;
-        }).join('');
-        out=out.replace(/<p>Jets du groupe : .*?<\/p>/,`<p>Jets du groupe :</p><p aria-label="Résultats des dés" style="display:flex;flex-wrap:wrap;gap:.12em;align-items:center;margin-top:-.35em">${dice}</p>`);
+        const dice=rolls.map(combatDie).join('');
+        out=out.replace(
+          /<p>Jets du groupe : .*?<\/p>/,
+          `<p>Jets du groupe :</p><div class="combat-dice" role="group" aria-label="Résultats des dés du groupe">${dice}</div>`
+        );
       }
       return out;
     };
