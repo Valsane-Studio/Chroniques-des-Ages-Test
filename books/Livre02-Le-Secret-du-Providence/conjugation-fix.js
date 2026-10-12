@@ -62,6 +62,28 @@
     story.c57.text=typeof previous==='function'?(s=>patch(previous(s))):patch(previous);
   }
 
+  // Page 105 : afficher les jets du groupe comme de vrais dés et retirer
+  // la phrase sur les portes du village, incohérente s'il ne reste que peu d'ennemis.
+  if(story.villageNightResult){
+    const previous=story.villageNightResult.text;
+    const faces={1:'⚀',2:'⚁',3:'⚂',4:'⚃',5:'⚄',6:'⚅'};
+    const patch=(html,s)=>{
+      let out=String(html??'').replace(' Des portes s’ouvrent dans tout le village.','');
+      const rolls=Array.isArray(s?.flags?.nightRaidRolls)?s.flags.nightRaidRolls:[];
+      if(rolls.length){
+        const dice=rolls.map(v=>{
+          const n=Math.max(1,Math.min(6,Math.floor(Number(v)||1)));
+          return `<span title="Résultat : ${n}" aria-label="Résultat ${n}" style="display:inline-block;font-size:2em;line-height:1;margin:0 .08em;vertical-align:-.08em">${faces[n]}</span>`;
+        }).join('');
+        out=out.replace(/<p>Jets du groupe : .*?<\/p>/,`<p>Jets du groupe :</p><p aria-label="Résultats des dés" style="display:flex;flex-wrap:wrap;gap:.12em;align-items:center;margin-top:-.35em">${dice}</p>`);
+      }
+      return out;
+    };
+    story.villageNightResult.text=typeof previous==='function'
+      ? (s=>patch(previous(s),s))
+      : patch(previous,{});
+  }
+
   // Pages 69/70 : même scène et mêmes embranchements, mais une page dédiée
   // à chaque choix de commandant.
   if(story.c55&&story.c56&&Array.isArray(book.pageOrder)&&book.pageByNode){
