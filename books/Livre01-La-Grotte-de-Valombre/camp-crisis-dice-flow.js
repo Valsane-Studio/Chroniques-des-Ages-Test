@@ -197,7 +197,7 @@
 
   arrival.choices = state => {
     if (!state.flags.anselmeFirstRound) {
-      return [{ label:'Jeter les dés', stay:true, inlineCombat:true, effect:resolveFirstRound }];
+      return [{ label:'Jeter les dés', stay:true, effect:resolveFirstRound }];
     }
     if (state.hp <= 0) return [];
     return typeof tacticalChoices === 'function' ? tacticalChoices(state) : (tacticalChoices || []);
