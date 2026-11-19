@@ -122,7 +122,7 @@ async function loadBook(id){
     document.head.appendChild(l);
   }):Promise.resolve();
   const bookPromise=LibraryApp.script(`${base}${m.bookScript||'book.js'}?v=${m.contentVersion||1}`);
-  const readerSrc='./engine/reader.js?v=multi-book-35';
+  const readerSrc='./engine/reader.js?v=multi-book-36';
   preloadScript(readerSrc);
   await Promise.all([themePromise,bookPromise]);
 
