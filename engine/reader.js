@@ -375,24 +375,79 @@ function closeJournal() {
   journalPanel.setAttribute('aria-hidden', 'true');
 }
 
+let pendingDiceAction = null;
+
+function showRollError(message) {
+  const target = storyText.querySelector('.dice-result') || storyText;
+  if (!target) return;
+  let notice = target.querySelector('.dice-roll-error');
+  if (!notice) {
+    notice = document.createElement('p');
+    notice.className = 'dice-roll-error';
+    notice.setAttribute('role', 'alert');
+    target.appendChild(notice);
+  }
+  notice.textContent = message;
+}
+
 function resolvePendingDice() {
   const pending = state.pendingDice;
-  if (!pending || pending.destination !== state.node) return;
-  const origin = STORY[pending.source];
-  const sourceChoices = origin ? (typeof origin.choices === 'function' ? origin.choices(state) : origin.choices || []) : [];
-  const original = sourceChoices[pending.index];
-  // Rebuild the callback after a reload; never roll twice, even after multiple taps.
-  if (!original || original.to !== pending.destination || original.label !== pending.label || typeof original.effect !== 'function') {
-    state.pendingDice = null;
-    saveState(); render();
-    return;
+  if (!pending || pending.destination !== state.node) {
+    showRollError('Ce lancer a perdu son contexte. Recharge la page pour reprendre ta partie.');
+    return false;
   }
-  state.pendingDice = null;
-  original.effect(state);
-  state.lastDicePage = state.node;
-  saveState(); render();
-  const dicePanel = storyText.querySelector('.dice-result');
-  if (dicePanel && typeof dicePanel.scrollIntoView === 'function') dicePanel.scrollIntoView({ behavior:'smooth', block:'center' });
+
+  // L'effet choisi est conservé en mémoire jusqu'au lancer. Les choix
+  // conditionnels peuvent changer dès que l'on entre dans la page d'épreuve.
+  let effect = pendingDiceAction?.pending === pending ? pendingDiceAction.effect : null;
+
+  // Après un rechargement, les fonctions ne sont pas sérialisées : retrouver
+  // uniquement une action identifiable sans ambiguïté sur la scène d'origine.
+  if (typeof effect !== 'function') {
+    try {
+      const origin = STORY[pending.source];
+      const sourceChoices = origin
+        ? (typeof origin.choices === 'function' ? origin.choices(state) : (origin.choices || []))
+        : [];
+      const indexed = sourceChoices[pending.index];
+      const candidates = sourceChoices.filter(choice =>
+        choice && choice.to === pending.destination && typeof choice.effect === 'function'
+      );
+      const matched = indexed && indexed.to === pending.destination &&
+        indexed.label === pending.label && typeof indexed.effect === 'function'
+          ? indexed
+          : candidates.find(choice => choice.label === pending.label) ||
+            (candidates.length === 1 ? candidates[0] : null);
+      effect = matched?.effect;
+    } catch (error) {
+      console.error('Livre 01 — impossible de retrouver le jet en attente', error);
+    }
+  }
+
+  if (typeof effect !== 'function') {
+    showRollError('Impossible de retrouver ce jet après la reprise de partie. Retourne au choix précédent ou recharge la page.');
+    return false;
+  }
+
+  const snapshot = JSON.stringify(state);
+  try {
+    state.pendingDice = null;
+    effect(state);
+    state.lastDicePage = state.node;
+    pendingDiceAction = null;
+    saveState();
+    render();
+    const panel = storyText.querySelector('.dice-result');
+    if (panel?.scrollIntoView) panel.scrollIntoView({ behavior:'smooth', block:'center' });
+    return true;
+  } catch (error) {
+    console.error('Livre 01 — échec du lancer différé', error);
+    state = JSON.parse(snapshot);
+    pendingDiceAction = null;
+    try { saveState(); render(); } catch (renderError) { console.error(renderError); }
+    showRollError('Le jet n’a pas abouti. Tu peux réessayer sans perdre ta progression.');
+    return false;
+  }
 }
 
 function render() {
@@ -546,7 +601,16 @@ function render() {
     `;
 
     btn.addEventListener('click', () => {
-      if (choice.action === 'resolveDice') { btn.disabled = true; return resolvePendingDice(); }
+      const isDiceAction = choice.action === 'resolveDice' || choice.action === 'damage' ||
+        Boolean(choice.inlineCombat || choice.diceTest) ||
+        /^(?:Jeter|Relancer|Lancer) (?:les?|trois) dés?\b/i.test(choice.label || '');
+      const snapshot = isDiceAction ? JSON.stringify(state) : null;
+      try {
+      if (choice.action === 'resolveDice') {
+        btn.disabled = true;
+        if (!resolvePendingDice()) btn.disabled = false;
+        return;
+      }
       if (choice.action === 'testQuestionnaire') {
         TEST_TELEMETRY?.openQuestionnaire(state);
         saveState();
@@ -566,6 +630,7 @@ function render() {
       if (deferredDex && choice.to && !choice.stay) {
         btn.disabled = true;
         state.pendingDice = {source: state.node, destination: choice.to, index: i, label: choice.label};
+        pendingDiceAction = {pending: state.pendingDice, effect: choice.effect};
         state.lastDicePage = null;
         enterNode(choice.to);
         return;
@@ -585,6 +650,17 @@ function render() {
         return;
       }
       enterNode(choice.to);
+      } catch (error) {
+        if (!isDiceAction) throw error;
+        console.error('Livre 01 — erreur de lancer', {page: state.node, choice: choice.label}, error);
+        if (snapshot) {
+          try { state = JSON.parse(snapshot); } catch (restoreError) { console.error(restoreError); }
+        }
+        pendingDiceAction = null;
+        btn.disabled = false;
+        try { saveState(); render(); } catch (renderError) { console.error(renderError); }
+        showRollError('Le lancer a rencontré une erreur. Tu peux réessayer sans perdre ta progression.');
+      }
     });
 
     choices.appendChild(btn);
