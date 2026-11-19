@@ -136,7 +136,7 @@
      --------------------------------------------------------- */
   const choicesRoot = document.getElementById('choices');
   const statusTags = document.getElementById('statusTags');
-  const rollLabel = /^(?:Jeter|Relancer|Lancer)\\s+(?:les?|trois|un)\\s+d[ée]s?\\b/i;
+  const rollLabel = /^(?:Jeter|Relancer|Lancer)\s+(?:les?|trois|un)\s+d[ée]s?\b/i;
 
   function hardenRollButtons() {
     if (!choicesRoot) return;
