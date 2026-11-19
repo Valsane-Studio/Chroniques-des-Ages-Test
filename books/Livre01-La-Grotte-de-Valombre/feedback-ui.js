@@ -130,6 +130,61 @@
   }
 
   /* ---------------------------------------------------------
+     2 bis) Les jets de dés doivent rester tactiles sur mobile.
+     Sur certains petits écrans, la barre de caractéristiques ou
+     un calque de choix peut recouvrir la zone de lancer.
+     --------------------------------------------------------- */
+  const choicesRoot = document.getElementById('choices');
+  const statusTags = document.getElementById('statusTags');
+  const rollLabel = /^(?:Jeter|Relancer|Lancer)\\s+(?:les?|trois|un)\\s+d[ée]s?\\b/i;
+
+  function hardenRollButtons() {
+    if (!choicesRoot) return;
+    const allButtons = Array.from(choicesRoot.querySelectorAll('.choice-btn'));
+    const waiting = !!storyText?.querySelector('.dice-test-waiting');
+    const diceButtons = allButtons.filter(button => {
+      const label = (button.querySelector('.choice-copy')?.textContent || button.textContent || '').trim();
+      return button.classList.contains('combat-roll-btn') ||
+        button.classList.contains('fluid-roll-control') ||
+        rollLabel.test(label) ||
+        (waiting && /^(?:Jeter|Lancer) les d[ée]s/i.test(label));
+    });
+
+    if (diceButtons.length) {
+      choicesRoot.dataset.rollTouchHardened = '1';
+      choicesRoot.style.setProperty('position', 'relative', 'important');
+      choicesRoot.style.setProperty('z-index', '60', 'important');
+      choicesRoot.style.setProperty('pointer-events', 'auto', 'important');
+      choicesRoot.style.setProperty('touch-action', 'manipulation', 'important');
+      if (statusTags) statusTags.style.setProperty('pointer-events', 'none', 'important');
+    } else if (choicesRoot.dataset.rollTouchHardened === '1') {
+      delete choicesRoot.dataset.rollTouchHardened;
+      for (const key of ['position','z-index','pointer-events','touch-action'])
+        choicesRoot.style.removeProperty(key);
+      if (statusTags) statusTags.style.removeProperty('pointer-events');
+    }
+
+    for (const button of diceButtons) {
+      button.style.setProperty('pointer-events', 'auto', 'important');
+      button.style.setProperty('touch-action', 'manipulation', 'important');
+      button.style.setProperty('position', 'relative', 'important');
+      button.style.setProperty('z-index', '61', 'important');
+      button.style.setProperty('-webkit-tap-highlight-color', 'rgba(0,0,0,0)', 'important');
+    }
+  }
+
+  if (choicesRoot) {
+    new MutationObserver(hardenRollButtons).observe(choicesRoot, {
+      childList: true, subtree: true
+    });
+    window.addEventListener('pageshow', hardenRollButtons);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) hardenRollButtons();
+    });
+    hardenRollButtons();
+  }
+
+  /* ---------------------------------------------------------
      3) Inventaire : croix toujours accessible + fermeture en
         cliquant/tapant hors de la carte (et touche Échap).
      --------------------------------------------------------- */
